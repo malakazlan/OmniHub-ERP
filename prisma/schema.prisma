@@ -1,0 +1,807 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id                 Int           @id @default(autoincrement())
+  email              String        @unique
+  name               String
+  password           String        // bcrypt hashed
+  phone              String?
+  role               String        @default("employee") // admin, manager, salesperson, accountant, driver, viewer
+  avatar             String?
+  isActive           Boolean       @default(true)
+  allowedModules     String        @default("[]") @db.LongText // JSON array of allowed module slugs
+  cashAccountId      Int?          @unique // Primary petty-cash ledger account for this login
+  lastLogin          DateTime?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  // Relations
+  salesOrders              SaleOrder[]
+  purchaseOrders           PurchaseOrder[]
+  payments                 Payment[]
+  activityLogs             ActivityLog[]
+  ownedCashAccounts        Account[]       @relation("AccountCashOwner")
+  primaryCashAccount       Account?        @relation("UserPrimaryCash", fields: [cashAccountId], references: [id], onDelete: SetNull, map: "users_cash_account_id_fkey")
+  customerOrdersCreated    CustomerOrder[] @relation("CustomerOrderCreatedBy")
+  customerOrdersReviewed   CustomerOrder[] @relation("CustomerOrderReviewedBy")
+
+  @@map("users")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  module      String   // farmers, sales, etc.
+  entityType  String?  // Farmer, SaleOrder, etc.
+  entityId    Int?
+  details     String?  @db.LongText // JSON with details
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([module])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
+
+model Account {
+  id              Int           @id @default(autoincrement())
+  name            String
+  code            String?       @unique  // ACC-001, ACC-002...
+  type            String        // asset, liability, equity, revenue, expense
+  category        String        // farmer, company, shop, bank, cash, transport, expense, salary, general
+  city            String?
+  phone           String?
+  whatsappNumber  String?
+  cnic            String?
+  address         String?       @db.Text
+  balance         Float         @default(0)
+  openingBalance  Float         @default(0)
+  reference       String?
+  isActive        Boolean       @default(true)
+  ownerUserId     Int?          // For cash accounts: user who may use this account
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  ownerUser       User?         @relation("AccountCashOwner", fields: [ownerUserId], references: [id], onDelete: SetNull, map: "accounts_owner_user_id_fkey")
+  primaryForUser  User?         @relation("UserPrimaryCash")
+
+  ledgerEntries   LedgerEntry[]
+  journalLines    JournalLine[]
+
+  @@index([category])
+  @@index([type])
+  @@index([ownerUserId])
+  @@map("accounts")
+}
+
+model Farmer {
+  id              Int           @id @default(autoincrement())
+  name            String
+  fatherName      String?
+  cnic            String?       @unique
+  phone           String?
+  whatsappNumber  String?
+  city            String?
+  village         String?
+  address         String?       @db.Text
+  bankName        String?
+  bankAccountNo   String?
+  accountId       Int?          @unique  // Link to Account for ledger
+  isActive        Boolean       @default(true)
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  purchases       PurchaseOrder[]
+
+  @@map("farmers")
+}
+
+model Company {
+  id              Int           @id @default(autoincrement())
+  name            String
+  contactPerson   String?
+  phone           String?
+  whatsappNumber  String?
+  email           String?
+  ntn             String?
+  strn            String?
+  city            String?
+  address         String?       @db.Text
+  companyType     String        @default("both") // supplier (sell raw to us), buyer (we sell finished to them), both
+  bankName        String?
+  bankAccountNo   String?
+  accountId       Int?          @unique  // Link to Account for ledger
+  creditLimit     Float         @default(0)
+  isActive        Boolean       @default(true)
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  saleOrders      SaleOrder[]
+  purchaseOrders  PurchaseOrder[]
+  customerOrders  CustomerOrder[]
+
+  @@map("companies")
+}
+
+model Shop {
+  id              Int           @id @default(autoincrement())
+  name            String
+  ownerName       String?
+  phone           String?
+  whatsappNumber  String?
+  city            String?
+  area            String?
+  address         String?       @db.Text
+  shopType        String?       // retail, wholesale, distributor
+  accountId       Int?          @unique  // Link to Account for ledger
+  creditLimit     Float         @default(0)
+  isActive        Boolean       @default(true)
+  assignedTo      Int?          // Salesperson userId
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  saleOrders      SaleOrder[]
+  customerOrders  CustomerOrder[]
+
+  @@map("shops")
+}
+
+model ProductCategory {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@map("product_categories")
+}
+
+model Product {
+  id              Int             @id @default(autoincrement())
+  name            String
+  sku             String?         @unique
+  categoryId      Int
+  unit            String          @default("bag") // bag, ton, kg, piece
+  bagWeight       Float?          @default(34) // Weight per bag, default 34kg
+  costPrice       Float           @default(0)
+  salePrice       Float           @default(0)
+  minimumStock    Float           @default(0)
+  currentStock    Float           @default(0)
+  description     String?         @db.Text
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  category        ProductCategory @relation(fields: [categoryId], references: [id])
+  purchaseItems   PurchaseItem[]
+  saleItems       SaleItem[]
+  customerOrderItems CustomerOrderItem[]
+  stockMovements  StockMovement[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model StockMovement {
+  id            Int       @id @default(autoincrement())
+  productId     Int
+  movementType  String    // purchase_in, sale_out, return_in, return_out, adjustment, transfer
+  quantity      Float
+  previousStock Float
+  newStock      Float
+  referenceType String?   // PurchaseOrder, SaleOrder, etc.
+  referenceId   Int?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  product       Product   @relation(fields: [productId], references: [id])
+
+  @@index([productId])
+  @@index([movementType])
+  @@map("stock_movements")
+}
+
+model PurchaseOrder {
+  id                  Int              @id @default(autoincrement())
+  purchaseNumber      String           @unique
+  purchaseDate        DateTime
+  farmerId            Int?
+  companyId           Int?
+  vendorName          String
+  vendorAccountId     Int?
+
+  // Costs
+  subtotal            Float            @default(0)
+  transportCost       Float            @default(0)
+  loadingCost         Float            @default(0)
+  labourCost          Float            @default(0)
+  taxAmount           Float            @default(0)
+  discountAmount      Float            @default(0)
+  totalAmount         Float            @default(0)
+
+  // Payment
+  paidAmount          Float            @default(0)
+  cashAmount          Float            @default(0)
+  bankAmount          Float            @default(0)
+  cashAccountId       Int?
+  bankAccountId       Int?
+  paymentStatus       String           @default("unpaid") // unpaid, partial, paid
+
+  // Transport
+  transportId         Int?
+  vehicleNumber       String?
+  driverName          String?
+
+  status              String           @default("draft") // draft, confirmed, received, cancelled
+  notes               String?          @db.Text
+  createdById         Int?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  // Relations
+  farmer              Farmer?          @relation(fields: [farmerId], references: [id])
+  company             Company?         @relation(fields: [companyId], references: [id])
+  createdBy           User?            @relation(fields: [createdById], references: [id])
+  items               PurchaseItem[]
+  returns             PurchaseReturn[]
+  transport           Transport?       @relation(fields: [transportId], references: [id])
+
+  @@index([farmerId])
+  @@index([companyId])
+  @@index([purchaseDate])
+  @@index([status])
+  @@map("purchase_orders")
+}
+
+model PurchaseItem {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int
+  productId       Int
+  productName     String
+  quantity        Float
+  unit            String
+  rate            Float
+  amount          Float
+  createdAt       DateTime      @default(now())
+
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@map("purchase_items")
+}
+
+model PurchaseReturn {
+  id                  Int           @id @default(autoincrement())
+  returnNumber        String        @unique
+  originalPurchaseId  Int
+  returnDate          DateTime
+  items               String        @db.LongText // JSON representation of items
+  returnAmount        Float         @default(0)
+  reason              String?
+  notes               String?       @db.Text
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  originalPurchase    PurchaseOrder @relation(fields: [originalPurchaseId], references: [id])
+
+  @@index([originalPurchaseId])
+  @@map("purchase_returns")
+}
+
+model SaleOrder {
+  id                  Int           @id @default(autoincrement())
+  invoiceNumber       String        @unique
+  saleDate            DateTime
+  companyId           Int?
+  shopId              Int?
+  customerName        String
+  customerAccountId   Int?
+
+  // Costs
+  subtotal            Float         @default(0)
+  transportCost       Float         @default(0)
+  loadingCost         Float         @default(0)
+  taxAmount           Float         @default(0)
+  discountAmount      Float         @default(0)
+  totalAmount         Float         @default(0)
+
+  // Payment
+  paidAmount          Float         @default(0)
+  cashAmount          Float         @default(0)
+  bankAmount          Float         @default(0)
+  cashAccountId       Int?
+  bankAccountId       Int?
+  paymentStatus       String        @default("unpaid") // unpaid, partial, paid
+
+  // Transport
+  transportId         Int?
+  vehicleNumber       String?
+  driverName          String?
+
+  // Gate Pass
+  gatePassGenerated   Boolean       @default(false)
+
+  status              String        @default("draft") // draft, confirmed, dispatched, delivered, cancelled
+  notes               String?       @db.Text
+  followUpPayments    String?       @db.LongText // JSON array of follow-up payments
+  createdById         Int?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  // Relations
+  company             Company?      @relation(fields: [companyId], references: [id])
+  shop                Shop?         @relation(fields: [shopId], references: [id])
+  createdBy           User?         @relation(fields: [createdById], references: [id])
+  items               SaleItem[]
+  returns             SaleReturn[]
+  gatePass            GatePass?
+  transport           Transport?    @relation(fields: [transportId], references: [id])
+  customerOrder       CustomerOrder?
+
+  @@index([companyId])
+  @@index([shopId])
+  @@index([saleDate])
+  @@index([status])
+  @@map("sale_orders")
+}
+
+model SaleItem {
+  id            Int      @id @default(autoincrement())
+  saleOrderId   Int
+  productId     Int
+  productName   String
+  quantity      Float
+  unit          String
+  rate          Float
+  amount        Float
+  createdAt     DateTime @default(now())
+
+  saleOrder     SaleOrder @relation(fields: [saleOrderId], references: [id], onDelete: Cascade)
+  product       Product   @relation(fields: [productId], references: [id])
+
+  @@index([saleOrderId])
+  @@index([productId])
+  @@map("sale_items")
+}
+
+model CustomerOrder {
+  id                Int       @id @default(autoincrement())
+  orderNumber       String    @unique
+  orderDate         DateTime
+  shopId            Int?
+  companyId         Int?
+  customerName      String
+  subtotal          Float     @default(0)
+  transportCost     Float     @default(0)
+  loadingCost       Float     @default(0)
+  taxAmount         Float     @default(0)
+  discountAmount    Float     @default(0)
+  totalAmount       Float     @default(0)
+  notes             String?   @db.Text
+  status            String    @default("pending") // pending, accepted, rejected, converted
+  rejectionReason   String?   @db.Text
+  saleOrderId       Int?      @unique
+  createdById       Int?
+  reviewedById      Int?
+  reviewedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  shop              Shop?         @relation(fields: [shopId], references: [id])
+  company           Company?      @relation(fields: [companyId], references: [id])
+  createdBy         User?         @relation("CustomerOrderCreatedBy", fields: [createdById], references: [id])
+  reviewedBy        User?         @relation("CustomerOrderReviewedBy", fields: [reviewedById], references: [id])
+  saleOrder         SaleOrder?    @relation(fields: [saleOrderId], references: [id])
+  items             CustomerOrderItem[]
+
+  @@index([status])
+  @@index([orderDate])
+  @@index([createdById])
+  @@map("customer_orders")
+}
+
+model CustomerOrderItem {
+  id                Int      @id @default(autoincrement())
+  customerOrderId   Int
+  productId         Int
+  productName       String
+  quantity          Float
+  unit              String
+  rate              Float
+  amount            Float
+  createdAt         DateTime @default(now())
+
+  customerOrder     CustomerOrder @relation(fields: [customerOrderId], references: [id], onDelete: Cascade)
+  product           Product       @relation(fields: [productId], references: [id])
+
+  @@index([customerOrderId])
+  @@index([productId])
+  @@map("customer_order_items")
+}
+
+model SaleReturn {
+  id                Int       @id @default(autoincrement())
+  returnNumber      String    @unique
+  originalSaleId    Int
+  returnDate        DateTime
+  items             String    @db.LongText // JSON items list
+  returnAmount      Float     @default(0)
+  reason            String?
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  originalSale      SaleOrder @relation(fields: [originalSaleId], references: [id])
+
+  @@index([originalSaleId])
+  @@map("sale_returns")
+}
+
+model GatePass {
+  id              Int       @id @default(autoincrement())
+  saleOrderId     Int       @unique
+  gatePassNumber  String    @unique
+  driverName      String
+  vehicleNumber   String
+  dispatchedAt    DateTime  @default(now())
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  saleOrder       SaleOrder @relation(fields: [saleOrderId], references: [id], onDelete: Cascade)
+
+  @@map("gate_passes")
+}
+
+model Vehicle {
+  id                  Int              @id @default(autoincrement())
+  registrationNumber  String           @unique
+  vehicleType         String           // truck, pickup, trailer, etc.
+  make                String?
+  model               String?
+  year                Int?
+  capacity            Float            @default(0) // in tons
+  driverName          String?
+  driverPhone         String?
+  driverAccountId     Int?             @unique
+  isOwned             Boolean          @default(true) // true = fleet owned, false = hired
+  isActive            Boolean          @default(true)
+  notes               String?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  transports          Transport[]
+  expenses            VehicleExpense[]
+
+  @@map("vehicles")
+}
+
+model Transport {
+  id                  Int             @id @default(autoincrement())
+  transportNumber     String          @unique
+  vehicleId           Int?
+  vehicleNumber       String?
+  driverName          String
+  driverPhone         String?
+
+  originCity          String
+  originAddress       String?
+  destinationCity     String
+  destinationAddress  String?
+
+  loadWeight          Float           @default(0)
+  loadDescription     String?
+
+  freightCharges      Float           @default(0)
+  loadingCharges      Float           @default(0)
+  unloadingCharges    Float           @default(0)
+  tollCharges         Float           @default(0)
+  otherCharges        Float           @default(0)
+  totalCharges        Float           @default(0)
+
+  paidAmount          Float           @default(0)
+  paymentStatus       String          @default("unpaid") // unpaid, partial, paid
+  paymentAccountId    Int?
+
+  status              String          @default("pending") // pending, in_transit, delivered, cancelled
+  dispatchDate        DateTime?
+  deliveryDate        DateTime?
+  notes               String?         @db.Text
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  vehicle             Vehicle?        @relation(fields: [vehicleId], references: [id])
+  purchaseOrders      PurchaseOrder[]
+  saleOrders          SaleOrder[]
+
+  @@index([vehicleId])
+  @@index([status])
+  @@map("transports")
+}
+
+model VehicleExpense {
+  id              Int      @id @default(autoincrement())
+  vehicleId       Int
+  expenseDate     DateTime
+  expenseType     String   // fuel, maintenance, repair, toll, salary, other
+  amount          Float    @default(0)
+  description     String?
+  paymentMethod   String   @default("cash")
+  accountId       Int?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("vehicle_expenses")
+}
+
+model LedgerEntry {
+  id              Int      @id @default(autoincrement())
+  accountId       Int
+  date            DateTime
+  description     String
+  reference       String?
+  referenceType   String?
+  referenceId     Int?
+  debit           Float    @default(0)
+  credit          Float    @default(0)
+  balance         Float    @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  account         Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([date])
+  @@index([referenceType, referenceId])
+  @@map("ledger_entries")
+}
+
+model JournalEntry {
+  id              Int           @id @default(autoincrement())
+  entryNumber     String        @unique
+  entryDate       DateTime
+  description     String
+  referenceType   String?
+  referenceId     Int?
+  totalDebit      Float         @default(0)
+  totalCredit     Float         @default(0)
+  status          String        @default("posted")
+  notes           String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  lines           JournalLine[]
+
+  @@map("journal_entries")
+}
+
+model JournalLine {
+  id              Int          @id @default(autoincrement())
+  journalEntryId  Int
+  accountId       Int
+  description     String?
+  debit           Float        @default(0)
+  credit          Float        @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  journalEntry    JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  account         Account      @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([journalEntryId])
+  @@index([accountId])
+  @@map("journal_lines")
+}
+
+model Payment {
+  id              Int       @id @default(autoincrement())
+  paymentNumber   String    @unique
+  paymentDate     DateTime
+  paymentMethod   String    // cash, bank_transfer, cheque, online
+  amount          Float
+  fromAccountId   Int?
+  toAccountId     Int?
+  accountName     String
+  description     String
+  referenceType   String?
+  referenceId     Int?
+  chequeNumber    String?
+  bankName        String?
+  status          String    @default("approved")
+  notes           String?   @db.Text
+  createdById     Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdBy       User?     @relation(fields: [createdById], references: [id])
+
+  @@index([paymentDate])
+  @@index([referenceType, referenceId])
+  @@map("payments")
+}
+
+model Expense {
+  id              Int              @id @default(autoincrement())
+  expenseNumber   String           @unique
+  expenseDate     DateTime
+  expenseTitle    String
+  categoryId      Int?
+  amount          Float
+  cashAmount      Float            @default(0)
+  bankAmount      Float            @default(0)
+  paymentMethod   String           @default("cash")
+  cashAccountId   Int?
+  bankAccountId   Int?
+  description     String?
+  status          String           @default("approved")
+  notes           String?          @db.Text
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  category        ExpenseCategory? @relation(fields: [categoryId], references: [id])
+
+  @@index([expenseDate])
+  @@map("expenses")
+}
+
+model ExpenseCategory {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  code        String?
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  expenses    Expense[]
+
+  @@map("expense_categories")
+}
+
+model DayClose {
+  id                  Int       @id @default(autoincrement())
+  closeDate           DateTime  @unique
+  openingCash         Float     @default(0)
+  totalSales          Float     @default(0)
+  totalPurchases      Float     @default(0)
+  cashReceived        Float     @default(0)
+  bankReceived        Float     @default(0)
+  chequeReceived      Float     @default(0)
+  totalReceived       Float     @default(0)
+  totalExpenses       Float     @default(0)
+  closingCash         Float     @default(0)
+  difference          Float     @default(0)
+  summary             String    @db.LongText
+  status              String    @default("open")
+  closedBy            String?
+  notes               String?   @db.Text
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("day_closes")
+}
+
+model Employee {
+  id              Int                  @id @default(autoincrement())
+  name            String
+  fatherName      String?
+  cnic            String?              @unique
+  phone           String?
+  role            String?              // salesperson, driver, accountant, laborer, officer
+  designation     String?
+  department      String?
+  salary          Float                @default(0)
+  joiningDate     DateTime?
+  address         String?              @db.Text
+  bankName        String?
+  bankAccountNo   String?
+  accountId       Int?                 @unique
+  cashAccountId   Int?                 @unique
+  userId          Int?                 @unique // Optional login user linked to this employee
+  isActive        Boolean              @default(true)
+  notes           String?              @db.Text
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  attendance      EmployeeAttendance[]
+  salaryRecords   SalaryRecord[]
+
+  @@map("employees")
+}
+
+model EmployeeAttendance {
+  id          Int       @id @default(autoincrement())
+  employeeId  Int
+  date        DateTime
+  status      String    // present, absent, half_day, leave, holiday
+  checkIn     DateTime?
+  checkOut    DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@map("employee_attendance")
+}
+
+model SalaryRecord {
+  id              Int       @id @default(autoincrement())
+  employeeId      Int
+  month           Int
+  year            Int
+  baseSalary      Float     @default(0)
+  deductions      Float     @default(0)
+  bonus           Float     @default(0)
+  netSalary       Float     @default(0)
+  paidAmount      Float     @default(0)
+  cashAmount      Float     @default(0)
+  bankAmount      Float     @default(0)
+  cashAccountId   Int?
+  bankAccountId   Int?
+  paymentDate     DateTime?
+  paymentMethod   String?
+  status          String    @default("pending") // pending, paid
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId])
+  @@map("salary_records")
+}
+
+model Setting {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   @db.LongText
+  group     String   @default("general")
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("cities")
+}
+
+model BankAccount {
+  id              Int      @id @default(autoincrement())
+  bankName        String
+  accountTitle    String
+  accountNumber   String
+  branchCode      String?
+  branchName      String?
+  ledgerAccountId Int?     @unique
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("bank_accounts")
+}
