@@ -1,8 +1,11 @@
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { parseDatabaseUrl } from "@/lib/dbConfig";
 
 function createPrismaClient() {
-  const adapter = new PrismaMariaDb(process.env.DATABASE_URL);
+  const config = parseDatabaseUrl(process.env.DATABASE_URL);
+  const adapter = new PrismaMariaDb(config);
   return new PrismaClient({ adapter });
 }
 
@@ -16,5 +19,7 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prismaGlobal = prisma;
 }
 
-// Warm DB pool once so first login/auth check is not cold-start slow
-prisma.$connect().catch(() => {});
+export async function checkDatabaseConnection() {
+  await prisma.$queryRaw`SELECT 1`;
+  return true;
+}

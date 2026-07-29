@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
-    "db:setup": "prisma generate && prisma db push && node prisma/seed.js"
+    "db:setup": "prisma generate && prisma db push && node prisma/seed.js",
+    "db:check": "node scripts/db-check.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

@@ -88,6 +88,19 @@ export async function POST(request) {
     return response;
   } catch (error) {
     console.error("Login API error:", error);
+    const msg = String(error?.message || "");
+    const dbDown =
+      error?.code === "P2039" ||
+      /pool timeout|connection timeout|ECONNREFUSED|DATABASE_URL/i.test(msg);
+    if (dbDown) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot reach the database. Start MySQL in XAMPP, then run: npm run db:setup",
+        },
+        { status: 503 }
+      );
+    }
     return NextResponse.json(
       { error: "Internal server error during login." },
       { status: 500 }

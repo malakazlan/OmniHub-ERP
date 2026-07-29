@@ -3,7 +3,23 @@ const { PrismaClient } = require("@prisma/client");
 const { PrismaMariaDb } = require("@prisma/adapter-mariadb");
 const bcrypt = require("bcryptjs");
 
-const adapter = new PrismaMariaDb(process.env.DATABASE_URL);
+function parseDatabaseUrl(connectionString) {
+  let raw = connectionString.trim().replace(/^["']|["']$/g, "");
+  if (raw.startsWith("mysql://")) raw = `mariadb://${raw.slice("mysql://".length)}`;
+  const url = new URL(raw);
+  return {
+    host: url.hostname === "localhost" ? "127.0.0.1" : url.hostname,
+    port: url.port ? Number(url.port) : 3306,
+    user: decodeURIComponent(url.username || "root"),
+    password: decodeURIComponent(url.password || ""),
+    database: url.pathname.replace(/^\//, "").split("?")[0],
+    connectTimeout: 15_000,
+    connectionLimit: 5,
+    prepareCacheLength: 0,
+  };
+}
+
+const adapter = new PrismaMariaDb(parseDatabaseUrl(process.env.DATABASE_URL));
 const prisma = new PrismaClient({ adapter });
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "metro@gmail.com";

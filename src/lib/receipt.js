@@ -64,10 +64,12 @@ export async function generateDocumentNumber(type, date = new Date()) {
   return `${pattern}${String(nextSeq).padStart(4, "0")}`;
 }
 
-export async function generateAccountCode(category) {
+export async function generateAccountCode(category, db = prisma) {
   const prefix = category.toUpperCase().slice(0, 3);
-  const accounts = await prisma.account.findMany({
-    where: { code: { startsWith: `ACC-${prefix}` } },
+  // Require trailing segment (ACC-CAS-001) so seed codes like ACC-CASH / ACC-BANK are not matched.
+  const codePrefix = `ACC-${prefix}-`;
+  const accounts = await db.account.findMany({
+    where: { code: { startsWith: codePrefix } },
     select: { code: true },
     orderBy: { code: "desc" },
     take: 1,
@@ -80,7 +82,7 @@ export async function generateAccountCode(category) {
     if (!isNaN(parsed)) nextSeq = parsed + 1;
   }
 
-  return `ACC-${prefix}-${String(nextSeq).padStart(3, "0")}`;
+  return `${codePrefix}${String(nextSeq).padStart(3, "0")}`;
 }
 
 export async function generateSKU(categoryName) {
