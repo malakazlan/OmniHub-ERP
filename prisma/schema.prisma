@@ -15,7 +15,7 @@ model User {
   role               String        @default("employee") // admin, manager, salesperson, accountant, driver, viewer
   avatar             String?
   isActive           Boolean       @default(true)
-  allowedModules     String        @default("[]") @db.LongText // JSON array of allowed module slugs
+  allowedModules     String        @db.LongText // JSON module slugs; app/seed set "[]" when empty (no DB default — MySQL TEXT rule)
   cashAccountId      Int?          @unique // Primary petty-cash ledger account for this login
   lastLogin          DateTime?
   createdAt          DateTime      @default(now())
