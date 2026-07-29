@@ -11,13 +11,26 @@ function createPrismaClient() {
 
 const globalForPrisma = globalThis;
 
-const prisma = globalForPrisma.prismaGlobal ?? createPrismaClient();
+function getPrismaClient() {
+  if (!globalForPrisma.prismaGlobal) {
+    globalForPrisma.prismaGlobal = createPrismaClient();
+  }
+  return globalForPrisma.prismaGlobal;
+}
+
+/** Lazy client so `next build` does not require DATABASE_URL at import time (e.g. Vercel). */
+const prisma = new Proxy(
+  {},
+  {
+    get(_target, prop) {
+      const client = getPrismaClient();
+      const value = client[prop];
+      return typeof value === "function" ? value.bind(client) : value;
+    },
+  }
+);
 
 export default prisma;
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prismaGlobal = prisma;
-}
 
 export async function checkDatabaseConnection() {
   await prisma.$queryRaw`SELECT 1`;
