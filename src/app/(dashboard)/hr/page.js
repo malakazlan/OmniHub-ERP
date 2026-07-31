@@ -18,7 +18,7 @@ import {
   CalendarCheck,
   Wallet,
   UserPlus,
-  FolderTree,
+  Plus,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
@@ -126,7 +126,7 @@ export default function HRPage() {
       <PageHeader
         module="hr"
         title="HR & Employees"
-        description="Attendance and payroll. Register staff and drivers in Project Accounts."
+        description="Attendance and payroll. Register staff and drivers in All Accounts."
         icon={Users}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
@@ -140,21 +140,21 @@ export default function HRPage() {
                 <Wallet className="w-4 h-4" /> Salary
               </Button>
             </Link>
-            <Link href="/accounts/directory/employees">
+            <Link href="/accounts?category=salary&create=1">
               <Button variant="outline" className="border-pink-200 text-acc-hr hover:bg-pink-50">
-                <FolderTree className="w-4 h-4" /> Add Employee
+                <Plus className="w-4 h-4" /> Add Employee
               </Button>
             </Link>
-            <Link href="/accounts/directory/drivers">
+            <Link href="/accounts?category=transport&mode=driver&create=1">
               <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
-                <FolderTree className="w-4 h-4" /> Add Driver
+                <Plus className="w-4 h-4" /> Add Driver
               </Button>
             </Link>
           </div>
         }
       />
 
-      <DirectoryRegisterBanner href="/accounts/directory/employees" label="employee or driver" />
+      <DirectoryRegisterBanner category="salary" label="employee or driver" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="hr" label="Total Employees" value={employees.length} icon={UserPlus} />

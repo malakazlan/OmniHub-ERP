@@ -4,7 +4,7 @@ import React from "react";
 import { formatDate } from "@/lib/formatters";
 
 export const DEFAULT_COMPANY = {
-  company_name: "Metro Feeds",
+  company_name: "Warraich Traders",
   company_address: "",
   company_phone: "",
   company_email: "",

@@ -35,77 +35,126 @@ export default function EmployeeLoginFields({ form, setForm, isEdit = false, has
     );
   }
 
-  if (!isEdit && !form.createLogin) {
+  if (!isEdit) {
+    return (
+      <div className="space-y-3 p-3 rounded-xl border border-slate-200 bg-slate-50/80">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">System login (optional)</p>
+        <label className="flex items-center gap-2 text-sm cursor-pointer font-medium text-slate-700">
+          <input
+            type="checkbox"
+            checked={!!form.createLogin}
+            onChange={(e) => setForm({ ...form, createLogin: e.target.checked })}
+          />
+          Create login with email & password
+        </label>
+        {form.createLogin && (
+          <>
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold uppercase text-slate-500">Login email *</label>
+              <input
+                className="input-field"
+                type="email"
+                value={form.loginEmail || ""}
+                onChange={(e) => setForm({ ...form, loginEmail: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold uppercase text-slate-500">Login password *</label>
+              <input
+                className="input-field"
+                type="password"
+                value={form.loginPassword || ""}
+                onChange={(e) => setForm({ ...form, loginPassword: e.target.value })}
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11px] font-semibold uppercase text-slate-500">Login role</label>
+              <select
+                className="input-field"
+                value={form.loginRole || "viewer"}
+                onChange={(e) => setLoginRole(e.target.value)}
+              >
+                {LOGIN_ROLES.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.loginIsActive !== false}
+                onChange={(e) => setForm({ ...form, loginIsActive: e.target.checked })}
+              />
+              Login account active
+            </label>
+            <ModuleAccessTabs
+              selected={form.allowedModules || []}
+              onChange={(mods) => setForm({ ...form, allowedModules: mods })}
+              disabled={form.loginRole === "admin"}
+            />
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (!showLoginBlock) {
     return null;
   }
 
   return (
     <div className="space-y-3 p-3 rounded-xl border border-slate-200 bg-slate-50/80">
       <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">System login</p>
-
-      {!isEdit && (
-        <label className="flex items-center gap-2 text-sm cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.createLogin}
-            onChange={(e) => setForm({ ...form, createLogin: e.target.checked })}
-          />
-          Create login (email & password)
+      <div className="space-y-1">
+        <label className="text-[11px] font-semibold uppercase text-slate-500">Login email *</label>
+        <input
+          className="input-field"
+          type="email"
+          value={form.loginEmail || ""}
+          onChange={(e) => setForm({ ...form, loginEmail: e.target.value })}
+          required={showLoginBlock}
+        />
+      </div>
+      <div className="space-y-1">
+        <label className="text-[11px] font-semibold uppercase text-slate-500">
+          New password (leave blank to keep)
         </label>
-      )}
-
-      {showLoginBlock && (
-        <>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase text-slate-500">Login email *</label>
-            <input
-              className="input-field"
-              type="email"
-              value={form.loginEmail || ""}
-              onChange={(e) => setForm({ ...form, loginEmail: e.target.value })}
-              required={showLoginBlock}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase text-slate-500">
-              {isEdit ? "New password (leave blank to keep)" : "Login password *"}
-            </label>
-            <input
-              className="input-field"
-              type="password"
-              value={form.loginPassword || ""}
-              onChange={(e) => setForm({ ...form, loginPassword: e.target.value })}
-              required={!isEdit && showLoginBlock}
-              autoComplete="new-password"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase text-slate-500">Login role</label>
-            <select
-              className="input-field"
-              value={form.loginRole || "viewer"}
-              onChange={(e) => setLoginRole(e.target.value)}
-            >
-              {LOGIN_ROLES.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
-          </div>
-          <label className="flex items-center gap-2 text-sm cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.loginIsActive !== false}
-              onChange={(e) => setForm({ ...form, loginIsActive: e.target.checked })}
-            />
-            Login account active
-          </label>
-          <ModuleAccessTabs
-            selected={form.allowedModules || []}
-            onChange={(mods) => setForm({ ...form, allowedModules: mods })}
-            disabled={form.loginRole === "admin"}
-          />
-        </>
-      )}
+        <input
+          className="input-field"
+          type="password"
+          value={form.loginPassword || ""}
+          onChange={(e) => setForm({ ...form, loginPassword: e.target.value })}
+          autoComplete="new-password"
+        />
+      </div>
+      <div className="space-y-1">
+        <label className="text-[11px] font-semibold uppercase text-slate-500">Login role</label>
+        <select
+          className="input-field"
+          value={form.loginRole || "viewer"}
+          onChange={(e) => setLoginRole(e.target.value)}
+        >
+          {LOGIN_ROLES.map((r) => (
+            <option key={r} value={r}>{r}</option>
+          ))}
+        </select>
+      </div>
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={form.loginIsActive !== false}
+          onChange={(e) => setForm({ ...form, loginIsActive: e.target.checked })}
+        />
+        Login account active
+      </label>
+      <ModuleAccessTabs
+        selected={form.allowedModules || []}
+        onChange={(mods) => setForm({ ...form, allowedModules: mods })}
+        disabled={form.loginRole === "admin"}
+      />
     </div>
   );
 }

@@ -227,9 +227,28 @@ export default function ProductDetailPage() {
       </div>
 
       {form && (
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Edit Product" size="lg">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Modal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          title="Edit Product"
+          size="md"
+          footer={
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <Button type="submit" form="edit-product-form" disabled={submitting} className="bg-acc-products hover:bg-violet-600 border-0 px-5 py-2 text-sm">
+                {submitting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving…</> : "Save Changes"}
+              </Button>
+            </div>
+          }
+        >
+          <form id="edit-product-form" onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1 md:col-span-2">
                 <label className="text-xs font-semibold text-slate-500">Product Name *</label>
                 <input type="text" value={form.name} onChange={handleChange("name")} required className="input-field text-xs" />
@@ -278,12 +297,6 @@ export default function ProductDetailPage() {
                   Active
                 </label>
               </div>
-            </div>
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-              <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-800 rounded-xl text-xs font-semibold cursor-pointer transition-colors">Cancel</button>
-              <Button type="submit" disabled={submitting} className="bg-acc-products hover:bg-violet-600">
-                {submitting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving...</> : "Save Changes"}
-              </Button>
             </div>
           </form>
         </Modal>

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
-import { Car, Loader2, ArrowLeft, Truck, Pencil, Fuel, FolderTree } from "lucide-react";
+import { Car, Loader2, ArrowLeft, Truck, Pencil, Fuel, Plus } from "lucide-react";
 import { DirectoryRegisterBanner } from "@/components/accounts/DirectoryShell";
 
 const emptyForm = {
@@ -86,7 +86,7 @@ export default function VehiclesPage() {
     setSubmitting(true);
     try {
       if (!editingId) {
-        showToast("Register new vehicles in Project Accounts", "warning");
+        showToast("Register new vehicles in All Accounts", "warning");
         return;
       }
       const res = await fetch(`/api/transport/vehicles/${editingId}`, {
@@ -214,16 +214,16 @@ export default function VehiclesPage() {
                 <Fuel className="w-4 h-4" /> Expenses
               </Button>
             </Link>
-            <Link href="/accounts/directory/vehicles">
+            <Link href="/accounts?category=transport&mode=vehicle&create=1">
               <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
-                <FolderTree className="w-4 h-4" /> Register in Project Accounts
+                <Plus className="w-4 h-4" /> Register in All Accounts
               </Button>
             </Link>
           </div>
         }
       />
 
-      <DirectoryRegisterBanner href="/accounts/directory/vehicles" label="vehicle" />
+      <DirectoryRegisterBanner category="transport" label="vehicle" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="transport" label="Total Vehicles" value={vehicles.length} icon={Car} />

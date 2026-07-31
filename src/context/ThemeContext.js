@@ -14,7 +14,7 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     const root = window.document.documentElement;
     root.classList.remove("dark");
-    localStorage.setItem("metrofeeds-theme", "light");
+    localStorage.setItem("warraichtraders-theme", "light");
   }, []);
 
   return (

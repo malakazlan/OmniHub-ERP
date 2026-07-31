@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/Button";
 import { DirectoryRegisterBanner } from "@/components/accounts/DirectoryShell";
-import { Sprout, MapPin, Phone, DollarSign, Loader2, UserPlus, FolderTree } from "lucide-react";
+import { Sprout, MapPin, Phone, DollarSign, Loader2, UserPlus, Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
 export default function FarmersPage() {
@@ -88,18 +88,18 @@ export default function FarmersPage() {
       <PageHeader
         module="farmers"
         title="Farmers"
-        description="View suppliers and payables. Register new farmers in Project Accounts."
+        description="View suppliers and payables. Register new farmers in All Accounts."
         icon={Sprout}
         actions={
-          <Link href="/accounts/directory/farmers">
+          <Link href="/accounts?category=farmer&create=1">
             <Button variant="outline" className="border-emerald-200 text-acc-farmers hover:bg-emerald-50">
-              <FolderTree className="w-4 h-4" /> Register in Project Accounts
+              <Plus className="w-4 h-4" /> Register in All Accounts
             </Button>
           </Link>
         }
       />
 
-      <DirectoryRegisterBanner href="/accounts/directory/farmers" label="farmer" />
+      <DirectoryRegisterBanner category="farmer" label="farmer" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="farmers" label="Total Farmers" value={farmers.length} icon={UserPlus} />

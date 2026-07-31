@@ -73,7 +73,7 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
       refNo={sale.invoiceNumber}
       date={sale.saleDate}
       signatureLabel="Sales officer"
-      footerNote="System-generated document · Metro Feeds ERP"
+      footerNote="System-generated document · Warraich Traders ERP"
     >
       <BillSection title="Customer">
         <BillFieldGrid

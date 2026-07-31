@@ -11,8 +11,10 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const categoryId = searchParams.get("categoryId");
     const lowStock = searchParams.get("lowStock");
+    const includeInactive = searchParams.get("includeInactive") === "true";
 
-    const where = { isActive: true };
+    const where = {};
+    if (!includeInactive) where.isActive = true;
     if (categoryId) where.categoryId = parseInt(categoryId);
 
     let products = await prisma.product.findMany({

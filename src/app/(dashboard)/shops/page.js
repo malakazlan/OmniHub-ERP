@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/Button";
 import { DirectoryRegisterBanner } from "@/components/accounts/DirectoryShell";
-import { Store, MapPin, Phone, DollarSign, Loader2, ShoppingBag, FolderTree } from "lucide-react";
+import { Store, MapPin, Phone, DollarSign, Loader2, ShoppingBag, Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 
@@ -95,18 +95,18 @@ export default function ShopsPage() {
       <PageHeader
         module="shops"
         title="Shops"
-        description="View customers and receivables. Register new shops in Project Accounts."
+        description="View customers and receivables. Register new shops in All Accounts."
         icon={Store}
         actions={
-          <Link href="/accounts/directory/shops">
+          <Link href="/accounts?category=shop&create=1">
             <Button variant="outline" className="border-amber-200 text-acc-shops hover:bg-amber-50">
-              <FolderTree className="w-4 h-4" /> Register in Project Accounts
+              <Plus className="w-4 h-4" /> Register in All Accounts
             </Button>
           </Link>
         }
       />
 
-      <DirectoryRegisterBanner href="/accounts/directory/shops" label="shop / customer" />
+      <DirectoryRegisterBanner category="shop" label="shop / customer" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="shops" label="Total Shops" value={shops.length} icon={ShoppingBag} />

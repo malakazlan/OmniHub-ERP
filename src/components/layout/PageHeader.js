@@ -4,14 +4,14 @@ import Link from "next/link";
 
 const ACCENT = {
   dashboard: {
-    icon: "bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100",
-    bar: "bg-acc-dashboard",
-    borderTop: "border-t-indigo-500",
+    icon: "bg-blue-50 text-[#0F52BA] ring-1 ring-blue-100",
+    bar: "bg-[#0F52BA]",
+    borderTop: "border-t-[#0F52BA]",
   },
   farmers: {
-    icon: "bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100",
-    bar: "bg-acc-farmers",
-    borderTop: "border-t-emerald-500",
+    icon: "bg-emerald-50 text-[#107C41] ring-1 ring-emerald-100",
+    bar: "bg-[#107C41]",
+    borderTop: "border-t-[#107C41]",
   },
   companies: {
     icon: "bg-blue-50 text-blue-600 ring-1 ring-blue-100",
@@ -114,11 +114,11 @@ export function PageHeader({ module = "dashboard", title, description, icon: Ico
   );
 }
 
-export function StatCard({ label, value, icon: Icon, module = "dashboard", subtext, loading = false, valueClassName = "" }) {
+export function StatCard({ label, value, icon: Icon, module = "dashboard", subtext, loading = false, valueClassName = "", className = "" }) {
   const accent = ACCENT[module] || ACCENT.dashboard;
 
   return (
-    <div className={`card-hover bg-white rounded-2xl border border-slate-200/80 border-t-[3px] ${accent.borderTop} p-4 sm:p-5 shadow-sm`}>
+    <div className={`card-hover bg-white rounded-2xl border border-slate-200/80 border-t-[3px] ${accent.borderTop} p-4 sm:p-5 shadow-sm ${className}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">{label}</p>

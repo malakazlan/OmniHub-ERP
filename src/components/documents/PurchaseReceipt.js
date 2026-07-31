@@ -172,7 +172,7 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
           <p className="text-[10px] font-bold uppercase text-slate-500">Prepared by</p>
           <div className="w-40 border-t border-slate-500 mt-8" />
         </div>
-        <p className="text-[9px] text-slate-400">Metro Feeds ERP · Computer generated</p>
+        <p className="text-[9px] text-slate-400">Warraich Traders ERP · Computer generated</p>
       </footer>
     </article>
   );

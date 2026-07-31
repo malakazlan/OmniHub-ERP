@@ -93,7 +93,7 @@ export default function LoginPage() {
                 </div>
               </div>
               <h1 className="text-[1.65rem] sm:text-[1.75rem] font-bold text-slate-900 tracking-tight leading-tight">
-                Metro <span className="text-emerald-600">Feeds</span>
+                Warraich <span className="text-emerald-600">Traders</span>
               </h1>
               <p className="text-sm text-slate-500 mt-2">Sign in to your ERP account</p>
             </div>
@@ -166,9 +166,8 @@ export default function LoginPage() {
             <div className="mt-8 pt-6 border-t border-slate-100 flex items-start gap-2.5 text-[11px] text-slate-500 leading-relaxed">
               <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" aria-hidden />
               <p>
-                Secure session · 7-day sign-in. Use the admin account from your{" "}
-                <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded text-slate-600">.env</code>{" "}
-                after running <code className="text-[10px] bg-slate-100 px-1 py-0.5 rounded text-slate-600">npm run db:seed</code>.
+                Authorized Access Only · Secure end-to-end encrypted session. 
+                Contact your system administrator for credentials or technical assistance.
               </p>
             </div>
           </div>

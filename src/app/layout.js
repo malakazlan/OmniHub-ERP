@@ -18,8 +18,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata = {
-  title: "Metro Feeds ERP",
-  description: "Enterprise Resource Planning for Metro Feeds — Animal Feed Trading",
+  title: "Warraich Traders ERP",
+  description: "Enterprise Resource Planning for Warraich Traders — Animal Feed Trading",
 };
 
 export default function RootLayout({ children }) {

@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/Button";
 import { DirectoryRegisterBanner } from "@/components/accounts/DirectoryShell";
-import { Building2, MapPin, Phone, DollarSign, Loader2, Factory, FolderTree } from "lucide-react";
+import { Building2, MapPin, Phone, DollarSign, Loader2, Factory, Plus } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 
@@ -98,18 +98,18 @@ export default function CompaniesPage() {
       <PageHeader
         module="companies"
         title="Companies"
-        description="View suppliers and buyers. Register new companies in Project Accounts."
+        description="View suppliers and buyers. Register new companies in All Accounts."
         icon={Building2}
         actions={
-          <Link href="/accounts/directory/companies">
+          <Link href="/accounts?category=company&create=1">
             <Button variant="outline" className="border-blue-200 text-acc-companies hover:bg-blue-50">
-              <FolderTree className="w-4 h-4" /> Register in Project Accounts
+              <Plus className="w-4 h-4" /> Register in All Accounts
             </Button>
           </Link>
         }
       />
 
-      <DirectoryRegisterBanner href="/accounts/directory/companies" label="company" />
+      <DirectoryRegisterBanner category="company" label="company" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="companies" label="Total Companies" value={companies.length} icon={Factory} />

@@ -124,7 +124,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
   if (cashAmt > 0) {
     cashAccountId = await resolveDefaultCashAccountId(tx, cashAccountId);
     if (!cashAccountId) {
-      throw new Error("No active cash account — register one under Project Accounts → Cash");
+      throw new Error("No active cash account — register one under All Accounts → Cash");
     }
     const posted = await tx.ledgerEntry.aggregate({
       where: {
@@ -152,7 +152,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
   if (bankAmt > 0) {
     bankAccountId = await resolveDefaultBankAccountId(tx, bankAccountId);
     if (!bankAccountId) {
-      throw new Error("No active bank account — register one under Project Accounts → Bank");
+      throw new Error("No active bank account — register one under All Accounts → Bank");
     }
     const posted = await tx.ledgerEntry.aggregate({
       where: {

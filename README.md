@@ -1,6 +1,6 @@
-# Metro Feeds ERP
+# Warraich Traders ERP
 
-Enterprise Resource Planning system for **Metro Feeds** — an animal feed trading company managing the full two-way supply chain: farmers → raw materials → companies → finished feed → shops.
+Enterprise Resource Planning system for **Warraich Traders** — an animal feed trading company managing the full two-way supply chain: farmers → raw materials → companies → finished feed → shops.
 
 ---
 
@@ -61,7 +61,7 @@ TOTAL          ███████████████████░░  
 | Framework | Next.js 16 (App Router) |
 | Language | JavaScript |
 | Styling | Tailwind CSS v4 |
-| Database | MySQL (XAMPP) — `metrofeeds_erp` |
+| Database | MySQL (XAMPP) — `warraichtraders_erp` |
 | ORM | Prisma 7 + MariaDB adapter |
 | Auth | JWT + bcryptjs + HTTP-only cookies |
 | Icons | Lucide React |
@@ -87,14 +87,14 @@ npm run dev         # http://localhost:3000
 
 | Field | Value |
 |---|---|
-| Email | `metro@gmail.com` |
-| Password | `metro1234` |
+| Email | `admin@warraichtraders.com` |
+| Password | `admin1234` |
 
 ### Database Config (`.env`)
 
 ```
-DATABASE_URL="mysql://root@localhost:3306/metrofeeds_erp"
-JWT_SECRET="metrofeeds_erp_secret_key_jwt_2026"
+DATABASE_URL="mysql://root@localhost:3306/warraichtraders_erp"
+JWT_SECRET="warraichtraders_erp_secret_key_jwt_2026"
 ```
 
 ---
@@ -125,8 +125,8 @@ Typography: **Inter** (UI) · **JetBrains Mono** (numbers/codes)
 ## Business Flow
 
 ```
-Farmer ──(raw materials)──► Metro Feeds ──(raw materials)──► Company
-Company ──(finished products)──► Metro Feeds ──(finished products)──► Shops
+Farmer ──(raw materials)──► Warraich Traders ──(raw materials)──► Company
+Company ──(finished products)──► Warraich Traders ──(finished products)──► Shops
 ```
 
 ---
@@ -195,7 +195,7 @@ A full verification pass was run against the live dev server (real HTTP requests
 1. **Dashboard receivables were broken (NaN-prone).** `/api/reports/sales` awaited a Promise incorrectly (`value + Promise` instead of resolving both first), corrupting the "Receivables" KPI. Fixed and re-verified.
 2. **Dashboard trading-activity chart was 100% hardcoded mock data.** Replaced with a real query aggregating the last 7 days of sales/purchases, refreshed automatically every 60 seconds.
 3. **Day Close cash reconciliation ignored standalone Payments.** It only summed purchase/expense cash splits, so any farmer/vendor/shop payment made through the Payments module silently vanished from the daily cash count. Rewrote it to derive cash-in/cash-out directly from ledger entries on the cash & bank accounts — this now automatically stays correct for *any* current or future source of cash movement (sales, purchases, expenses, payments, salaries, journal entries).
-4. **Farmer payable sign convention was inverted in the UI.** A negative ledger balance (money Metro Feeds owes the farmer) was shown in the farmer's brand color while a positive balance (farmer owes Metro Feeds back, e.g. after a return) was flagged red as if it were a debt — the opposite of reality. Fixed the farmers list & detail page to color/label balances correctly, and split the dashboard's payables/receivables math into sign-aware `getReceivablesByCategory` / `getPayablesByCategory` helpers (`lib/ledger.js`) instead of a naive net sum.
+4. **Farmer payable sign convention was inverted in the UI.** A negative ledger balance (money Warraich Traders owes the farmer) was shown in the farmer's brand color while a positive balance (farmer owes Warraich Traders back, e.g. after a return) was flagged red as if it were a debt — the opposite of reality. Fixed the farmers list & detail page to color/label balances correctly, and split the dashboard's payables/receivables math into sign-aware `getReceivablesByCategory` / `getPayablesByCategory` helpers (`lib/ledger.js`) instead of a naive net sum.
 5. **HR Salary payments were completely disconnected from accounting.** Paying a salary never touched the employee's ledger account or deducted cash/bank — so payroll never appeared in Day Close, account balances, or payables. Added `cashAmount`/`bankAmount`/`cashAccountId`/`bankAccountId` to `SalaryRecord`, wired accrual + payment ledger entries (delta-based so re-editing the same month never double-posts), and updated the Salary page UI with a cash/bank split form matching Expenses.
 
 **Verified end-to-end (via live API calls, not just unit logic):**
@@ -230,4 +230,4 @@ npm run db:seed        # Reset admin credentials
 
 ---
 
-*Last updated: 24 July 2026 · Metro Feeds ERP v0.3*
+*Last updated: 24 July 2026 · Warraich Traders ERP v0.3*

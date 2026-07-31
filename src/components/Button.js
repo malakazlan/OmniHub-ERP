@@ -14,8 +14,8 @@ export function Button({
   const baseStyles = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2";
   
   const variants = {
-    primary: "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-md hover:shadow-indigo-500/20 focus:ring-indigo-500",
-    brand: "bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/25 focus:ring-emerald-500 focus:ring-offset-white border-0",
+    primary: "bg-[#0F52BA] hover:bg-[#0B3E8F] text-white shadow-md hover:shadow-blue-900/20 focus:ring-[#0F52BA]",
+    brand: "bg-[#0F52BA] hover:bg-[#0B3E8F] text-white shadow-md shadow-blue-900/15 focus:ring-[#0F52BA] focus:ring-offset-white border-0",
     secondary: "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-200 focus:ring-neutral-500",
     danger: "bg-red-600 hover:bg-red-500 text-white shadow-sm focus:ring-red-500",
     outline: "border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 focus:ring-neutral-500",

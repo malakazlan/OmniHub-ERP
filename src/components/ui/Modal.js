@@ -1,59 +1,105 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
-export function Modal({ isOpen, onClose, title, children, size = "md" }) {
-  // Handle escape key to close modal
+const SIZES = {
+  sm: "max-w-sm",
+  md: "max-w-lg",
+  lg: "max-w-2xl",
+  xl: "max-w-4xl",
+};
+
+const MODAL_ROOT_ID = "erp-modal-root";
+
+function getPortalTarget() {
+  if (typeof document === "undefined") return null;
+  return document.getElementById(MODAL_ROOT_ID) || document.body;
+}
+
+export function Modal({ isOpen, onClose, title, children, footer, size = "md" }) {
+  const [mounted, setMounted] = useState(false);
+  const [portalTarget, setPortalTarget] = useState(null);
+
+  useEffect(() => {
+    setMounted(true);
+    setPortalTarget(getPortalTarget());
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") onClose();
     };
+    const main = document.querySelector(".erp-main-surface");
+    const inDashboard = Boolean(document.getElementById(MODAL_ROOT_ID));
+
     if (isOpen) {
       window.addEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "hidden"; // Prevent background scroll
+      if (inDashboard && main) {
+        main.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "hidden";
+      }
     }
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "unset";
+      if (main) main.style.overflow = "";
+      document.body.style.overflow = "";
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted || !portalTarget) return null;
 
-  const sizes = {
-    sm: "max-w-md",
-    md: "max-w-lg",
-    lg: "max-w-2xl",
-    xl: "max-w-4xl",
-    full: "max-w-full m-4 h-[calc(100vh-2rem)]",
-  };
+  const inMainColumn = portalTarget.id === MODAL_ROOT_ID;
+  const overlayPosition = inMainColumn ? "absolute" : "fixed";
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-      {/* Overlay backdrop */}
-      <div 
-        className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300"
+  return createPortal(
+    <div
+      className={`${overlayPosition} inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-auto`}
+      role="presentation"
+    >
+      <div
+        className={`${overlayPosition} inset-0 bg-slate-900/45 backdrop-blur-md backdrop-saturate-150`}
         onClick={onClose}
+        aria-hidden
       />
 
-      {/* Modal Dialog Body */}
-      <div 
-        className={`relative bg-white border border-slate-200 w-full rounded-2xl shadow-2xl shadow-slate-200/50 overflow-hidden transform transition-all duration-300 scale-100 flex flex-col max-h-[90vh] z-10 ${sizes[size]}`}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className={`erp-modal-panel relative z-10 flex w-full flex-col rounded-xl border border-slate-200/90 bg-white shadow-[0_24px_48px_-12px_rgba(15,23,42,0.25)] ${SIZES[size] || SIZES.md}`}
+        style={{ maxHeight: "min(88vh, 720px)" }}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h3 className="text-base font-bold text-slate-900">{title}</h3>
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-5">
+          <h3 id="modal-title" className="text-sm font-bold text-slate-900 sm:text-base">
+            {title}
+          </h3>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors cursor-pointer"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 cursor-pointer"
+            aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto flex-1 text-sm text-slate-700">
+
+        <div
+          className="overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 text-sm text-slate-700"
+          style={{ maxHeight: footer ? "calc(min(88vh, 720px) - 7.5rem)" : "calc(min(88vh, 720px) - 3.5rem)" }}
+        >
           {children}
         </div>
+
+        {footer ? (
+          <div className="shrink-0 border-t border-slate-100 bg-slate-50/90 px-4 py-3 sm:px-5">
+            {footer}
+          </div>
+        ) : null}
       </div>
-    </div>
+    </div>,
+    portalTarget
   );
 }

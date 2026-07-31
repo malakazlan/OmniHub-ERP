@@ -64,9 +64,9 @@ export default function LandingPage() {
         </div>
 
         <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-slate-900 fade-up fade-up-delay-1">
-          Metro{" "}
+          Warraich{" "}
           <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 bg-clip-text text-transparent">
-            Feeds
+            Traders
           </span>
         </h1>
 

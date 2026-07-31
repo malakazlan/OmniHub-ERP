@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
 const DEFAULT_SETTINGS = {
-  company_name: "Metro Feeds",
+  company_name: "Warraich Traders",
   company_address: "",
   company_phone: "",
   company_email: "",

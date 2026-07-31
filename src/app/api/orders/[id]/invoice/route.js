@@ -4,7 +4,7 @@ import { canViewOrders } from "@/lib/customerOrderAccess";
 import { mustScopeOrdersToSelf } from "@/lib/ordersNav";
 
 const DEFAULT_SETTINGS = {
-  company_name: "Metro Feeds",
+  company_name: "Warraich Traders",
   company_address: "",
   company_phone: "",
   company_email: "",

@@ -64,7 +64,7 @@ function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus, className =
   return (
     <div className={className}>
       <div className="erp-shell-search flex items-center gap-2 px-3.5 py-2.5 rounded-xl erp-shell-search-focus">
-        <Search className="w-4 h-4 shrink-0 text-emerald-400/80" />
+        <Search className="w-4 h-4 shrink-0 text-[var(--brand-primary)]/80" />
         <input
           ref={inputRef}
           type="search"
@@ -72,17 +72,17 @@ function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus, className =
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={onKeyDown}
           placeholder="Search modules…"
-          className="flex-1 min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 outline-none"
+          className="erp-shell-search-input flex-1 min-w-0 bg-transparent text-sm outline-none"
           aria-label="Search modules"
           autoComplete="off"
         />
         {query && (
-          <button type="button" onClick={() => setQuery("")} className="text-slate-500 hover:text-slate-200 p-0.5 cursor-pointer" aria-label="Clear">
+          <button type="button" onClick={() => setQuery("")} className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer" aria-label="Clear">
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
-      <ul className="mt-2 max-h-[min(50vh,320px)] overflow-y-auto erp-sidebar-scroll rounded-xl border border-white/10 bg-black/20">
+      <ul className="erp-shell-search-dropdown mt-2 max-h-[min(50vh,320px)] overflow-y-auto erp-sidebar-scroll rounded-xl py-1">
         {results.map((item, idx) => {
           const Icon = item.icon;
           return (
@@ -91,10 +91,10 @@ function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus, className =
                 type="button"
                 onClick={() => go(item.href)}
                 className={`w-full flex items-center gap-3 px-3 py-3 text-left text-sm transition-colors cursor-pointer ${
-                  idx === highlight ? "bg-emerald-500/15 text-white" : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                  idx === highlight ? "bg-blue-50 text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-slate-50"
                 }`}
               >
-                <span className="w-9 h-9 rounded-lg bg-white/10 text-emerald-400 flex items-center justify-center shrink-0">
+                <span className="w-9 h-9 rounded-lg bg-blue-50 text-[var(--brand-primary)] ring-1 ring-blue-100 flex items-center justify-center shrink-0">
                   <Icon className="w-4 h-4" />
                 </span>
                 <span className="flex-1 min-w-0">
@@ -165,7 +165,7 @@ function DesktopModuleSearch({ hasModuleAccess }) {
   return (
     <div ref={wrapRef} className="hidden md:block relative flex-1 max-w-lg mx-auto min-w-0">
       <div className={`erp-shell-search flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-200 ${open ? "erp-shell-search-focus" : ""}`}>
-        <Search className="w-4 h-4 shrink-0 text-slate-500" />
+        <Search className="w-4 h-4 shrink-0 text-slate-400" />
         <input
           type="search"
           value={query}
@@ -173,14 +173,14 @@ function DesktopModuleSearch({ hasModuleAccess }) {
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder="Search modules…"
-          className="flex-1 min-w-0 bg-transparent text-sm text-slate-100 placeholder:text-slate-500 outline-none"
+          className="erp-shell-search-input flex-1 min-w-0 bg-transparent text-sm outline-none"
           aria-label="Search modules"
           autoComplete="off"
         />
-        <kbd className="hidden lg:inline text-[9px] font-mono text-slate-500 border border-white/10 rounded-md px-1.5 py-0.5">/</kbd>
+        <kbd className="hidden lg:inline text-[9px] font-mono text-slate-400 border border-slate-200 rounded-md px-1.5 py-0.5 bg-white/80">/</kbd>
       </div>
       {open && results.length > 0 && (
-        <ul className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 rounded-2xl border border-white/10 bg-[#1a2530] shadow-2xl py-2 max-h-72 overflow-y-auto erp-sidebar-scroll">
+        <ul className="erp-shell-search-dropdown absolute left-0 right-0 top-[calc(100%+8px)] z-50 rounded-2xl py-2 max-h-72 overflow-y-auto erp-sidebar-scroll">
           {results.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -190,10 +190,10 @@ function DesktopModuleSearch({ hasModuleAccess }) {
                   onMouseEnter={() => setHighlight(idx)}
                   onClick={() => go(item.href)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-left text-xs transition-colors cursor-pointer ${
-                    idx === highlight ? "bg-emerald-500/15 text-white" : "text-slate-400 hover:bg-white/5"
+                    idx === highlight ? "bg-blue-50 text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-slate-50"
                   }`}
                 >
-                  <span className="w-8 h-8 rounded-lg bg-white/10 text-emerald-400 flex items-center justify-center shrink-0">
+                  <span className="w-8 h-8 rounded-lg bg-blue-50 text-[var(--brand-primary)] ring-1 ring-blue-100 flex items-center justify-center shrink-0">
                     <Icon className="w-4 h-4" />
                   </span>
                   <span className="flex-1 min-w-0">
@@ -237,21 +237,21 @@ export default function TopBar({ onMenuClick }) {
         <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink-0">
           <button
             onClick={onMenuClick}
-            className="lg:hidden text-slate-400 hover:text-white p-2.5 -ml-1 rounded-xl hover:bg-white/10 focus:outline-none cursor-pointer shrink-0 transition-colors"
+            className="lg:hidden erp-shell-btn-icon -ml-1 shrink-0"
             aria-label="Open menu"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 lg:hidden min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0F52BA] to-[#0B3E8F] flex items-center justify-center shrink-0 shadow-sm">
               <Wheat className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-sm text-white truncate max-w-[120px] sm:max-w-none">Metro Feeds</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] truncate max-w-[120px] sm:max-w-none">Warraich Traders</span>
           </div>
         </div>
 
         <div className="hidden lg:flex items-center min-w-0 flex-1">
-          <p className="text-sm font-medium text-slate-300 truncate">
+          <p className="text-sm font-medium text-[var(--text-secondary)] truncate">
             Welcome{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
           </p>
         </div>
@@ -261,41 +261,41 @@ export default function TopBar({ onMenuClick }) {
         <button
           type="button"
           onClick={() => setMobileSearch(true)}
-          className="md:hidden ml-auto p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+          className="md:hidden ml-auto erp-shell-btn-icon"
           aria-label="Search modules"
         >
           <Search className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-0.5 sm:gap-1 md:ml-auto shrink-0">
-          <button type="button" className="relative text-slate-400 hover:text-white p-2.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer" aria-label="Notifications">
+          <button type="button" className="relative erp-shell-btn-icon" aria-label="Notifications">
             <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-emerald-400 ring-2 ring-[#1a2530]" />
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#0F52BA] ring-2 ring-white" />
           </button>
 
-          <div className="h-6 w-px bg-white/10 hidden sm:block mx-0.5" />
+          <div className="h-6 w-px bg-[var(--border-clean)] hidden sm:block mx-0.5" />
 
           <div className="flex items-center gap-1.5 sm:gap-2 pl-0.5">
             <div className="flex flex-col text-right hidden sm:flex">
-              <span className="text-sm font-semibold text-slate-100 leading-tight truncate max-w-[120px] lg:max-w-[140px]">{user?.name}</span>
-              <span className="text-[10px] text-emerald-400 font-medium uppercase tracking-wide">{roleLabel}</span>
+              <span className="text-sm font-semibold text-[var(--text-primary)] leading-tight truncate max-w-[120px] lg:max-w-[140px]">{user?.name}</span>
+              <span className="text-[10px] text-[var(--brand-primary)] font-medium uppercase tracking-wide">{roleLabel}</span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+            <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[var(--brand-primary)] shrink-0">
               <User className="w-4 h-4" />
             </div>
           </div>
 
-          <button onClick={logout} className="text-slate-400 hover:text-rose-400 p-2.5 rounded-xl hover:bg-rose-500/10 transition-colors cursor-pointer" aria-label="Sign out">
+          <button onClick={logout} className="erp-shell-btn-icon hover:!text-rose-500 hover:!bg-rose-50" aria-label="Sign out">
             <LogOut className="w-4 h-4" />
           </button>
         </div>
       </header>
 
       {mobileSearch && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-[#141c24]/95 backdrop-blur-sm p-4 pt-3 safe-area-pb">
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-[var(--bg-surface)]/98 backdrop-blur-md p-4 pt-3 safe-area-pb border-t border-[var(--border-clean)]">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-white">Search modules</span>
-            <button type="button" onClick={() => setMobileSearch(false)} className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer" aria-label="Close search">
+            <span className="text-sm font-semibold text-[var(--text-primary)]">Search modules</span>
+            <button type="button" onClick={() => setMobileSearch(false)} className="erp-shell-btn-icon" aria-label="Close search">
               <X className="w-5 h-5" />
             </button>
           </div>

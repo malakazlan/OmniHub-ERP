@@ -3,7 +3,7 @@ import { formatDate, formatQuantity } from "@/lib/formatters";
 import { amountInWords } from "@/lib/amountInWords";
 
 const DEFAULT_COMPANY = {
-  company_name: "Metro Feeds",
+  company_name: "Warraich Traders",
   company_address: "",
   company_phone: "",
   company_email: "",
@@ -136,7 +136,7 @@ function drawHeader(pdf, c, sale, grid, y) {
   setFill(pdf, COLORS.teal600);
   pdf.rect(left, y + h - 1, w, 1, "F");
 
-  textAt(pdf, c.company_name || "Metro Feeds", left + LAYOUT.pad, y + 11, {
+  textAt(pdf, c.company_name || "Warraich Traders", left + LAYOUT.pad, y + 11, {
     size: TYPE.company,
     color: COLORS.white,
     style: "bold",
@@ -469,7 +469,7 @@ export function downloadSaleInvoicePdf(sale, company = {}, filename = "invoice.p
     style: "bold",
   });
 
-  textAt(pdf, "Metro Feeds ERP · Computer-generated tax invoice", pageW / 2, pageH - margin + 1, {
+  textAt(pdf, "Warraich Traders ERP · Computer-generated tax invoice", pageW / 2, pageH - margin + 1, {
     align: "center",
     size: TYPE.footer,
     color: COLORS.slate400,

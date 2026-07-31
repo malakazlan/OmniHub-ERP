@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { DirectoryRegisterBanner } from "@/components/accounts/DirectoryShell";
-import { Building2, Loader2, ArrowLeft, Pencil, Trash2, FolderTree } from "lucide-react";
+import { Building2, Loader2, ArrowLeft, Pencil, Trash2, Plus } from "lucide-react";
 
 const emptyForm = {
   bankName: "",
@@ -181,7 +181,7 @@ export default function BankAccountsSettingsPage() {
       <PageHeader
         module="settings"
         title="Bank Accounts"
-        description="View bank metadata. New bank ledger accounts are registered in Project Accounts."
+        description="View bank metadata. New bank ledger accounts are registered in All Accounts."
         icon={Building2}
         breadcrumbs={[
           { label: "Settings", href: "/settings" },
@@ -194,16 +194,16 @@ export default function BankAccountsSettingsPage() {
                 <ArrowLeft className="w-4 h-4" /> Back
               </Button>
             </Link>
-            <Link href="/accounts/directory/bank">
+            <Link href="/accounts?category=bank&create=1">
               <Button variant="outline" className="border-sky-200 text-acc-accounts hover:bg-sky-50">
-                <FolderTree className="w-4 h-4" /> Register in Project Accounts
+                <Plus className="w-4 h-4" /> Register in All Accounts
               </Button>
             </Link>
           </div>
         }
       />
 
-      <DirectoryRegisterBanner href="/accounts/directory/bank" label="bank" />
+      <DirectoryRegisterBanner category="bank" label="bank" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard module="settings" label="Total Accounts" value={bankAccounts.length} icon={Building2} />
