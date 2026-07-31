@@ -99,6 +99,31 @@ JWT_SECRET="warraichtraders_erp_secret_key_jwt_2026"
 
 ---
 
+## Git Identity for Multiple Accounts
+
+If you use multiple GitHub accounts for different projects, set the identity per repository rather than globally.
+
+```bash
+cd /path/to/project
+git config user.name "traderswarraich4"
+git config user.email "traderswarraich4@gmail.com"
+```
+
+For a reusable helper script on Windows PowerShell:
+
+```powershell
+cd scripts
+./git-identity.ps1 -Name "traderswarraich4" -Email "traderswarraich4@gmail.com"
+```
+
+To apply it globally instead of just this repo:
+
+```powershell
+./git-identity.ps1 -Name "traderswarraich4" -Email "traderswarraich4@gmail.com" -Global
+```
+
+---
+
 ## UI Design System
 
 Each module uses its own accent color on a shared dark slate base:
