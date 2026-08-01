@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* Custom animations for hero landing page */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px);
+  }
+}
+
+@keyframes sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-sheen {
+  animation: sheen 8s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
 :root {
   /* ── ERP Design Tokens (production light theme) ── */
 
@@ -317,6 +344,26 @@ body {
   background: linear-gradient(180deg, #eef4ff 0%, #ffffff 55%);
   border-bottom: 1.5px solid var(--erp-gloss-line-soft);
   box-shadow: 0 1px 0 var(--erp-gloss-highlight) inset;
+}
+
+.animate-blob {
+  animation: blob 16s ease-in-out infinite;
+}
+
+.animate-blob-slow {
+  animation: blob 24s ease-in-out infinite;
+}
+
+@keyframes blob {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(20px, -20px) scale(1.08);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.96);
+  }
 }
 .erp-doc-section {
   background: #ffffff;
@@ -799,6 +846,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .login-card {
   background: rgba(255, 255, 255, 0.92);
+  -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(226, 232, 240, 0.9);
   border-radius: 24px;
@@ -978,6 +1026,7 @@ input[type="number"]::-webkit-inner-spin-button {
   color: #E2E8F0;
   transition: all 0.22s ease;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -1208,6 +1257,7 @@ input[type="number"]::-webkit-inner-spin-button {
 
 .erp-shell-overlay {
   background: rgba(15, 23, 42, 0.45);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -1796,6 +1846,7 @@ input[type="number"]::-webkit-inner-spin-button {
   text-align: center;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
@@ -2191,6 +2242,7 @@ input[type="number"]::-webkit-inner-spin-button {
   text-align: center;
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.16);
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -2447,3 +2499,93 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-ledger-surface tbody tr.cursor-pointer:hover {
   background: #f0f9ff !important;
 }
+
+/* ── Premium Brushed Steel Landing Page Animations ── */
+@keyframes sheen-slide {
+  0% {
+    transform: translateX(-150%) skewX(-15deg);
+  }
+  40%, 100% {
+    transform: translateX(250%) skewX(-15deg);
+  }
+}
+
+/* ── Premium Agriculture ERP Landing Page Animations ── */
+@keyframes sheen-slide {
+  0% {
+    transform: translateX(-150%) skewX(-15deg);
+  }
+  50%, 100% {
+    transform: translateX(250%) skewX(-15deg);
+  }
+}
+
+@keyframes blob-one {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translate(60px, -50px) scale(1.15);
+    opacity: 0.22;
+  }
+}
+
+@keyframes blob-two {
+  0%, 100% {
+    transform: translate(0px, 0px) scale(1);
+    opacity: 0.1;
+  }
+  50% {
+    transform: translate(-50px, 60px) scale(0.95);
+    opacity: 0.2;
+  }
+}
+
+@keyframes grain-float-up {
+  0% {
+    transform: translateY(110vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.7;
+  }
+  85% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(40px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+@keyframes text-glow-breathing {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.25), 0 0 45px rgba(16, 185, 129, 0.15);
+    filter: brightness(0.96);
+  }
+  50% {
+    text-shadow: 0 0 35px rgba(245, 158, 11, 0.5), 0 0 80px rgba(16, 185, 129, 0.35);
+    filter: brightness(1.1);
+  }
+}
+
+.animate-sheen {
+  animation: sheen-slide 10s infinite linear;
+}
+.animate-blob-one {
+  animation: blob-one 16s infinite ease-in-out;
+}
+.animate-blob-two {
+  animation: blob-two 20s infinite ease-in-out;
+}
+.animate-text-glow {
+  animation: text-glow-breathing 4.5s infinite ease-in-out;
+}
+.agri-grain {
+  position: absolute;
+  border-radius: 50% 40% 55% 45%;
+  animation: grain-float-up linear infinite;
+  pointer-events: none;
+}
+

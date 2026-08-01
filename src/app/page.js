@@ -1,103 +1,590 @@
 "use client";
 
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { ArrowRight, Wheat } from "lucide-react";
+import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 
-const GRAINS = [
-  { left: "8%", delay: "0s", duration: "9s", color: "#f59e0b", size: 7 },
-  { left: "18%", delay: "1.2s", duration: "11s", color: "#eab308", size: 9 },
-  { left: "28%", delay: "2.4s", duration: "8s", color: "#d97706", size: 6 },
-  { left: "42%", delay: "0.6s", duration: "10s", color: "#ca8a04", size: 8 },
-  { left: "55%", delay: "3s", duration: "12s", color: "#fbbf24", size: 7 },
-  { left: "68%", delay: "1.8s", duration: "9.5s", color: "#f59e0b", size: 10 },
-  { left: "78%", delay: "0.3s", duration: "11.5s", color: "#eab308", size: 6 },
-  { left: "88%", delay: "2.1s", duration: "8.5s", color: "#d97706", size: 8 },
-  { left: "95%", delay: "4s", duration: "10.5s", color: "#f59e0b", size: 7 },
-];
-
-export default function LandingPage() {
+// Layer 1: Deep midnight background (base)
+const MidnightBackground = () => {
   return (
-    <div className="relative min-h-screen overflow-hidden auth-bg flex flex-col">
-      {/* Falling feed grains */}
-      {GRAINS.map((g, i) => (
-        <span
-          key={i}
-          className="feed-grain"
-          style={{
-            left: g.left,
-            animationDelay: g.delay,
-            animationDuration: g.duration,
-            background: g.color,
-            width: g.size,
-            height: g.size,
-          }}
-        />
-      ))}
+    <div className="absolute inset-0 bg-[#020617]" />
+  );
+};
 
-      {/* Soft grid */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.35]"
+// Layer 2: Animated grid system at 5% opacity
+const AnimatedGrid = () => {
+  return (
+    <div className="absolute inset-0 opacity-[0.05] pointer-events-none">
+      <motion.div
+        className="absolute inset-0"
         style={{
-          backgroundImage:
-            "linear-gradient(rgba(15,23,42,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.04) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
+          backgroundImage: `
+            linear-gradient(to right, rgba(255, 255, 255, 0.4) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 1px, transparent 1px)
+          `,
+          backgroundSize: "80px 80px",
+        }}
+        animate={{
+          backgroundPosition: ["0px 0px", "80px 80px", "0px 0px"],
+        }}
+        transition={{
+          duration: 60,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+    </div>
+  );
+};
+
+// Layer 3: Aurora gradient movement - extremely soft
+const AuroraGradient = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden">
+      <motion.div
+        className="absolute top-[-20%] left-[-10%] w-[120%] h-[50%]"
+        style={{
+          background: 'linear-gradient(180deg, transparent 0%, rgba(37, 99, 235, 0.08) 40%, rgba(6, 182, 212, 0.05) 70%, transparent 100%)',
+          filter: 'blur(100px)',
+        }}
+        animate={{
+          x: [0, 80, -40, 0],
+          y: [0, -20, 15, 0],
+          scaleX: [1, 1.15, 0.95, 1],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+      
+      <motion.div
+        className="absolute bottom-[-20%] right-[-10%] w-[120%] h-[50%]"
+        style={{
+          background: 'linear-gradient(0deg, transparent 0%, rgba(139, 92, 246, 0.07) 40%, rgba(37, 99, 235, 0.04) 70%, transparent 100%)',
+          filter: 'blur(120px)',
+        }}
+        animate={{
+          x: [0, -60, 50, 0],
+          y: [0, 30, -15, 0],
+          scaleX: [1, 0.9, 1.1, 1],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "easeInOut",
         }}
       />
 
-      {/* Decorative feed silhouettes */}
-      <div className="absolute left-[6%] bottom-[18%] hidden md:block sprout-sway opacity-80">
-        <Wheat className="w-16 h-16 text-emerald-600/40" strokeWidth={1.25} />
-      </div>
-      <div className="absolute right-[8%] top-[22%] hidden md:block feed-bag opacity-90">
-        <div className="w-20 h-24 rounded-2xl bg-gradient-to-b from-amber-200 to-amber-400 shadow-lg shadow-amber-200/50 border border-amber-300/60 flex items-center justify-center">
-          <span className="text-[10px] font-bold text-amber-900/70 tracking-widest rotate-[-8deg]">FEED</span>
-        </div>
-      </div>
+      <motion.div
+        className="absolute top-[25%] left-[35%] w-[30%] h-[30%]"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(6, 182, 212, 0.06) 0%, transparent 70%)',
+          filter: 'blur(80px)',
+        }}
+        animate={{
+          opacity: [0.4, 0.7, 0.4],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </div>
+  );
+};
 
-      {/* Center content */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center">
-        <div className="relative mb-8 fade-up">
-          <span className="absolute inset-0 rounded-3xl pulse-ring bg-emerald-400/30" />
-          <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center brand-glow shadow-xl shadow-emerald-500/25">
-            <Wheat className="w-9 h-9 text-white" strokeWidth={1.75} />
-          </div>
-        </div>
+// Layer 4: Noise texture
+const NoiseTexture = () => {
+  return (
+    <div
+      className="absolute inset-0 opacity-[0.03] pointer-events-none"
+      style={{
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+      }}
+    />
+  );
+};
 
-        <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-slate-900 fade-up fade-up-delay-1">
-          Warraich{" "}
-          <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 bg-clip-text text-transparent">
-            Traders
-          </span>
-        </h1>
+// Layer 5: Light beams - very subtle
+const LightBeams = () => {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {[...Array(4)].map((_, i) => (
+        <motion.div
+          key={i}
+          className="absolute h-[1px] w-full"
+          style={{
+            top: `${20 + i * 18}%`,
+            background: 'linear-gradient(90deg, transparent 0%, rgba(37, 99, 235, 0.15) 50%, transparent 100%)',
+            filter: 'blur(1px)',
+          }}
+          animate={{
+            x: ['-100%', '100%'],
+            opacity: [0, 0.5, 0],
+          }}
+          transition={{
+            duration: 14 + i * 1.5,
+            repeat: Infinity,
+            delay: i * 1.5,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
-        <p className="mt-4 text-lg sm:text-xl text-slate-500 font-medium tracking-wide fade-up fade-up-delay-2">
-          Trade Smart. Feed Better.
-        </p>
+// Layer 6: Large radial atmospheric glow behind centerpiece
+const AtmosphericGlow = () => {
+  return (
+    <motion.div
+      className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[60vw] h-[50vh]"
+      style={{
+        background: 'radial-gradient(ellipse at center, rgba(37, 99, 235, 0.12) 0%, rgba(6, 182, 212, 0.06) 40%, transparent 70%)',
+        filter: 'blur(80px)',
+      }}
+      animate={{
+        opacity: [0.6, 0.9, 0.6],
+        scale: [1, 1.05, 1],
+      }}
+      transition={{
+        duration: 12,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    />
+  );
+};
 
-        <div className="mt-3 h-1 w-24 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-emerald-400 fade-up fade-up-delay-2" />
+// Layer 7: Floating particles - 20-40 very slow movement
+const FloatingParticles = () => {
+  const [particles, setParticles] = useState([]);
+  const [isMounted, setIsMounted] = useState(false);
 
-        <Link
-          href="/login"
-          className="group mt-12 inline-flex items-center gap-2.5 px-9 py-3.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold shadow-lg shadow-emerald-600/25 hover:shadow-emerald-500/35 transition-all duration-300 cursor-pointer fade-up fade-up-delay-3"
+  useEffect(() => {
+    setIsMounted(true);
+    const generatedParticles = Array.from({ length: 32 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 2 + 0.5,
+      duration: Math.random() * 25 + 20,
+      delay: Math.random() * 10,
+      xMotion: Math.random() * 25 - 12.5,
+      yMotion: Math.random() * 25 - 12.5,
+      opacity: Math.random() * 0.4 + 0.1,
+    }));
+    setParticles(generatedParticles);
+  }, []);
+
+  if (!isMounted) return null;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            width: particle.size,
+            height: particle.size,
+            opacity: particle.opacity,
+          }}
+          animate={{
+            y: [0, particle.yMotion, 0],
+            x: [0, particle.xMotion, 0],
+            opacity: [particle.opacity * 0.5, particle.opacity, particle.opacity * 0.5],
+          }}
+          transition={{
+            duration: particle.duration,
+            repeat: Infinity,
+            delay: particle.delay,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// SPECTACULAR ENERGY CORE CENTERPIECE
+const EnergyCore = ({ mousePosition }) => {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const rotateX = useTransform(mouseY, [0, window.innerHeight], [8, -8]);
+  const rotateY = useTransform(mouseX, [0, window.innerWidth], [-8, 8]);
+
+  return (
+    <motion.div
+      className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[35vw] h-[45vh] max-w-[500px] max-h-[550px] min-w-[300px] min-h-[400px]"
+      style={{
+        rotateX,
+        rotateY,
+        perspective: 1000,
+      }}
+      animate={{
+        y: [0, -15, 0],
+      }}
+      transition={{
+        duration: 8,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      {/* Main glass core structure */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.05) 100%)',
+          backdropFilter: 'blur(40px)',
+          WebkitBackdropFilter: 'blur(40px)',
+          borderRadius: '20px',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: `
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+            0 25px 50px -12px rgba(37, 99, 235, 0.25),
+            0 0 100px -20px rgba(6, 182, 212, 0.15)
+          `,
+        }}
+        animate={{
+          rotate: [0, 360],
+        }}
+        transition={{
+          duration: 120,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      >
+        {/* Inner glow layers */}
+        <motion.div
+          className="absolute inset-[15%]"
+          style={{
+            background: 'radial-gradient(ellipse at 30% 30%, rgba(37, 99, 235, 0.2) 0%, rgba(6, 182, 212, 0.1) 50%, transparent 70%)',
+            borderRadius: '15px',
+            filter: 'blur(20px)',
+          }}
+          animate={{
+            opacity: [0.6, 1, 0.6],
+            scale: [1, 1.05, 1],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Bright core center */}
+        <motion.div
+          className="absolute inset-[35%]"
+          style={{
+            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.8) 0%, rgba(37, 99, 235, 0.4) 40%, transparent 70%)',
+            borderRadius: '10px',
+            filter: 'blur(15px)',
+          }}
+          animate={{
+            opacity: [0.7, 1, 0.7],
+            scale: [1, 1.1, 1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Glass reflection layers */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 40%, rgba(255, 255, 255, 0.05) 100%)',
+            borderRadius: '20px',
+          }}
+        />
+
+        {/* Refractive edge glow */}
+        <motion.div
+          className="absolute inset-0 rounded-[20px]"
+          style={{
+            border: '1px solid transparent',
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.3), rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.3)) border-box',
+            WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+          }}
+          animate={{
+            opacity: [0.4, 0.7, 0.4],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Internal energy lines */}
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute"
+            style={{
+              top: '50%',
+              left: '50%',
+              width: '80%',
+              height: '1px',
+              background: 'linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.4), transparent)',
+              filter: 'blur(1px)',
+            }}
+            animate={{
+              rotate: [i * 60, i * 60 + 360],
+              opacity: [0.3, 0.6, 0.3],
+            }}
+            transition={{
+              duration: 20 + i * 5,
+              repeat: Infinity,
+              ease: "linear",
+            }}
+          />
+        ))}
+
+        {/* Floating energy particles within core */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1.5 h-1.5 rounded-full bg-white/70"
+            style={{
+              top: '50%',
+              left: '50%',
+            }}
+            animate={{
+              x: [0, Math.cos(i * 60 * Math.PI / 180) * 60],
+              y: [0, Math.sin(i * 60 * Math.PI / 180) * 60],
+              opacity: [0, 1, 0],
+              scale: [0, 1, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              delay: i * 0.5,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </motion.div>
+
+      {/* Outer volumetric glow */}
+      <motion.div
+        className="absolute inset-[-20%]"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(37, 99, 235, 0.15) 0%, rgba(6, 182, 212, 0.08) 40%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+        animate={{
+          opacity: [0.5, 0.8, 0.5],
+          scale: [1, 1.1, 1],
+        }}
+        transition={{
+          duration: 7,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      />
+    </motion.div>
+  );
+};
+
+// Premium glassmorphism button
+const PremiumButton = ({ children, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <motion.button
+      className="relative overflow-hidden px-10 py-4 rounded-lg text-white font-medium tracking-wide"
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.98 }}
+      style={{
+        background: 'rgba(255, 255, 255, 0.03)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: `
+          0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+          0 8px 32px -8px rgba(37, 99, 235, 0.3)
+        `,
+      }}
+    >
+      {/* Internal glow */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(circle at center, rgba(37, 99, 235, 0.2) 0%, transparent 70%)',
+        }}
+        animate={{
+          opacity: isHovered ? 1 : 0.5,
+        }}
+        transition={{ duration: 0.3 }}
+      />
+      
+      {/* Shine sweep animation */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"
+        animate={{
+          x: isHovered ? ['-100%', '100%'] : '-100%',
+        }}
+        transition={{
+          duration: 0.8,
+          ease: "easeInOut",
+        }}
+      />
+      
+      {/* Animated border glow */}
+      <motion.div
+        className="absolute inset-0 rounded-lg"
+        style={{
+          border: '1px solid transparent',
+          background: 'linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.5), transparent) border-box',
+          WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)',
+          WebkitMaskComposite: 'xor',
+          maskComposite: 'exclude',
+        }}
+        animate={{
+          opacity: isHovered ? 1 : 0,
+        }}
+        transition={{ duration: 0.3 }}
+      />
+      
+      <span className="relative z-10">{children}</span>
+    </motion.button>
+  );
+};
+
+// Main landing page component
+export default function LandingPage() {
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+    const handleMouseMove = (e) => {
+      setMousePosition({
+        x: e.clientX,
+        y: e.clientY,
+      });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
+  if (!isMounted) return null;
+
+  return (
+    <div className="relative w-screen h-screen overflow-hidden">
+      {/* Layer 1: Deep midnight background */}
+      <MidnightBackground />
+      
+      {/* Layer 2: Animated grid system */}
+      <AnimatedGrid />
+      
+      {/* Layer 3: Aurora gradient movement */}
+      <AuroraGradient />
+      
+      {/* Layer 4: Noise texture */}
+      <NoiseTexture />
+      
+      {/* Layer 5: Light beams */}
+      <LightBeams />
+      
+      {/* Layer 6: Large radial atmospheric glow */}
+      <AtmosphericGlow />
+      
+      {/* Layer 7: Floating particles */}
+      <FloatingParticles />
+
+      {/* SPECTACULAR ENERGY CORE CENTERPIECE */}
+      <EnergyCore mousePosition={mousePosition} />
+
+      {/* Mouse-reactive spotlight */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(500px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(37, 99, 235, 0.06), transparent 70%)`,
+        }}
+      />
+
+      {/* Content - positioned below energy core */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+        {/* Company name with gradient treatment */}
+        <motion.div
+          className="text-center max-w-[65vw]"
+          initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
         >
-          Enter System
-          <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-        </Link>
-      </main>
+          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-2" style={{ letterSpacing: '-0.02em' }}>
+            <span className="text-white" style={{ textShadow: '0 0 40px rgba(37, 99, 235, 0.2)' }}>WARRAICH</span>
+            <span className="ml-3 bg-gradient-to-r from-[#60A5FA] to-[#22D3EE] bg-clip-text text-transparent">
+              TRADERS
+            </span>
+          </h1>
+        </motion.div>
 
-      {/* Animated bottom wave */}
-      <div className="relative z-10 h-24 overflow-hidden">
-        <svg className="absolute bottom-0 left-0 w-[200%] h-full wave-path" viewBox="0 0 1440 120" preserveAspectRatio="none">
-          <path
-            fill="rgba(16,185,129,0.12)"
-            d="M0,64 C240,110 480,20 720,64 C960,108 1200,30 1440,64 L1440,120 L0,120 Z"
-          />
-          <path
-            fill="rgba(5,150,105,0.18)"
-            d="M0,80 C240,40 480,100 720,70 C960,40 1200,90 1440,60 L1440,120 L0,120 Z"
-          />
-        </svg>
+        {/* Tagline */}
+        <motion.p
+          className="text-lg text-white/70 tracking-[0.25em] uppercase mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 0.7, ease: "easeOut" }}
+        >
+          Enterprise Resource Planning
+        </motion.p>
+
+        {/* Access Portal Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1, delay: 1, ease: "easeOut" }}
+        >
+          <Link href="/login">
+            <PremiumButton>Access Portal →</PremiumButton>
+          </Link>
+        </motion.div>
       </div>
+
+      {/* Volumetric rays effect */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 20%, rgba(37, 99, 235, 0.05) 0%, transparent 50%)',
+          }}
+          animate={{
+            opacity: [0.3, 0.6, 0.3],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+      </div>
+
+      {/* Deep vignette for cinematic depth */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(2, 6, 23, 0.5) 100%)',
+        }}
+      />
     </div>
   );
 }
