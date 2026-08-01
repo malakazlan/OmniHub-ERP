@@ -142,7 +142,7 @@ const LightBeams = () => {
 const AtmosphericGlow = () => {
   return (
     <motion.div
-      className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[60vw] h-[50vh]"
+      className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[90vw] md:w-[60vw] h-[50vh]"
       style={{
         background: 'radial-gradient(ellipse at center, rgba(37, 99, 235, 0.12) 0%, rgba(6, 182, 212, 0.06) 40%, transparent 70%)',
         filter: 'blur(80px)',
@@ -223,7 +223,7 @@ const EnergyCore = ({ mousePosition }) => {
 
   return (
     <motion.div
-      className="absolute top-[5%] left-1/2 -translate-x-1/2 w-[35vw] h-[45vh] max-w-[500px] max-h-[550px] min-w-[300px] min-h-[400px]"
+      className="absolute top-[10%] md:top-[5%] left-1/2 -translate-x-1/2 w-[80vw] sm:w-[50vw] md:w-[35vw] h-[40vh] md:h-[45vh] max-w-[500px] max-h-[550px] min-w-[250px] md:min-w-[300px] min-h-[300px] md:min-h-[400px]"
       style={{
         rotateX,
         rotateY,
@@ -406,7 +406,7 @@ const PremiumButton = ({ children, onClick }) => {
   
   return (
     <motion.button
-      className="relative overflow-hidden px-10 py-4 rounded-lg text-white font-medium tracking-wide"
+      className="relative overflow-hidden px-8 py-3 md:px-10 md:py-4 rounded-lg text-white font-medium tracking-wide text-sm md:text-base"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -522,17 +522,17 @@ export default function LandingPage() {
       />
 
       {/* Content - positioned below energy core */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-4 mt-20 md:mt-0">
         {/* Company name with gradient treatment */}
         <motion.div
-          className="text-center max-w-[65vw]"
+          className="text-center w-full max-w-[90vw] md:max-w-[65vw]"
           initial={{ opacity: 0, y: 30, filter: 'blur(10px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
           transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
         >
-          <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight mb-2" style={{ letterSpacing: '-0.02em' }}>
-            <span className="text-white" style={{ textShadow: '0 0 40px rgba(37, 99, 235, 0.2)' }}>WARRAICH</span>
-            <span className="ml-3 bg-gradient-to-r from-[#60A5FA] to-[#22D3EE] bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black text-white tracking-tight mb-4 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-3" style={{ letterSpacing: '-0.02em' }}>
+            <span className="text-white drop-shadow-2xl" style={{ textShadow: '0 0 40px rgba(37, 99, 235, 0.4)' }}>WARRAICH</span>
+            <span className="bg-gradient-to-r from-[#60A5FA] to-[#22D3EE] bg-clip-text text-transparent">
               TRADERS
             </span>
           </h1>
@@ -540,7 +540,7 @@ export default function LandingPage() {
 
         {/* Tagline */}
         <motion.p
-          className="text-lg text-white/70 tracking-[0.25em] uppercase mb-12"
+          className="text-xs sm:text-sm md:text-lg text-white/70 tracking-[0.15em] sm:tracking-[0.25em] uppercase mb-10 md:mb-12 text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1, delay: 0.7, ease: "easeOut" }}
