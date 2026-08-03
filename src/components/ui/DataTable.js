@@ -77,10 +77,12 @@ export function DataTable({
                     key={col.accessor}
                     onClick={() => col.sortable !== false && handleSort(col.accessor)}
                     className={`px-5 py-3.5 select-none ${
-                      col.sortable !== false ? "cursor-pointer hover:bg-slate-100" : ""
-                    }`}
+                      col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : "text-left"
+                    } ${col.sortable !== false ? "cursor-pointer hover:bg-slate-100" : ""}`}
                   >
-                    <div className="flex items-center gap-1">
+                    <div className={`flex items-center gap-1 ${
+                      col.align === "right" ? "justify-end" : col.align === "center" ? "justify-center" : ""
+                    }`}>
                       {col.header}
                       {sortConfig.key === col.accessor && (
                         sortConfig.direction === "asc"
@@ -103,7 +105,12 @@ export function DataTable({
                     }`}
                   >
                     {columns.map((col) => (
-                      <td key={col.accessor} className="px-5 py-3.5 whitespace-nowrap">
+                      <td
+                        key={col.accessor}
+                        className={`px-5 py-3.5 ${col.wrap === false ? "whitespace-nowrap" : ""} ${
+                          col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : "text-left"
+                        }`}
+                      >
                         {col.cell ? col.cell(row) : row[col.accessor]}
                       </td>
                     ))}

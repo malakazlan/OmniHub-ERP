@@ -8,6 +8,7 @@ import {
   syncPurchasePaymentLedgerLegs,
 } from "@/lib/order-processing";
 import { logActivity } from "@/lib/activityLog";
+import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
 function canManagePurchases(user) {
   return user && (user.role === "admin" || user.role === "manager");
@@ -56,8 +57,20 @@ export async function POST(req, { params }) {
     }
 
     const paymentDate = body.paymentDate ? new Date(body.paymentDate) : new Date();
-    const cashAccountId = body.cashAccountId ? parseInt(body.cashAccountId, 10) : existing.cashAccountId;
+    let cashAccountId = body.cashAccountId ? parseInt(body.cashAccountId, 10) : existing.cashAccountId;
     const bankAccountId = body.bankAccountId ? parseInt(body.bankAccountId, 10) : existing.bankAccountId;
+
+    if (cashAmount > 0) {
+      if (!cashAccountId) {
+        const userCash = await resolveUserCashAccountId(prisma, user.userId);
+        if (userCash) cashAccountId = userCash;
+      }
+      try {
+        await assertUserCanUseCashAccount(prisma, user, cashAccountId);
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 403 });
+      }
+    }
 
     const purchase = await prisma.$transaction(async (tx) => {
       const orderForLedger = {

@@ -6,9 +6,11 @@ import { Button } from "@/components/Button";
 import { useToast } from "@/context/ToastContext";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
 import { Loader2, Wallet } from "lucide-react";
+import { useDefaultCashAccountId } from "@/hooks/useDefaultCashAccount";
 
 export function PurchasePayModal({ purchase, open, onClose, onPaid }) {
   const { showToast } = useToast();
+  const defaultCashAccountId = useDefaultCashAccountId();
   const [submitting, setSubmitting] = useState(false);
   const [accounts, setAccounts] = useState([]);
   const [form, setForm] = useState({
@@ -37,8 +39,12 @@ export function PurchasePayModal({ purchase, open, onClose, onPaid }) {
       paymentDate: new Date().toISOString().slice(0, 10),
       cashAmount: "",
       bankAmount: "",
+      cashAccountId: purchase?.cashAccountId
+        ? String(purchase.cashAccountId)
+        : defaultCashAccountId || "",
+      bankAccountId: "",
     }));
-  }, [open, purchase?.id]);
+  }, [open, purchase?.id, defaultCashAccountId]);
 
   const cashAccounts = accounts.filter((a) => a.category === "cash");
   const bankAccounts = accounts.filter((a) => a.category === "bank");

@@ -1,5 +1,20 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest, hashPassword } from "@/lib/auth";
+import { parseAssignedCashAccountId } from "@/lib/userCashAccount";
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  phone: true,
+  role: true,
+  isActive: true,
+  allowedModules: true,
+  cashAccountId: true,
+  lastLogin: true,
+  createdAt: true,
+  primaryCashAccount: { select: { id: true, name: true, code: true } },
+};
 
 export async function GET(req, { params }) {
   try {
@@ -11,10 +26,7 @@ export async function GET(req, { params }) {
     const { id } = await params;
     const target = await prisma.user.findUnique({
       where: { id: parseInt(id) },
-      select: {
-        id: true, email: true, name: true, phone: true, role: true,
-        isActive: true, allowedModules: true, lastLogin: true, createdAt: true,
-      },
+      select: USER_SELECT,
     });
 
     if (!target) return Response.json({ error: "User not found" }, { status: 404 });
@@ -65,6 +77,18 @@ export async function PUT(req, { params }) {
       data.password = await hashPassword(body.password);
     }
 
+    if (body.cashAccountId !== undefined) {
+      try {
+        data.cashAccountId = await parseAssignedCashAccountId(
+          prisma,
+          body.cashAccountId,
+          userId
+        );
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 400 });
+      }
+    }
+
     // Prevent an admin from locking themselves out
     if (userId === user.id && data.isActive === false) {
       return Response.json({ error: "You cannot deactivate your own account" }, { status: 400 });
@@ -73,10 +97,7 @@ export async function PUT(req, { params }) {
     const updated = await prisma.user.update({
       where: { id: userId },
       data,
-      select: {
-        id: true, email: true, name: true, phone: true, role: true,
-        isActive: true, allowedModules: true, lastLogin: true, createdAt: true,
-      },
+      select: USER_SELECT,
     });
 
     return Response.json({

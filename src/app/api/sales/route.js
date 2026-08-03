@@ -11,6 +11,7 @@ import {
   resolveCustomerAccountId,
   applySaleStockAndLedger,
 } from "@/lib/order-processing";
+import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true } } } },
@@ -108,6 +109,19 @@ export async function POST(req) {
     }
 
     const body = await req.json();
+
+    if (parseNum(body.cashAmount) > 0 && !body.cashAccountId) {
+      const userCash = await resolveUserCashAccountId(prisma, user.userId);
+      if (userCash) body.cashAccountId = userCash;
+    }
+
+    if (parseNum(body.cashAmount) > 0 && body.cashAccountId) {
+      try {
+        await assertUserCanUseCashAccount(prisma, user, body.cashAccountId);
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 403 });
+      }
+    }
 
     if (!body.customerName) {
       return Response.json({ error: "Customer name is required" }, { status: 400 });

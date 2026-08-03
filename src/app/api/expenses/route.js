@@ -3,6 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
+import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
 function canManage(user) {
   return user && (user.role === "admin" || user.role === "manager" || user.role === "accountant");
@@ -47,8 +48,9 @@ export async function POST(req) {
     const body = await req.json();
     const {
       expenseDate, expenseTitle, categoryId, cashAmount, bankAmount,
-      cashAccountId, bankAccountId, description, notes,
+      bankAccountId, description, notes,
     } = body;
+    let { cashAccountId } = body;
 
     const cash = parseFloat(cashAmount) || 0;
     const bank = parseFloat(bankAmount) || 0;
@@ -56,6 +58,19 @@ export async function POST(req) {
 
     if (!expenseTitle) return Response.json({ error: "Expense title is required" }, { status: 400 });
     if (amount <= 0) return Response.json({ error: "Amount must be greater than zero" }, { status: 400 });
+
+    if (cash > 0 && !cashAccountId) {
+      const userCash = await resolveUserCashAccountId(prisma, user.userId);
+      if (userCash) cashAccountId = userCash;
+    }
+
+    if (cash > 0 && cashAccountId) {
+      try {
+        await assertUserCanUseCashAccount(prisma, user, cashAccountId);
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 403 });
+      }
+    }
 
     const date = expenseDate ? new Date(expenseDate) : new Date();
     const expenseNumber = await generateDocumentNumber("expense", date);

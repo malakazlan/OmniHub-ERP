@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { Wallet, Loader2, ArrowLeft, Plus, DollarSign } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { useDefaultCashAccountId } from "@/hooks/useDefaultCashAccount";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -36,6 +37,7 @@ const emptyForm = {
 
 export default function SalaryPage() {
   const { showToast } = useToast();
+  const defaultCashAccountId = useDefaultCashAccountId();
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [records, setRecords] = useState([]);
@@ -93,6 +95,7 @@ export default function SalaryPage() {
       ...emptyForm,
       month,
       year,
+      cashAccountId: defaultCashAccountId || "",
     });
     setModalOpen(true);
   };

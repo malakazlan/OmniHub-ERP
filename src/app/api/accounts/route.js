@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateAccountCode } from "@/lib/receipt";
-import { cashAccountWhereForUser, canAccessAllCashAccounts } from "@/lib/accountAccess";
+import { cashAccountWhereForUser } from "@/lib/accountAccess";
 import { directoryCreateBlocked } from "@/lib/directoryCreate";
 
 export async function GET(req) {
@@ -12,16 +12,18 @@ export async function GET(req) {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
     const type = searchParams.get("type");
+    const assignable = searchParams.get("assignable") === "1";
 
     const where = {};
     if (category) where.category = category;
     if (type) where.type = type;
 
-    if (category === "cash") {
+    if (category === "cash" && assignable && user.role === "admin") {
+      where.isActive = true;
+    } else if (category === "cash") {
       const cashWhere = await cashAccountWhereForUser(prisma, user);
       Object.assign(where, cashWhere);
-    } else if (!canAccessAllCashAccounts(user) && !category) {
-      // Non-finance users still see non-cash accounts in full lists; hide other users' cash.
+    } else if (!category) {
       const cashWhere = await cashAccountWhereForUser(prisma, user);
       const allowedCashIds = await prisma.account.findMany({
         where: cashWhere,

@@ -25,6 +25,7 @@ const emptyForm = {
   phone: "",
   role: "viewer",
   isActive: true,
+  cashAccountId: "",
   allowedModules: defaultModulesForRole("viewer"),
 };
 
@@ -32,6 +33,7 @@ export default function UsersSettingsPage() {
   const { showToast } = useToast();
   const { user: currentUser, loading: authLoading } = useAuth();
   const [users, setUsers] = useState([]);
+  const [cashAccounts, setCashAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -54,6 +56,12 @@ export default function UsersSettingsPage() {
   useEffect(() => {
     if (!authLoading && currentUser?.role === "admin") {
       fetchUsers();
+      fetch("/api/accounts?category=cash&assignable=1")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.accounts) setCashAccounts(d.accounts.filter((a) => a.isActive));
+        })
+        .catch(() => {});
     } else if (!authLoading) {
       setLoading(false);
     }
@@ -90,6 +98,7 @@ export default function UsersSettingsPage() {
       allowedModules: Array.isArray(row.allowedModules)
         ? row.allowedModules
         : defaultModulesForRole(row.role || "viewer"),
+      cashAccountId: row.cashAccountId ? String(row.cashAccountId) : "",
     });
     setModalOpen(true);
   };
@@ -205,6 +214,15 @@ export default function UsersSettingsPage() {
       header: "Phone",
       accessor: "phone",
       cell: (row) => <span className="text-xs text-slate-600">{row.phone || "—"}</span>,
+    },
+    {
+      header: "Cash account",
+      accessor: "cashAccountId",
+      cell: (row) => (
+        <span className="text-xs text-slate-600">
+          {row.primaryCashAccount?.name || "—"}
+        </span>
+      ),
     },
     {
       header: "Status",
@@ -327,6 +345,26 @@ export default function UsersSettingsPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="space-y-1 md:col-span-2">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                Assigned cash account
+              </label>
+              <select
+                value={form.cashAccountId}
+                onChange={handleChange("cashAccountId")}
+                className="input-field"
+              >
+                <option value="">No restriction / no default</option>
+                {cashAccounts.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}{a.code ? ` (${a.code})` : ""}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-500 mt-1">
+                Required for payments: this user can only use this cash account on sales, purchases, and expenses.
+              </p>
             </div>
             <div className="md:col-span-2">
               <ModuleAccessTabs

@@ -10,6 +10,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { Wallet2, Plus, Loader2, ArrowLeft, Tags, Trash2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { useDefaultCashAccountId, applyDefaultCashAccount } from "@/hooks/useDefaultCashAccount";
 
 const emptyForm = {
   expenseDate: new Date().toISOString().slice(0, 10),
@@ -25,6 +26,7 @@ const emptyForm = {
 
 export default function ExpensesPage() {
   const { showToast } = useToast();
+  const defaultCashAccountId = useDefaultCashAccountId();
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cashAccounts, setCashAccounts] = useState([]);
@@ -70,7 +72,7 @@ export default function ExpensesPage() {
   }, []);
 
   const openCreate = () => {
-    setForm(emptyForm);
+    setForm(applyDefaultCashAccount(emptyForm, defaultCashAccountId));
     setModalOpen(true);
   };
 

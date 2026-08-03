@@ -24,6 +24,7 @@ import { CURRENCY_SYMBOL } from "@/lib/constants";
 import SearchPicker from "@/components/ui/SearchPicker";
 import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { useDefaultCashAccountId, applyDefaultCashAccount } from "@/hooks/useDefaultCashAccount";
 
 function FieldLabel({ children, className = "" }) {
   return (
@@ -91,6 +92,7 @@ export default function NewPurchasePage() {
   const editId = searchParams.get("edit");
   const isEdit = Boolean(editId);
   const { showToast } = useToast();
+  const defaultCashAccountId = useDefaultCashAccountId();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -192,6 +194,11 @@ export default function NewPurchasePage() {
     };
     load();
   }, [editId, router, showToast]);
+
+  useEffect(() => {
+    if (!defaultCashAccountId || editId) return;
+    setForm((f) => applyDefaultCashAccount(f, defaultCashAccountId));
+  }, [defaultCashAccountId, editId]);
 
   const vendorOptions = vendorType === "farmer" ? farmers : companies;
 

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { parseNumber } from "@/lib/formatters";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
+import { useDefaultCashAccountId, applyDefaultCashAccount } from "@/hooks/useDefaultCashAccount";
 
 const EMPTY_ITEM = { productId: "", quantity: "", rate: "", amount: 0 };
 
@@ -106,12 +107,14 @@ function NewSalePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showToast } = useToast();
+  const defaultCashAccountId = useDefaultCashAccountId();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [customerType, setCustomerType] = useState("shop");
   const [shops, setShops] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
+  const [accounts, setAccounts] = useState([]);
 
   const [form, setForm] = useState({
     customerId: "",
@@ -122,6 +125,8 @@ function NewSalePageInner() {
     discountAmount: "",
     cashAmount: "",
     bankAmount: "",
+    cashAccountId: "",
+    bankAccountId: "",
     notes: "",
   });
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
@@ -158,22 +163,25 @@ function NewSalePageInner() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [shopsRes, companiesRes, productsRes, ordersRes] = await Promise.all([
+        const [shopsRes, companiesRes, productsRes, ordersRes, accountsRes] = await Promise.all([
           fetch("/api/shops"),
           fetch("/api/companies"),
           fetch("/api/products"),
           fetch("/api/orders?forSale=1"),
+          fetch("/api/accounts"),
         ]);
-        const [shopsData, companiesData, productsData, ordersData] = await Promise.all([
+        const [shopsData, companiesData, productsData, ordersData, accountsData] = await Promise.all([
           shopsRes.json(),
           companiesRes.json(),
           productsRes.json(),
           ordersRes.json(),
+          accountsRes.json(),
         ]);
         if (shopsRes.ok) setShops(shopsData.shops || []);
         if (companiesRes.ok) setCompanies(companiesData.companies || []);
         if (productsRes.ok) setProducts(productsData.products || []);
         if (ordersRes.ok) setAcceptedOrders(ordersData.orders || []);
+        if (accountsRes.ok) setAccounts((accountsData.accounts || []).filter((a) => a.isActive));
 
         const orderIdParam = searchParams.get("orderId");
         if (orderIdParam) {
@@ -192,6 +200,11 @@ function NewSalePageInner() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showToast, searchParams]);
+
+  useEffect(() => {
+    if (!defaultCashAccountId) return;
+    setForm((f) => applyDefaultCashAccount(f, defaultCashAccountId));
+  }, [defaultCashAccountId]);
 
   const customerOptions = customerType === "shop" ? shops : companies;
 
@@ -227,6 +240,9 @@ function NewSalePageInner() {
   const totalAmount = subtotal + surcharges - parseNumber(form.discountAmount);
   const paidAmount = parseNumber(form.cashAmount) + parseNumber(form.bankAmount);
   const balanceDue = Math.max(totalAmount - paidAmount, 0);
+
+  const cashAccounts = useMemo(() => accounts.filter((a) => a.category === "cash"), [accounts]);
+  const bankAccounts = useMemo(() => accounts.filter((a) => a.category === "bank"), [accounts]);
 
   const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
@@ -269,6 +285,8 @@ function NewSalePageInner() {
         discountAmount: parseNumber(form.discountAmount),
         cashAmount: parseNumber(form.cashAmount),
         bankAmount: parseNumber(form.bankAmount),
+        cashAccountId: form.cashAccountId ? parseInt(form.cashAccountId, 10) : null,
+        bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : null,
         notes: form.notes || null,
         status,
       };
@@ -599,45 +617,99 @@ function NewSalePageInner() {
 
                 <div className="erp-summary-block">
                   <div className="erp-summary-block-title">Payment received</div>
-                  <div className="p-2 sm:p-3 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="erp-method-tag erp-method-tag-cash shrink-0">
-                        <Banknote className="w-3 h-3" /> Cash
+                  <div className="p-2 sm:p-3">
+                    <table className="erp-payment-table">
+                      <thead>
+                        <tr>
+                          <th className="w-[72px]">Method</th>
+                          <th>Ledger account</th>
+                          <th className="w-[120px]">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>
+                            <span className="erp-method-tag erp-method-tag-cash">
+                              <Banknote className="w-3 h-3" /> Cash
+                            </span>
+                          </td>
+                          <td>
+                            <select
+                              value={form.cashAccountId}
+                              onChange={handleChange("cashAccountId")}
+                              className="input-field-compact w-full text-xs bg-white"
+                            >
+                              <option value="">Select account</option>
+                              {cashAccounts.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.name}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={form.cashAmount}
+                              onChange={handleChange("cashAmount")}
+                              className="input-field-compact w-full text-right tabular-nums"
+                              placeholder="0"
+                              aria-label="Cash payment amount"
+                            />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <span className="erp-method-tag erp-method-tag-bank">
+                              <Landmark className="w-3 h-3" /> Bank
+                            </span>
+                          </td>
+                          <td>
+                            <select
+                              value={form.bankAccountId}
+                              onChange={handleChange("bankAccountId")}
+                              className="input-field-compact w-full text-xs bg-white"
+                            >
+                              <option value="">Select account</option>
+                              {bankAccounts.map((a) => (
+                                <option key={a.id} value={a.id}>
+                                  {a.name}
+                                </option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              step="any"
+                              value={form.bankAmount}
+                              onChange={handleChange("bankAmount")}
+                              className="input-field-compact w-full text-right tabular-nums"
+                              placeholder="0"
+                              aria-label="Bank payment amount"
+                            />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <div className="flex flex-wrap items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (balanceDue <= 0) return;
+                          setForm((f) => ({ ...f, cashAmount: String(balanceDue), bankAmount: "" }));
+                        }}
+                        className="text-[11px] font-semibold text-green-700 hover:text-green-900 cursor-pointer underline-offset-2 hover:underline"
+                      >
+                        Apply full balance to cash
+                      </button>
+                      <span className="text-[11px] text-slate-500">
+                        Due after payment: <Money value={balanceDue} strong className="text-green-800" />
                       </span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={form.cashAmount}
-                        onChange={handleChange("cashAmount")}
-                        className="input-field-compact flex-1 text-right tabular-nums"
-                        placeholder="0"
-                      />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="erp-method-tag erp-method-tag-bank shrink-0">
-                        <Landmark className="w-3 h-3" /> Bank
-                      </span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="any"
-                        value={form.bankAmount}
-                        onChange={handleChange("bankAmount")}
-                        className="input-field-compact flex-1 text-right tabular-nums"
-                        placeholder="0"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (balanceDue <= 0) return;
-                        setForm((f) => ({ ...f, cashAmount: String(balanceDue), bankAmount: "" }));
-                      }}
-                      className="text-[11px] font-semibold text-green-700 hover:text-green-900 cursor-pointer underline-offset-2 hover:underline"
-                    >
-                      Apply full balance to cash
-                    </button>
                   </div>
                   <SummaryRow label="Total received" value={paidAmount} bold />
                   <SummaryRow label="Outstanding on invoice">

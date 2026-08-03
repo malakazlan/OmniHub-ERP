@@ -7,10 +7,11 @@ import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/Button";
 import AccountRegisterModal from "@/components/accounts/AccountRegisterModal";
-import { DirectoryAdminNotice, useDirectoryAdmin } from "@/components/accounts/DirectoryAdminActions";
+import AccountEditModal from "@/components/accounts/AccountEditModal";
+import { DirectoryAdminNotice, DirectoryAdminActions, confirmDirectoryDelete, useDirectoryAdmin } from "@/components/accounts/DirectoryAdminActions";
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 import {
-  BookOpen, Loader2, Landmark, Users, ChevronRight, Wallet,
+  BookOpen, Loader2, Landmark, Users, Wallet,
   Banknote, Building, Store, Plus, Search, ArrowLeft, Sprout, Truck, Car, UserCircle,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
@@ -88,6 +89,8 @@ function AccountsPageContent() {
   const [activeCategory, setActiveCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingAccount, setEditingAccount] = useState(null);
   const [transportMode, setTransportMode] = useState("driver");
 
   const fetchAccounts = useCallback(async () => {
@@ -145,6 +148,27 @@ function AccountsPageContent() {
     updateUrl(activeCategory, true, activeCategory === "transport" ? transportMode : undefined);
   };
 
+  const handleEditAccount = useCallback((row) => {
+    setEditingAccount(row);
+    setEditModalOpen(true);
+  }, []);
+
+  const handleDeleteAccount = useCallback(async (row) => {
+    if (!(await confirmDirectoryDelete(row.name))) return;
+    try {
+      const res = await fetch(`/api/accounts/${row.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Account deleted", "success");
+        fetchAccounts();
+      } else {
+        showToast(data.error || "Failed to delete account", "error");
+      }
+    } catch {
+      showToast("Error connecting to server", "error");
+    }
+  }, [showToast, fetchAccounts]);
+
   const categoryStats = useMemo(() => {
     return PROJECT_CATEGORIES.map((slug) => ({
       slug,
@@ -184,13 +208,19 @@ function AccountsPageContent() {
   const columns = useMemo(() => {
     const cols = [
       {
-        header: "Account",
+        header: "Account name",
         accessor: "name",
+        wrap: false,
         cell: (row) => (
-          <div>
-            <p className="font-semibold text-slate-900">{row.name}</p>
-            <p className="text-[11px] font-mono text-slate-400 mt-0.5">{row.code || "—"}</p>
-          </div>
+          <span className="font-semibold text-[var(--text-primary)]">{row.name}</span>
+        ),
+      },
+      {
+        header: "Code",
+        accessor: "code",
+        wrap: false,
+        cell: (row) => (
+          <span className="text-xs font-mono text-[var(--text-secondary)]">{row.code || "—"}</span>
         ),
       },
     ];
@@ -199,6 +229,7 @@ function AccountsPageContent() {
       cols.push({
         header: "Category",
         accessor: "category",
+        wrap: false,
         cell: (row) => (
           <span className="text-xs font-medium text-slate-600">{CATEGORY_LABELS[row.category] || row.category}</span>
         ),
@@ -207,17 +238,28 @@ function AccountsPageContent() {
 
     cols.push(
       {
-        header: "Contact",
+        header: "Phone",
         accessor: "phone",
+        wrap: false,
         cell: (row) => (
-          <span className="text-xs text-slate-500">{row.phone || row.city || "—"}</span>
+          <span className="text-sm text-[var(--text-primary)] tabular-nums">{row.phone || "—"}</span>
+        ),
+      },
+      {
+        header: "City",
+        accessor: "city",
+        wrap: false,
+        cell: (row) => (
+          <span className="text-sm text-[var(--text-secondary)]">{row.city || "—"}</span>
         ),
       },
       {
         header: "Balance",
         accessor: "balance",
+        align: "right",
+        wrap: false,
         cell: (row) => (
-          <span className={`font-mono text-sm font-bold tabular-nums ${row.balance >= 0 ? "text-emerald-700" : "text-rose-600"}`}>
+          <span className={`font-mono text-sm font-bold tabular-nums ${row.balance >= 0 ? "text-[var(--status-success)]" : "text-[var(--status-danger)]"}`}>
             {formatCurrency(row.balance)}
           </span>
         ),
@@ -225,20 +267,34 @@ function AccountsPageContent() {
       {
         header: "Status",
         accessor: "isActive",
+        align: "center",
+        sortable: false,
+        wrap: false,
         cell: (row) => (
           <Badge variant={row.isActive ? "success" : "neutral"}>{row.isActive ? "Active" : "Inactive"}</Badge>
         ),
       },
-      {
-        header: "",
-        accessor: "actions",
-        sortable: false,
-        cell: () => <ChevronRight className="w-4 h-4 text-slate-300" />,
-      }
     );
 
+    if (activeCategory) {
+      cols.push({
+        header: "Actions",
+        accessor: "adminActions",
+        align: "right",
+        sortable: false,
+        wrap: false,
+        cell: (row) => (
+          <DirectoryAdminActions
+            onEdit={() => handleEditAccount(row)}
+            onDelete={() => handleDeleteAccount(row)}
+            onView={() => router.push(`/accounts/${row.id}`)}
+          />
+        ),
+      });
+    }
+
     return cols;
-  }, [activeCategory]);
+  }, [activeCategory, handleEditAccount, handleDeleteAccount, router]);
 
   const activeLabel = activeCategory && activeCategory !== "all"
     ? CATEGORY_LABELS[activeCategory]
@@ -446,6 +502,16 @@ function AccountsPageContent() {
           onSuccess={fetchAccounts}
         />
       )}
+
+      <AccountEditModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setEditingAccount(null);
+        }}
+        account={editingAccount}
+        onSuccess={fetchAccounts}
+      />
     </div>
   );
 }

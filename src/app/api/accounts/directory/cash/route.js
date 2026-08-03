@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
-import { cashAccountWhereForUser, canAccessAllCashAccounts } from "@/lib/accountAccess";
+import { cashAccountWhereForDirectory, canBrowseAllCashAccounts } from "@/lib/accountAccess";
 import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccounts";
 import { logActivity } from "@/lib/activityLog";
 import { employeesByCashAccountIds } from "@/lib/accountRelations";
@@ -11,7 +11,7 @@ export async function GET(req) {
     const user = getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    const where = await cashAccountWhereForUser(prisma, user);
+    const where = await cashAccountWhereForDirectory(prisma, user);
 
     const accounts = await prisma.account.findMany({
       where,
@@ -27,7 +27,7 @@ export async function GET(req) {
       employeeCash: empByCash[a.id] || null,
     }));
 
-    return Response.json({ success: true, accounts: withEmployee, canManageAll: canAccessAllCashAccounts(user) });
+    return Response.json({ success: true, accounts: withEmployee, canManageAll: canBrowseAllCashAccounts(user) });
   } catch (error) {
     console.error("List directory cash accounts error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

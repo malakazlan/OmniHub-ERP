@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, ChevronRight } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
 
 export function useDirectoryAdmin() {
@@ -8,29 +8,47 @@ export function useDirectoryAdmin() {
   return user?.role === "admin";
 }
 
-/** Stop row navigation when clicking actions */
-export function DirectoryAdminActions({ onEdit, onDelete }) {
+/** Row actions — right-aligned edit / delete / open */
+export function DirectoryAdminActions({ onEdit, onDelete, onView }) {
   const isAdmin = useDirectoryAdmin();
-  if (!isAdmin) return null;
 
   return (
-    <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-      <button
-        type="button"
-        title="Edit"
-        onClick={onEdit}
-        className="p-1.5 rounded-lg hover:bg-sky-50 text-slate-400 hover:text-acc-accounts transition-colors cursor-pointer"
-      >
-        <Pencil className="w-3.5 h-3.5" />
-      </button>
-      <button
-        type="button"
-        title="Delete"
-        onClick={onDelete}
-        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+    <div
+      className="flex items-center justify-end gap-1.5"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {isAdmin && (
+        <>
+          <button
+            type="button"
+            title="Edit account"
+            onClick={onEdit}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-[var(--brand-primary)] bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            <Pencil className="w-3 h-3 shrink-0" />
+            Edit
+          </button>
+          <button
+            type="button"
+            title="Delete account"
+            onClick={onDelete}
+            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-[var(--status-danger)] bg-red-50 border border-red-100 hover:bg-red-100 transition-colors cursor-pointer"
+          >
+            <Trash2 className="w-3 h-3 shrink-0" />
+            Delete
+          </button>
+        </>
+      )}
+      {onView && (
+        <button
+          type="button"
+          title="View ledger"
+          onClick={onView}
+          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 border border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      )}
     </div>
   );
 }

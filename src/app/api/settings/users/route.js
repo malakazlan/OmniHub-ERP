@@ -2,6 +2,21 @@ import prisma from "@/lib/prisma";
 import { getUserFromRequest, hashPassword } from "@/lib/auth";
 import { MODULES } from "@/lib/constants";
 import { defaultModulesForRole } from "@/lib/modulePresets";
+import { parseAssignedCashAccountId } from "@/lib/userCashAccount";
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  phone: true,
+  role: true,
+  isActive: true,
+  allowedModules: true,
+  cashAccountId: true,
+  lastLogin: true,
+  createdAt: true,
+  primaryCashAccount: { select: { id: true, name: true, code: true } },
+};
 
 export async function GET(req) {
   try {
@@ -11,17 +26,7 @@ export async function GET(req) {
     }
 
     const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        role: true,
-        isActive: true,
-        allowedModules: true,
-        lastLogin: true,
-        createdAt: true,
-      },
+      select: USER_SELECT,
       orderBy: { createdAt: "desc" },
     });
 
@@ -45,7 +50,7 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { email, name, password, phone, role, allowedModules, isActive } = body;
+    const { email, name, password, phone, role, allowedModules, isActive, cashAccountId } = body;
 
     if (!email || !name || !password) {
       return Response.json(
@@ -69,6 +74,15 @@ export async function POST(req) {
       modules = defaultModulesForRole(assignedRole);
     }
 
+    let assignedCashId = null;
+    if (cashAccountId !== undefined && cashAccountId !== null && cashAccountId !== "") {
+      try {
+        assignedCashId = await parseAssignedCashAccountId(prisma, cashAccountId);
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 400 });
+      }
+    }
+
     const newUser = await prisma.user.create({
       data: {
         email,
@@ -78,17 +92,9 @@ export async function POST(req) {
         role: assignedRole,
         allowedModules: JSON.stringify(modules),
         isActive: isActive !== undefined ? Boolean(isActive) : true,
+        cashAccountId: assignedCashId,
       },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        role: true,
-        isActive: true,
-        allowedModules: true,
-        createdAt: true,
-      },
+      select: USER_SELECT,
     });
 
     return Response.json(

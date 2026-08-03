@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
+import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -99,6 +100,18 @@ export async function POST(req) {
     const payDate = paymentDate ? new Date(paymentDate) : new Date();
     const monthLabel = `${MONTH_NAMES[parseInt(month) - 1] || month} ${year}`;
 
+    let resolvedCashAccountId = cashAccountId ? parseInt(cashAccountId, 10) : null;
+    if (cashAmt > 0) {
+      if (!resolvedCashAccountId) {
+        resolvedCashAccountId = await resolveUserCashAccountId(prisma, user.userId);
+      }
+      try {
+        await assertUserCanUseCashAccount(prisma, user, resolvedCashAccountId);
+      } catch (err) {
+        return Response.json({ error: err.message }, { status: 403 });
+      }
+    }
+
     const record = await prisma.$transaction(async (tx) => {
       const existing = await tx.salaryRecord.findUnique({
         where: {
@@ -129,7 +142,7 @@ export async function POST(req) {
           paidAmount: paid,
           cashAmount: cashAmt,
           bankAmount: bankAmt,
-          cashAccountId: cashAccountId ? parseInt(cashAccountId) : null,
+          cashAccountId: resolvedCashAccountId,
           bankAccountId: bankAccountId ? parseInt(bankAccountId) : null,
           paymentDate: paid > 0 ? payDate : null,
           paymentMethod: paymentMethod || null,
@@ -144,7 +157,7 @@ export async function POST(req) {
           paidAmount: paid,
           cashAmount: cashAmt,
           bankAmount: bankAmt,
-          cashAccountId: cashAccountId ? parseInt(cashAccountId) : null,
+          cashAccountId: resolvedCashAccountId,
           bankAccountId: bankAccountId ? parseInt(bankAccountId) : null,
           paymentDate: paid > 0 ? payDate : null,
           paymentMethod: paymentMethod || null,
@@ -194,10 +207,10 @@ export async function POST(req) {
       // and account balances stay in sync in real time.
       const prevCash = existing?.cashAmount || 0;
       const prevCashAcct = existing?.cashAccountId || null;
-      const cashDelta = cashAmt - (prevCashAcct === (cashAccountId ? parseInt(cashAccountId) : null) ? prevCash : 0);
-      if (cashAccountId && Math.abs(cashDelta) > 0.001) {
+      const cashDelta = cashAmt - (prevCashAcct === resolvedCashAccountId ? prevCash : 0);
+      if (resolvedCashAccountId && Math.abs(cashDelta) > 0.001) {
         await createLedgerEntry(tx, {
-          accountId: parseInt(cashAccountId),
+          accountId: resolvedCashAccountId,
           date: payDate,
           description: `Salary payment (cash) for ${monthLabel} — ${employee.name}`,
           reference: `SAL-${saved.id}`,
