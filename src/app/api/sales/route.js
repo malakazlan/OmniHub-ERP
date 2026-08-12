@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { logActivity } from "@/lib/activityLog";
@@ -134,7 +134,7 @@ export async function POST(req) {
     const saleDate = data.saleDate;
     const invoiceNumber = await generateDocumentNumber("sale", saleDate);
 
-    const sale = await prisma.$transaction(async (tx) => {
+    const sale = await runTransaction(async (tx) => {
       const customerAccountId = await resolveCustomerAccountId(tx, {
         companyId: data.companyId,
         shopId: data.shopId,

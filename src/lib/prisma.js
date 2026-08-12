@@ -18,6 +18,16 @@ function getPrismaClient() {
   return globalForPrisma.prismaGlobal;
 }
 
+/** Interactive transaction defaults — stock/ledger flows can exceed Prisma's 5s default. */
+export const PRISMA_TX_OPTIONS = {
+  maxWait: 15_000,
+  timeout: 30_000,
+};
+
+export async function runTransaction(callback) {
+  return getPrismaClient().$transaction(callback, PRISMA_TX_OPTIONS);
+}
+
 /** Lazy client so `next build` does not require DATABASE_URL at import time (e.g. Vercel). */
 const prisma = new Proxy(
   {},

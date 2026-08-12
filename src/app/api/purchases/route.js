@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { logActivity } from "@/lib/activityLog";
@@ -158,7 +158,7 @@ export async function POST(req) {
     const purchaseDate = data.purchaseDate;
     const purchaseNumber = await generateDocumentNumber("purchase", purchaseDate);
 
-    const purchase = await prisma.$transaction(async (tx) => {
+    const purchase = await runTransaction(async (tx) => {
       const vendorAccountId = await resolveVendorAccountId(tx, {
         farmerId: data.farmerId,
         companyId: data.companyId,
@@ -210,11 +210,23 @@ export async function POST(req) {
     if (error.message?.includes("not found") || error.message?.includes("Insufficient")) {
       return Response.json({ error: error.message }, { status: 400 });
     }
+    if (error.message?.includes("Account ") && error.message?.includes("not found")) {
+      return Response.json(
+        { error: "Vendor ledger account is missing. Retry the purchase — a new account will be created automatically." },
+        { status: 400 }
+      );
+    }
     if (error.code === "P2002") {
       return Response.json({ error: "Duplicate purchase number" }, { status: 400 });
     }
     if (error.code === "P2003") {
       return Response.json({ error: "Invalid reference (product, farmer, or company)" }, { status: 400 });
+    }
+    if (error.code === "P2028") {
+      return Response.json(
+        { error: "Purchase save timed out — check MySQL is running and retry." },
+        { status: 503 }
+      );
     }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }

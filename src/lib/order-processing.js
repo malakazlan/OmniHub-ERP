@@ -1,4 +1,5 @@
 import { createLedgerEntry } from "./ledger";
+import { generateAccountCode } from "./receipt";
 
 export function parseNum(val, fallback = 0) {
   const n = parseFloat(val);
@@ -48,38 +49,125 @@ export function shouldApplySaleEffects(status) {
   return status === "confirmed" || status === "dispatched" || status === "delivered";
 }
 
+async function accountExists(tx, accountId) {
+  if (!accountId) return false;
+  const account = await tx.account.findUnique({
+    where: { id: accountId },
+    select: { id: true },
+  });
+  return Boolean(account);
+}
+
+async function ensureFarmerLedgerAccount(tx, farmerId) {
+  const farmer = await tx.farmer.findUnique({ where: { id: farmerId } });
+  if (!farmer) return null;
+
+  if (farmer.accountId && (await accountExists(tx, farmer.accountId))) {
+    return farmer.accountId;
+  }
+
+  const code = await generateAccountCode("farmer", tx);
+  const account = await tx.account.create({
+    data: {
+      name: `${farmer.name} (Farmer)`,
+      code,
+      type: "liability",
+      category: "farmer",
+      city: farmer.city,
+      phone: farmer.phone,
+      whatsappNumber: farmer.whatsappNumber,
+      cnic: farmer.cnic,
+      address: farmer.address,
+    },
+  });
+
+  await tx.farmer.update({
+    where: { id: farmerId },
+    data: { accountId: account.id },
+  });
+
+  return account.id;
+}
+
+async function ensureCompanyLedgerAccount(tx, companyId, { forPurchase = false } = {}) {
+  const company = await tx.company.findUnique({ where: { id: companyId } });
+  if (!company) return null;
+
+  if (company.accountId && (await accountExists(tx, company.accountId))) {
+    return company.accountId;
+  }
+
+  const code = await generateAccountCode("company", tx);
+  const accountType =
+    forPurchase || company.companyType === "supplier" ? "liability" : "asset";
+
+  const account = await tx.account.create({
+    data: {
+      name: `${company.name} (Company)`,
+      code,
+      type: accountType,
+      category: "company",
+      city: company.city,
+      phone: company.phone,
+      whatsappNumber: company.whatsappNumber,
+      address: company.address,
+    },
+  });
+
+  await tx.company.update({
+    where: { id: companyId },
+    data: { accountId: account.id },
+  });
+
+  return account.id;
+}
+
+async function ensureShopLedgerAccount(tx, shopId) {
+  const shop = await tx.shop.findUnique({ where: { id: shopId } });
+  if (!shop) return null;
+
+  if (shop.accountId && (await accountExists(tx, shop.accountId))) {
+    return shop.accountId;
+  }
+
+  const code = await generateAccountCode("shop", tx);
+  const account = await tx.account.create({
+    data: {
+      name: `${shop.name} (Shop)`,
+      code,
+      type: "asset",
+      category: "shop",
+      city: shop.city,
+      phone: shop.phone,
+      whatsappNumber: shop.whatsappNumber,
+      address: shop.address,
+    },
+  });
+
+  await tx.shop.update({
+    where: { id: shopId },
+    data: { accountId: account.id },
+  });
+
+  return account.id;
+}
+
 export async function resolveVendorAccountId(tx, { farmerId, companyId }) {
   if (farmerId) {
-    const farmer = await tx.farmer.findUnique({
-      where: { id: farmerId },
-      select: { accountId: true },
-    });
-    return farmer?.accountId ?? null;
+    return ensureFarmerLedgerAccount(tx, farmerId);
   }
   if (companyId) {
-    const company = await tx.company.findUnique({
-      where: { id: companyId },
-      select: { accountId: true },
-    });
-    return company?.accountId ?? null;
+    return ensureCompanyLedgerAccount(tx, companyId, { forPurchase: true });
   }
   return null;
 }
 
 export async function resolveCustomerAccountId(tx, { companyId, shopId }) {
   if (companyId) {
-    const company = await tx.company.findUnique({
-      where: { id: companyId },
-      select: { accountId: true },
-    });
-    return company?.accountId ?? null;
+    return ensureCompanyLedgerAccount(tx, companyId, { forPurchase: false });
   }
   if (shopId) {
-    const shop = await tx.shop.findUnique({
-      where: { id: shopId },
-      select: { accountId: true },
-    });
-    return shop?.accountId ?? null;
+    return ensureShopLedgerAccount(tx, shopId);
   }
   return null;
 }

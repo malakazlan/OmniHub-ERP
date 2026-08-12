@@ -31,6 +31,8 @@ export function parseDatabaseUrl(connectionString) {
     database,
     connectTimeout: 15_000,
     connectionLimit: 10,
+    acquireTimeout: 15_000,
+    idleTimeout: 60_000,
     prepareCacheLength: 0,
   };
 }

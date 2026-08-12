@@ -25,12 +25,7 @@ export async function GET(req) {
       Object.assign(where, cashWhere);
     } else if (!category) {
       const cashWhere = await cashAccountWhereForUser(prisma, user);
-      const allowedCashIds = await prisma.account.findMany({
-        where: cashWhere,
-        select: { id: true },
-      });
-      const cashIds = allowedCashIds.map((a) => a.id);
-      where.OR = [{ category: { not: "cash" } }, { id: { in: cashIds.length ? cashIds : [-1] } }];
+      where.OR = [{ category: { not: "cash" } }, cashWhere];
     }
 
     const accounts = await prisma.account.findMany({
@@ -41,6 +36,13 @@ export async function GET(req) {
     return Response.json({ success: true, accounts });
   } catch (error) {
     console.error("List accounts error:", error);
+    const msg = String(error?.message || "");
+    if (error?.code === "ECONNRESET" || /ECONNRESET|pool timeout|connection timeout/i.test(msg)) {
+      return Response.json(
+        { error: "Database connection lost. Check that MySQL is running in XAMPP, then retry." },
+        { status: 503 }
+      );
+    }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

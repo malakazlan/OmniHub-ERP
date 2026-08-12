@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import {
   parseNum,
@@ -137,7 +137,7 @@ export async function PUT(req, { params }) {
 
     const computed = existing.status === "draft" ? buildPurchaseUpdate(body) : {};
 
-    const purchase = await prisma.$transaction(async (tx) => {
+    const purchase = await runTransaction(async (tx) => {
       let updateData = {};
 
       if (existing.status === "draft") {

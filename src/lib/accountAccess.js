@@ -19,6 +19,11 @@ export async function cashAccountWhereForUser(prisma, user) {
   const uid = authUserId(user);
   if (!uid) return { id: -1 };
 
+  const assignedId = user?.cashAccountId ? parseInt(user.cashAccountId, 10) : null;
+  if (assignedId && Number.isFinite(assignedId)) {
+    return { category: "cash", id: assignedId, isActive: true };
+  }
+
   const dbUser = await prisma.user.findUnique({
     where: { id: uid },
     select: { cashAccountId: true },

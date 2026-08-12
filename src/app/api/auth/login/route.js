@@ -63,6 +63,7 @@ export async function POST(request) {
       email: user.email,
       name: user.name,
       role: user.role,
+      cashAccountId: user.cashAccountId ?? null,
       allowedModules,
     });
 
