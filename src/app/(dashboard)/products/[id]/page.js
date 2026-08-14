@@ -1,51 +1,44 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { useAuth } from "@/context/AuthContext";
-import { PageHeader, StatCard } from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
-import { DataTable } from "@/components/ui/DataTable";
+import ProductForm from "@/components/products/ProductForm";
+import RegisterPrintView from "@/components/reports/RegisterPrintView";
+import RegisterExportToolbar from "@/components/reports/RegisterExportToolbar";
+import { useRegisterExport } from "@/hooks/useRegisterExport";
 import {
-  Package, Loader2, ArrowLeft, Pencil, Trash2, AlertTriangle,
-  Boxes, DollarSign, TrendingUp,
+  Package, Loader2, ArrowLeft, Pencil, Trash2, AlertTriangle, Boxes, DollarSign, TrendingUp,
 } from "lucide-react";
 import { formatCurrency, formatQuantity, formatDateTime } from "@/lib/formatters";
 
 const MOVEMENT_LABELS = {
-  purchase_in: { label: "Purchase In", variant: "success" },
-  sale_out: { label: "Sale Out", variant: "danger" },
-  return_in: { label: "Return In", variant: "info" },
-  return_out: { label: "Return Out", variant: "warning" },
-  adjustment: { label: "Adjustment", variant: "neutral" },
-  transfer: { label: "Transfer", variant: "info" },
+  purchase_in: "Purchase in",
+  sale_out: "Sale out",
+  return_in: "Return in",
+  return_out: "Return out",
+  adjustment: "Adjustment",
+  transfer: "Transfer",
 };
-
-function DetailRow({ label, value, mono = false }) {
-  return (
-    <div className="flex justify-between items-start gap-4 py-2 border-b border-slate-100 last:border-0">
-      <span className="text-xs text-slate-500 shrink-0">{label}</span>
-      <span className={`text-xs font-semibold text-slate-900 text-right ${mono ? "font-mono" : ""}`}>{value ?? "—"}</span>
-    </div>
-  );
-}
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { showToast } = useToast();
   const { user } = useAuth();
+  const printRef = useRef(null);
+
   const [product, setProduct] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(null);
+  const [companySettings, setCompanySettings] = useState(null);
 
   const fetchProduct = async () => {
     try {
@@ -67,26 +60,49 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     if (id) fetchProduct();
+    fetch("/api/settings").then((r) => r.json()).then((d) => { if (d.settings) setCompanySettings(d.settings); }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const movements = product?.stockMovements || [];
+  const printCols = useMemo(
+    () => [
+      { key: "date", label: "Date", get: (r) => formatDateTime(r.createdAt), pdfWidth: 38 },
+      { key: "type", label: "Type", get: (r) => MOVEMENT_LABELS[r.movementType] || r.movementType, pdfWidth: 28 },
+      { key: "qty", label: "Qty", align: "right", pdfWidth: 22, get: (r) => formatQuantity(r.quantity, product?.unit) },
+      {
+        key: "range",
+        label: "Before → After",
+        pdfWidth: 40,
+        get: (r) => `${formatQuantity(r.previousStock, product?.unit)} → ${formatQuantity(r.newStock, product?.unit)}`,
+      },
+      { key: "notes", label: "Notes", get: (r) => r.notes || "—", pdfWidth: 50 },
+    ],
+    [product?.unit]
+  );
+
+  const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
+    printRef,
+    title: product ? `Product — ${product.name}` : "Product",
+    subtitle: product?.sku ? `SKU ${product.sku}` : "",
+    company: companySettings,
+    columns: printCols,
+    rows: movements,
+    filename: product ? `product-${product.sku || product.id}.pdf` : "product.pdf",
+  });
 
   const openEdit = () => {
     setForm({
       name: product.name || "", categoryId: product.categoryId || "", unit: product.unit || "kg",
       bagWeight: product.bagWeight ?? "34", costPrice: product.costPrice ?? "", salePrice: product.salePrice ?? "",
-      minimumStock: product.minimumStock ?? "", description: product.description || "", isActive: product.isActive,
+      minimumStock: product.minimumStock ?? "", currentStock: product.currentStock ?? "",
+      description: product.description || "", isActive: product.isActive,
     });
     setModalOpen(true);
   };
 
-  const handleChange = (field) => (e) => {
-    const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setForm({ ...form, [field]: val });
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.categoryId) { showToast("Product name and category are required", "warning"); return; }
     setSubmitting(true);
     try {
       const res = await fetch(`/api/products/${id}`, {
@@ -99,7 +115,7 @@ export default function ProductDetailPage() {
         showToast("Product updated!", "success");
         setModalOpen(false);
         fetchProduct();
-      } else showToast(data.error || "Failed to update product", "error");
+      } else showToast(data.error || "Failed to update", "error");
     } catch {
       showToast("Error processing request", "error");
     } finally {
@@ -108,35 +124,28 @@ export default function ProductDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete product "${product.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete product "${product.name}"?`)) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
         showToast(data.message || "Product removed", "success");
         router.push("/products");
-      } else showToast(data.error || "Failed to delete product", "error");
+      } else showToast(data.error || "Failed to delete", "error");
     } catch {
       showToast("Error processing request", "error");
     }
   };
 
   if (loading) {
-    return (
-      <div className="h-96 flex items-center justify-center page-enter">
-        <Loader2 className="w-8 h-8 text-acc-products animate-spin" />
-      </div>
-    );
+    return <div className="h-96 flex items-center justify-center erp-products-surface"><Loader2 className="w-8 h-8 text-violet-600 animate-spin" /></div>;
   }
 
   if (!product) {
     return (
-      <div className="page-enter space-y-6">
-        <PageHeader module="products" title="Product Not Found" icon={Package} breadcrumbs={[{ label: "Products", href: "/products" }, { label: "Not Found" }]} />
-        <Card><CardContent className="py-12 text-center">
-          <p className="text-slate-500 mb-4">This product could not be found.</p>
-          <Link href="/products"><Button variant="outline" className="border-slate-200 text-slate-700"><ArrowLeft className="w-4 h-4" /> Back to Products</Button></Link>
-        </CardContent></Card>
+      <div className="erp-products-surface p-8 text-center">
+        <p className="text-slate-500 mb-4">Product not found</p>
+        <Link href="/products"><Button variant="outline"><ArrowLeft className="w-4 h-4" /> Back</Button></Link>
       </div>
     );
   }
@@ -144,163 +153,96 @@ export default function ProductDetailPage() {
   const isLow = product.currentStock <= product.minimumStock;
   const stockValue = (product.currentStock || 0) * (product.costPrice || 0);
 
-  const movementColumns = [
-    { header: "Date", accessor: "createdAt", cell: (row) => <span className="text-xs text-slate-500">{formatDateTime(row.createdAt)}</span> },
-    {
-      header: "Type", accessor: "movementType",
-      cell: (row) => {
-        const m = MOVEMENT_LABELS[row.movementType] || { label: row.movementType, variant: "neutral" };
-        return <Badge variant={m.variant}>{m.label}</Badge>;
-      },
-    },
-    { header: "Quantity", accessor: "quantity", cell: (row) => <span className="font-mono text-xs font-bold text-slate-900">{formatQuantity(row.quantity, product.unit)}</span> },
-    { header: "Before → After", accessor: "newStock", cell: (row) => <span className="font-mono text-xs text-slate-500">{formatQuantity(row.previousStock, product.unit)} → {formatQuantity(row.newStock, product.unit)}</span> },
-    { header: "Notes", accessor: "notes", cell: (row) => <span className="text-xs text-slate-500">{row.notes || "—"}</span> },
-  ];
-
   return (
-    <div className="space-y-8 page-enter pb-10">
-      <PageHeader
-        module="products"
-        title={product.name}
-        description={product.sku ? `SKU: ${product.sku}` : "Product profile & stock history"}
-        icon={Package}
-        breadcrumbs={[{ label: "Products", href: "/products" }, { label: product.name }]}
-        actions={
-          <div className="flex items-center gap-2">
-            <Badge variant="info">{product.category?.name || "—"}</Badge>
-            <Badge variant={product.isActive ? "success" : "neutral"}>{product.isActive ? "Active" : "Inactive"}</Badge>
-            <Button variant="outline" onClick={openEdit} className="border-slate-200 text-slate-700"><Pencil className="w-4 h-4" /> Edit</Button>
-            {user?.role === "admin" && (
-              <Button variant="outline" onClick={handleDelete} className="border-red-200 text-red-600 hover:bg-red-50"><Trash2 className="w-4 h-4" /> Delete</Button>
-            )}
-            <Link href="/products"><Button variant="outline" className="border-slate-200 text-slate-700"><ArrowLeft className="w-4 h-4" /> Back</Button></Link>
-          </div>
-        }
-      />
+    <div className="erp-products-surface page-enter pb-8">
+      <div className="erp-products-page space-y-5">
+        <Link href="/products" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> Products</Link>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          module="products" label="Current Stock" icon={Boxes}
-          value={formatQuantity(product.currentStock, product.unit)}
-          valueClassName={isLow ? "text-red-500" : "text-emerald-600"}
-          subtext={isLow ? "Below minimum threshold" : undefined}
-        />
-        <StatCard module="products" label="Cost Price" value={formatCurrency(product.costPrice)} icon={DollarSign} />
-        <StatCard module="products" label="Sale Price" value={formatCurrency(product.salePrice)} icon={TrendingUp} />
-        <StatCard module="products" label="Stock Value" value={formatCurrency(stockValue)} icon={AlertTriangle} valueClassName={isLow ? "text-red-500" : ""} />
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
-          <Card>
-            <CardHeader><h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Boxes className="w-4 h-4 text-acc-products" /> Stock Movement History</h2></CardHeader>
-            <CardContent>
-              {(product.stockMovements || []).length === 0 ? (
-                <p className="text-sm text-slate-500 py-6 text-center">No stock movements recorded yet.</p>
-              ) : (
-                <DataTable columns={movementColumns} data={product.stockMovements} />
+        <div className="erp-prod-detail-panel">
+          <div className="erp-prod-detail-head">
+            <div>
+              <h1 className="erp-prod-page-title">{product.name}</h1>
+              <div className="erp-prod-detail-meta">
+                <span>{product.sku || "No SKU"}</span>
+                <span>{product.category?.name}</span>
+                <span className={product.isActive ? "text-emerald-700" : "text-slate-500"}>{product.isActive ? "Active" : "Inactive"}</span>
+              </div>
+            </div>
+            <div className="erp-prod-detail-actions">
+              <Button variant="outline" onClick={openEdit} className="border-slate-200"><Pencil className="w-4 h-4" /> Edit</Button>
+              {user?.role === "admin" && (
+                <Button variant="outline" onClick={handleDelete} className="border-red-200 text-red-600"><Trash2 className="w-4 h-4" /> Delete</Button>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {product.description && (
-            <Card>
-              <CardHeader><h2 className="text-sm font-bold text-slate-900">Description</h2></CardHeader>
-              <CardContent><p className="text-sm text-slate-600 whitespace-pre-wrap">{product.description}</p></CardContent>
-            </Card>
-          )}
+          <div className="erp-prod-stats erp-prod-stats-inline">
+            <div className="erp-prod-stat"><p className="erp-prod-stat-label">Stock</p><p className={`erp-prod-stat-value ${isLow ? "text-red-600" : "text-emerald-700"}`}>{formatQuantity(product.currentStock, product.unit)}</p></div>
+            <div className="erp-prod-stat"><p className="erp-prod-stat-label">Cost</p><p className="erp-prod-stat-value">{formatCurrency(product.costPrice)}</p></div>
+            <div className="erp-prod-stat"><p className="erp-prod-stat-label">Sale</p><p className="erp-prod-stat-value">{formatCurrency(product.salePrice)}</p></div>
+            <div className="erp-prod-stat"><p className="erp-prod-stat-label">Stock value</p><p className="erp-prod-stat-value">{formatCurrency(stockValue)}</p></div>
+          </div>
+
+          <div className="erp-prod-detail-info">
+            <div><span className="label">Unit</span><span>{product.unit}</span></div>
+            {product.unit === "bag" && <div><span className="label">Bag weight</span><span>{product.bagWeight || 34} kg</span></div>}
+            <div><span className="label">Min stock</span><span>{formatQuantity(product.minimumStock, product.unit)}</span></div>
+            {isLow && <div className="erp-prod-low-banner"><AlertTriangle className="w-4 h-4" /> Below minimum stock threshold</div>}
+            {product.description && <div className="erp-prod-desc"><span className="label">Description</span><p>{product.description}</p></div>}
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader><h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Package className="w-4 h-4 text-acc-products" /> Details</h2></CardHeader>
-            <CardContent>
-              <DetailRow label="SKU" value={product.sku} mono />
-              <DetailRow label="Category" value={product.category?.name} />
-              <DetailRow label="Unit" value={product.unit} />
-              {product.unit === "bag" && <DetailRow label="Bag Weight" value={`${product.bagWeight || 34} kg`} />}
-              <DetailRow label="Minimum Stock" value={formatQuantity(product.minimumStock, product.unit)} />
-            </CardContent>
-          </Card>
+        <div className="erp-prod-register">
+          <div className="erp-prod-register-head">
+            <div>
+              <p className="erp-prod-register-title flex items-center gap-2"><Boxes className="w-4 h-4 text-violet-600" /> Stock movements</p>
+              <p className="erp-prod-register-meta">{movements.length} entries</p>
+            </div>
+            <RegisterExportToolbar onPrint={onPrint} onExportPdf={onExportPdf} pdfLoading={pdfLoading} disabled={movements.length === 0} resultCount={movements.length} label="movements" />
+          </div>
+
+          {movements.length === 0 ? (
+            <div className="erp-ac-empty py-12 text-center text-sm text-slate-500">No stock movements recorded yet.</div>
+          ) : (
+            <div className="erp-accounts-grid-wrap">
+              <div className="erp-accounts-grid-scroll">
+                <table className="erp-ledger-grid erp-prod-grid">
+                  <thead>
+                    <tr>
+                      <th className="erp-lg-th erp-prod-th">Date</th>
+                      <th className="erp-lg-th erp-prod-th">Type</th>
+                      <th className="erp-lg-th erp-prod-th erp-lg-th-money">Quantity</th>
+                      <th className="erp-lg-th erp-prod-th">Before → After</th>
+                      <th className="erp-lg-th erp-prod-th">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {movements.map((m) => (
+                      <tr key={m.id} className="erp-lg-row">
+                        <td className="erp-lg-td erp-lg-td-date">{formatDateTime(m.createdAt)}</td>
+                        <td className="erp-lg-td"><span className="erp-prod-move-pill">{MOVEMENT_LABELS[m.movementType] || m.movementType}</span></td>
+                        <td className="erp-lg-td erp-lg-td-money">{formatQuantity(m.quantity, product.unit)}</td>
+                        <td className="erp-lg-td text-xs font-mono text-slate-600">{formatQuantity(m.previousStock, product.unit)} → {formatQuantity(m.newStock, product.unit)}</td>
+                        <td className="erp-lg-td text-xs text-slate-500">{m.notes || "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {form && (
-        <Modal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          title="Edit Product"
-          size="md"
-          footer={
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-lg hover:bg-white cursor-pointer"
-              >
-                Cancel
-              </button>
-              <Button type="submit" form="edit-product-form" disabled={submitting} className="bg-acc-products hover:bg-violet-600 border-0 px-5 py-2 text-sm">
-                {submitting ? <><Loader2 className="w-3.5 h-3.5 animate-spin" />Saving…</> : "Save Changes"}
-              </Button>
-            </div>
-          }
-        >
-          <form id="edit-product-form" onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-500">Product Name *</label>
-                <input type="text" value={form.name} onChange={handleChange("name")} required className="input-field text-xs" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Category *</label>
-                <select value={form.categoryId} onChange={handleChange("categoryId")} required className="input-field text-xs">
-                  <option value="">Select category</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Unit</label>
-                <select value={form.unit} onChange={handleChange("unit")} className="input-field text-xs">
-                  <option value="kg">Kilogram (Kg)</option>
-                  <option value="ton">Ton</option>
-                  <option value="bag">Bag</option>
-                  <option value="piece">Piece</option>
-                </select>
-              </div>
-              {form.unit === "bag" && (
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500">Bag Weight (Kg)</label>
-                  <input type="number" value={form.bagWeight} onChange={handleChange("bagWeight")} className="input-field text-xs" />
-                </div>
-              )}
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Cost Price (₨)</label>
-                <input type="number" value={form.costPrice} onChange={handleChange("costPrice")} className="input-field text-xs" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Sale Price (₨)</label>
-                <input type="number" value={form.salePrice} onChange={handleChange("salePrice")} className="input-field text-xs" />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Minimum Stock Alert</label>
-                <input type="number" value={form.minimumStock} onChange={handleChange("minimumStock")} className="input-field text-xs" />
-              </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-500">Description</label>
-                <textarea value={form.description} onChange={handleChange("description")} className="input-field text-xs h-16 resize-none" />
-              </div>
-              <div className="md:col-span-2">
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                  <input type="checkbox" checked={form.isActive} onChange={handleChange("isActive")} className="rounded border-slate-300" />
-                  Active
-                </label>
-              </div>
-            </div>
-          </form>
+        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Edit product" size="lg">
+          <ProductForm form={form} onChange={setForm} categories={categories} submitting={submitting} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} submitLabel="Save changes" />
         </Modal>
       )}
+
+      <div className="erp-register-print-host" aria-hidden>
+        <RegisterPrintView ref={printRef} title={`Product — ${product.name}`} subtitle={`SKU ${product.sku || "—"} · Stock ${formatQuantity(product.currentStock, product.unit)}`} company={companySettings} columns={printCols} rows={movements} />
+      </div>
     </div>
   );
 }

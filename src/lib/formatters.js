@@ -9,6 +9,27 @@ export function formatCurrency(amount, showSymbol = true) {
   return showSymbol ? `${CURRENCY_SYMBOL} ${formatted}` : formatted;
 }
 
+/** ASCII-safe currency for PDF export (jsPDF standard fonts cannot render ₨). */
+export function formatCurrencyForPdf(amount) {
+  const num = Number(amount) || 0;
+  const formatted = num.toLocaleString("en-PK", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  });
+  return `Rs. ${formatted}`;
+}
+
+/** Strip/replace Unicode characters that break jsPDF Helvetica output. */
+export function pdfSafeText(value) {
+  if (value == null || value === "") return "-";
+  return String(value)
+    .replace(/\u20A8/g, "Rs.")
+    .replace(/\u2014/g, "-")
+    .replace(/\u2026/g, "...")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"');
+}
+
 export function formatDate(date, options = {}) {
   if (!date) return "—";
   const d = new Date(date);

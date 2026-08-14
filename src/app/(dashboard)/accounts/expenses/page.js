@@ -1,16 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
-import { PageHeader, StatCard } from "@/components/layout/PageHeader";
-import { DataTable } from "@/components/ui/DataTable";
-import { Card, CardContent } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
-import { Wallet2, Plus, Loader2, ArrowLeft, Tags, Trash2 } from "lucide-react";
+import ExpenseForm from "@/components/accounts/ExpenseForm";
+import ExpensesRegister from "@/components/accounts/ExpensesRegister";
+import RegisterPrintView from "@/components/reports/RegisterPrintView";
+import RegisterExportToolbar from "@/components/reports/RegisterExportToolbar";
+import { useRegisterExport } from "@/hooks/useRegisterExport";
+import {
+  Wallet2, Plus, Loader2, Tags, Search, ArrowLeft,
+} from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { useDefaultCashAccountId, applyDefaultCashAccount } from "@/hooks/useDefaultCashAccount";
+
+const EXPENSE_PRINT_COLS = [
+  { key: "no", label: "Expense #", get: (r) => r.expenseNumber, pdfWidth: 28 },
+  { key: "title", label: "Title", get: (r) => r.expenseTitle, pdfWidth: 45 },
+  { key: "cat", label: "Category", get: (r) => r.category?.name || "—", pdfWidth: 28 },
+  { key: "pay", label: "Payment", get: (r) => r.paymentMethod, pdfWidth: 22 },
+  { key: "amt", label: "Amount", align: "right", get: (r) => formatCurrency(r.amount), pdfWidth: 28, tone: "danger" },
+  { key: "date", label: "Date", get: (r) => formatDate(r.expenseDate), pdfWidth: 24 },
+];
 
 const emptyForm = {
   expenseDate: new Date().toISOString().slice(0, 10),
@@ -27,6 +40,7 @@ const emptyForm = {
 export default function ExpensesPage() {
   const { showToast } = useToast();
   const defaultCashAccountId = useDefaultCashAccountId();
+  const printRef = useRef(null);
   const [expenses, setExpenses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cashAccounts, setCashAccounts] = useState([]);
@@ -35,8 +49,10 @@ export default function ExpensesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [companySettings, setCompanySettings] = useState(null);
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     try {
       const res = await fetch("/api/expenses");
       const data = await res.json();
@@ -47,7 +63,7 @@ export default function ExpensesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
   useEffect(() => {
     const load = async () => {
@@ -69,7 +85,8 @@ export default function ExpensesPage() {
     };
     load();
     fetchExpenses();
-  }, []);
+    fetch("/api/settings").then((r) => r.json()).then((d) => { if (d.settings) setCompanySettings(d.settings); }).catch(() => {});
+  }, [fetchExpenses]);
 
   const openCreate = () => {
     setForm(applyDefaultCashAccount(emptyForm, defaultCashAccountId));
@@ -92,10 +109,6 @@ export default function ExpensesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.expenseTitle || (!form.cashAmount && !form.bankAmount)) {
-      showToast("Title and amount are required", "warning");
-      return;
-    }
     setSubmitting(true);
     try {
       const res = await fetch("/api/expenses", {
@@ -116,75 +129,70 @@ export default function ExpensesPage() {
     }
   };
 
-  const totalAmount = expenses.reduce((s, e) => s + (e.amount || 0), 0);
-  const thisMonth = expenses.filter((e) => {
-    const d = new Date(e.expenseDate);
-    const now = new Date();
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  }).reduce((s, e) => s + e.amount, 0);
+  const filteredExpenses = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return expenses;
+    return expenses.filter(
+      (e) =>
+        e.expenseTitle?.toLowerCase().includes(q) ||
+        e.expenseNumber?.toLowerCase().includes(q) ||
+        e.category?.name?.toLowerCase().includes(q) ||
+        e.description?.toLowerCase().includes(q)
+    );
+  }, [expenses, searchQuery]);
 
-  const columns = [
-    {
-      header: "Expense #",
-      accessor: "expenseNumber",
-      cell: (row) => <span className="font-mono text-xs font-bold text-acc-accounts">{row.expenseNumber}</span>,
-    },
-    {
-      header: "Title",
-      accessor: "expenseTitle",
-      cell: (row) => (
-        <div>
-          <p className="font-semibold text-slate-900 text-sm">{row.expenseTitle}</p>
-          {row.category && <p className="text-[10px] text-slate-500">{row.category.name}</p>}
-        </div>
-      ),
-    },
-    {
-      header: "Method",
-      accessor: "paymentMethod",
-      cell: (row) => <span className="text-xs capitalize text-slate-600">{row.paymentMethod}</span>,
-    },
-    {
-      header: "Amount",
-      accessor: "amount",
-      cell: (row) => <span className="font-mono text-xs font-bold text-red-600">{formatCurrency(row.amount)}</span>,
-    },
-    {
-      header: "Date",
-      accessor: "expenseDate",
-      cell: (row) => <span className="text-xs text-slate-500">{formatDate(row.expenseDate)}</span>,
-    },
-    {
-      header: "",
-      accessor: "id",
-      cell: (row) => (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); handleDelete(row); }}
-          className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
-      ),
-    },
-  ];
+  const totalAmount = expenses.reduce((s, e) => s + (e.amount || 0), 0);
+  const thisMonth = expenses
+    .filter((e) => {
+      const d = new Date(e.expenseDate);
+      const now = new Date();
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    })
+    .reduce((s, e) => s + e.amount, 0);
+  const filteredTotal = filteredExpenses.reduce((s, e) => s + (e.amount || 0), 0);
+
+  const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
+    printRef,
+    title: "Expense Register",
+    subtitle: `${filteredExpenses.length} expenses`,
+    company: companySettings,
+    columns: EXPENSE_PRINT_COLS,
+    rows: filteredExpenses,
+    footers: [{
+      label: "Total",
+      value: formatCurrency(filteredTotal),
+      valueColumn: "amt",
+      labelColumn: "pay",
+    }],
+    filename: `expenses-${new Date().toISOString().slice(0, 10)}.pdf`,
+  });
+
+  if (loading && expenses.length === 0) {
+    return (
+      <div className="min-h-[400px] flex items-center justify-center erp-finance-surface">
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8 page-enter">
-      <PageHeader
-        module="accounts"
-        title="Expenses"
-        description="Record and track day-to-day business expenses."
-        icon={Wallet2}
-        breadcrumbs={[
-          { label: "Accounting", href: "/accounts" },
-          { label: "Expenses" },
-        ]}
-        actions={
-          <div className="flex items-center gap-2">
+    <div className="erp-finance-surface page-enter pb-8">
+      <div className="erp-finance-page space-y-5">
+        <header className="erp-fin-page-header">
+          <div>
+            <div className="erp-fin-page-badge">
+              <Wallet2 className="w-3.5 h-3.5" />
+              Finance · Expenses
+            </div>
+            <h1 className="erp-fin-page-title">Expense register</h1>
+            <p className="erp-fin-page-desc">
+              Record day-to-day business expenses with cash, bank, or split payment settlement.
+            </p>
+          </div>
+          <div className="erp-fin-header-actions">
             <Link href="/accounts">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <ArrowLeft className="w-4 h-4" /> Back
+                <ArrowLeft className="w-4 h-4" /> Accounts
               </Button>
             </Link>
             <Link href="/accounts/expenses/categories">
@@ -192,147 +200,110 @@ export default function ExpensesPage() {
                 <Tags className="w-4 h-4" /> Categories
               </Button>
             </Link>
-            <Button onClick={openCreate} className="bg-acc-accounts hover:bg-indigo-700 border-0">
-              <Plus className="w-4 h-4" /> Add Expense
+            <Button onClick={openCreate} className="bg-acc-accounts border-0">
+              <Plus className="w-4 h-4" /> Add expense
             </Button>
           </div>
-        }
-      />
+        </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <StatCard module="accounts" label="Total Expenses" value={formatCurrency(totalAmount)} icon={Wallet2} valueClassName="text-red-500" />
-        <StatCard module="accounts" label="This Month" value={formatCurrency(thisMonth)} icon={Wallet2} />
+        <div className="erp-fin-stats">
+          <div className="erp-fin-stat">
+            <div className="erp-fin-stat-icon"><Wallet2 className="w-4 h-4" /></div>
+            <div>
+              <p className="erp-fin-stat-label">Total expenses</p>
+              <p className="erp-fin-stat-value is-expense">{formatCurrency(totalAmount)}</p>
+            </div>
+          </div>
+          <div className="erp-fin-stat">
+            <div className="erp-fin-stat-icon"><Wallet2 className="w-4 h-4" /></div>
+            <div>
+              <p className="erp-fin-stat-label">This month</p>
+              <p className="erp-fin-stat-value is-expense">{formatCurrency(thisMonth)}</p>
+            </div>
+          </div>
+          <div className="erp-fin-stat">
+            <div className="erp-fin-stat-icon"><Tags className="w-4 h-4" /></div>
+            <div>
+              <p className="erp-fin-stat-label">Categories</p>
+              <p className="erp-fin-stat-value">{categories.length}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="erp-fin-toolbar">
+          <div className="erp-fin-search-wrap">
+            <Search className="erp-fin-search-icon" />
+            <input
+              type="text"
+              placeholder="Search title, number, category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="erp-fin-register">
+          <div className="erp-fin-register-head">
+            <div>
+              <p className="erp-fin-register-title">Expense list</p>
+              <p className="erp-fin-register-meta">
+                {filteredExpenses.length} record{filteredExpenses.length === 1 ? "" : "s"}
+                {searchQuery ? ` · “${searchQuery}”` : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="erp-ac-section-balance">
+                <p className="erp-ac-section-balance-label">Filtered total</p>
+                <p className="erp-ac-section-balance-value is-neg">{formatCurrency(filteredTotal)}</p>
+              </div>
+              <RegisterExportToolbar
+                onPrint={onPrint}
+                onExportPdf={onExportPdf}
+                pdfLoading={pdfLoading}
+                disabled={filteredExpenses.length === 0}
+                resultCount={filteredExpenses.length}
+              />
+            </div>
+          </div>
+
+          <ExpensesRegister
+            rows={filteredExpenses}
+            loading={loading}
+            onDelete={handleDelete}
+            totalAmount={filteredTotal}
+          />
+        </div>
       </div>
 
-      <Card>
-        <CardContent>
-          {loading ? (
-            <div className="h-48 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-acc-accounts animate-spin" />
-            </div>
-          ) : (
-            <DataTable columns={columns} data={expenses} searchKey="expenseTitle" placeholder="Search expenses..." />
-          )}
-        </CardContent>
-      </Card>
-
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Add Expense" size="lg">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Title *</label>
-              <input
-                type="text"
-                value={form.expenseTitle}
-                onChange={(e) => setForm({ ...form, expenseTitle: e.target.value })}
-                required
-                className="input-field"
-                placeholder="e.g. Office rent for July"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Category</label>
-              <select
-                value={form.categoryId}
-                onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-                className="input-field"
-              >
-                <option value="">— Uncategorized —</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Date</label>
-              <input
-                type="date"
-                value={form.expenseDate}
-                onChange={(e) => setForm({ ...form, expenseDate: e.target.value })}
-                className="input-field"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Cash Amount</label>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                value={form.cashAmount}
-                onChange={(e) => setForm({ ...form, cashAmount: e.target.value })}
-                className="input-field"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Cash Account</label>
-              <select
-                value={form.cashAccountId}
-                onChange={(e) => setForm({ ...form, cashAccountId: e.target.value })}
-                className="input-field"
-              >
-                <option value="">— None —</option>
-                {cashAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Bank Amount</label>
-              <input
-                type="number"
-                min="0"
-                step="any"
-                value={form.bankAmount}
-                onChange={(e) => setForm({ ...form, bankAmount: e.target.value })}
-                className="input-field"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Bank Account</label>
-              <select
-                value={form.bankAccountId}
-                onChange={(e) => setForm({ ...form, bankAccountId: e.target.value })}
-                className="input-field"
-              >
-                <option value="">— None —</option>
-                {bankAccounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Description</label>
-              <input
-                type="text"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="input-field"
-              />
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Notes</label>
-              <textarea
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                className="input-field h-16 resize-none"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={() => setModalOpen(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-900 border border-slate-200 cursor-pointer transition-colors"
-            >
-              Cancel
-            </button>
-            <Button type="submit" disabled={submitting} className="bg-acc-accounts hover:bg-indigo-700 border-0">
-              {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-              Save Expense
-            </Button>
-          </div>
-        </form>
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Record expense" size="lg">
+        <ExpenseForm
+          form={form}
+          onChange={setForm}
+          categories={categories}
+          cashAccounts={cashAccounts}
+          bankAccounts={bankAccounts}
+          defaultCashAccountId={defaultCashAccountId}
+          submitting={submitting}
+          onSubmit={handleSubmit}
+          onCancel={() => setModalOpen(false)}
+        />
       </Modal>
+
+      <div className="erp-register-print-host" aria-hidden>
+        <RegisterPrintView
+          ref={printRef}
+          title="Expense Register"
+          company={companySettings}
+          columns={EXPENSE_PRINT_COLS}
+          rows={filteredExpenses}
+          footers={[{
+            label: "Total",
+            value: formatCurrency(filteredTotal),
+            valueColumn: "amt",
+            labelColumn: "pay",
+          }]}
+        />
+      </div>
     </div>
   );
 }

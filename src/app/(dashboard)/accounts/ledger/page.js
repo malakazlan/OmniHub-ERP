@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useReactToPrint } from "react-to-print";
 import { useToast } from "@/context/ToastContext";
 import { StatCard } from "@/components/layout/PageHeader";
@@ -43,6 +44,7 @@ const CATEGORY_LABELS = {
 
 export default function GeneralLedgerPage() {
   const { showToast } = useToast();
+  const searchParams = useSearchParams();
   const [accounts, setAccounts] = useState([]);
   const [selectedAccountId, setSelectedAccountId] = useState("");
   const [account, setAccount] = useState(null);
@@ -86,6 +88,11 @@ export default function GeneralLedgerPage() {
       .then((d) => { if (d.settings) setCompanySettings(d.settings); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("accountId");
+    if (fromUrl) setSelectedAccountId(fromUrl);
+  }, [searchParams]);
 
   const fetchLedger = useCallback(async () => {
     setLoading(true);

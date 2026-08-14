@@ -40,20 +40,44 @@ export async function PUT(req, { params }) {
     const product = await prisma.product.findUnique({ where: { id: productId } });
     if (!product) return Response.json({ error: "Product not found" }, { status: 404 });
 
-    const updated = await prisma.product.update({
-      where: { id: productId },
-      data: {
-        name: body.name,
-        categoryId: body.categoryId ? parseInt(body.categoryId) : product.categoryId,
-        unit: body.unit,
-        bagWeight: body.unit === "bag" ? (parseFloat(body.bagWeight) || 34) : null,
-        costPrice: body.costPrice !== undefined ? parseFloat(body.costPrice) : product.costPrice,
-        salePrice: body.salePrice !== undefined ? parseFloat(body.salePrice) : product.salePrice,
-        minimumStock: body.minimumStock !== undefined ? parseFloat(body.minimumStock) : product.minimumStock,
-        description: body.description,
-        isActive: body.isActive !== undefined ? body.isActive : product.isActive,
-      },
-      include: { category: true },
+    const previousStock = product.currentStock;
+    const nextStock =
+      body.currentStock !== undefined && body.currentStock !== ""
+        ? parseFloat(body.currentStock)
+        : previousStock;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.product.update({
+        where: { id: productId },
+        data: {
+          name: body.name,
+          categoryId: body.categoryId ? parseInt(body.categoryId) : product.categoryId,
+          unit: body.unit,
+          bagWeight: body.unit === "bag" ? (parseFloat(body.bagWeight) || 34) : null,
+          costPrice: body.costPrice !== undefined ? parseFloat(body.costPrice) : product.costPrice,
+          salePrice: body.salePrice !== undefined ? parseFloat(body.salePrice) : product.salePrice,
+          minimumStock: body.minimumStock !== undefined ? parseFloat(body.minimumStock) : product.minimumStock,
+          currentStock: Number.isFinite(nextStock) ? nextStock : previousStock,
+          description: body.description,
+          isActive: body.isActive !== undefined ? body.isActive : product.isActive,
+        },
+        include: { category: true },
+      });
+
+      if (Number.isFinite(nextStock) && nextStock !== previousStock) {
+        await tx.stockMovement.create({
+          data: {
+            productId: productId,
+            movementType: "adjustment",
+            quantity: Math.abs(nextStock - previousStock),
+            previousStock,
+            newStock: nextStock,
+            notes: "Stock adjusted from product edit",
+          },
+        });
+      }
+
+      return result;
     });
 
     return Response.json({ success: true, product: updated });

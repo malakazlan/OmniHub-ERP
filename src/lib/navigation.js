@@ -46,6 +46,7 @@ export const NAV_SECTIONS = [
     title: "Inventory",
     items: [
       { slug: "products", label: "Products", href: "/products", icon: Package, keywords: "stock feed inventory" },
+      { slug: "products", label: "Inventory Report", href: "/reports/inventory", icon: BarChart3, keywords: "stock levels valuation movements report" },
     ],
   },
   {
@@ -64,6 +65,7 @@ export const DASHBOARD_SHORTCUTS = [
   { slug: "companies", label: "Companies", href: "/companies" },
   { slug: "shops", label: "Shops", href: "/shops" },
   { slug: "products", label: "Products", href: "/products" },
+  { slug: "products", label: "Inventory Report", href: "/reports/inventory" },
   { slug: "purchases", label: "Purchases", href: "/purchases" },
   { slug: "sales", label: "Sales", href: "/sales" },
   { slug: "orders", label: "Orders", href: "/orders" },
@@ -184,6 +186,9 @@ export const NAV_THEME = {
 export function isNavItemActive(pathname, href) {
   if (href === "/accounts") {
     return pathname === "/accounts";
+  }
+  if (href === "/reports") {
+    return pathname === "/reports";
   }
   if (href === "/transport") {
     return pathname === "/transport" || pathname.startsWith("/transport/new");
