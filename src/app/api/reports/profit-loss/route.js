@@ -23,17 +23,27 @@ export async function GET(req) {
         expenseDateFilter.expenseDate.gte = new Date(from);
       }
       if (to) {
-        saleDateFilter.saleDate.lte = new Date(to);
-        purchaseDateFilter.purchaseDate.lte = new Date(to);
-        expenseDateFilter.expenseDate.lte = new Date(to);
+        const end = new Date(to);
+        end.setHours(23, 59, 59, 999);
+        saleDateFilter.saleDate.lte = end;
+        purchaseDateFilter.purchaseDate.lte = end;
+        expenseDateFilter.expenseDate.lte = end;
+        transportDateFilter.createdAt.lte = end;
       }
+    }
+
+    const transportDateFilter = {};
+    if (from || to) {
+      transportDateFilter.createdAt = {};
+      if (from) transportDateFilter.createdAt.gte = new Date(from);
+      if (to) transportDateFilter.createdAt.lte = new Date(to);
     }
 
     const [salesAgg, purchasesAgg, expensesAgg, transportAgg, salesByMonth] = await Promise.all([
       prisma.saleOrder.aggregate({ _sum: { totalAmount: true, subtotal: true }, where: { status: { not: "cancelled" }, ...saleDateFilter } }),
       prisma.purchaseOrder.aggregate({ _sum: { totalAmount: true }, where: { status: { not: "cancelled" }, ...purchaseDateFilter } }),
       prisma.expense.aggregate({ _sum: { amount: true }, where: { status: { not: "rejected" }, ...expenseDateFilter } }),
-      prisma.transport.aggregate({ _sum: { totalCharges: true }, where: { status: { not: "cancelled" } } }),
+      prisma.transport.aggregate({ _sum: { totalCharges: true }, where: { status: { not: "cancelled" }, ...transportDateFilter } }),
       prisma.saleOrder.findMany({
         where: { status: { not: "cancelled" }, ...saleDateFilter },
         select: { saleDate: true, totalAmount: true },

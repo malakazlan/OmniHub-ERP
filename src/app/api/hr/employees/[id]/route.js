@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest, hashPassword } from "@/lib/auth";
 import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePresets";
 import { MODULES } from "@/lib/constants";
@@ -147,7 +147,7 @@ export async function PUT(req, { params }) {
       return Response.json({ error: "Employee not found" }, { status: 404 });
     }
 
-    const employee = await prisma.$transaction(async (tx) => {
+    const employee = await runTransaction(async (tx) => {
       const updatedName = body.name ?? existing.name;
       const updatedPhone = body.phone ?? existing.phone;
 
@@ -229,7 +229,7 @@ export async function DELETE(req, { params }) {
       return Response.json({ error: "Employee not found" }, { status: 404 });
     }
 
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       await tx.employee.delete({ where: { id: employeeId } });
       if (existing.accountId) {
         await tx.account.delete({ where: { id: existing.accountId } }).catch(() => {});

@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
@@ -112,7 +112,7 @@ export async function POST(req) {
       }
     }
 
-    const record = await prisma.$transaction(async (tx) => {
+    const record = await runTransaction(async (tx) => {
       const existing = await tx.salaryRecord.findUnique({
         where: {
           employeeId_month_year: {

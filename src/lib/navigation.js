@@ -54,7 +54,8 @@ export const NAV_SECTIONS = [
     items: [
       { slug: "hr", label: "HR", href: "/hr", icon: Users, keywords: "employees payroll attendance" },
       { slug: "reports", label: "Reports", href: "/reports", icon: BarChart3, keywords: "analytics profit loss" },
-      { slug: "settings", label: "Settings", href: "/settings", icon: Settings, keywords: "users cities configuration" },
+      { slug: "settings", label: "Owner Withdrawals", href: "/admin/withdrawals", icon: Wallet2, keywords: "owner personal drawings admin" },
+      { slug: "settings", label: "Settings", href: "/settings", icon: Settings, keywords: "users cities company profile" },
     ],
   },
 ];
@@ -78,6 +79,7 @@ export const DASHBOARD_SHORTCUTS = [
   { slug: "accounts", label: "Journal", href: "/accounts/journal" },
   { slug: "hr", label: "HR", href: "/hr" },
   { slug: "reports", label: "Reports", href: "/reports" },
+  { slug: "settings", label: "Owner Withdrawals", href: "/admin/withdrawals" },
   { slug: "settings", label: "Settings", href: "/settings" },
 ];
 

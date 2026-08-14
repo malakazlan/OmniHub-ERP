@@ -1,4 +1,4 @@
-import prisma, { runTransaction } from "@/lib/prisma";
+import prisma, { runTransaction, withDbRetry, isTransientDbError, dbUnavailableResponse } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import {
   parseNum,
@@ -69,10 +69,12 @@ export async function GET(req, { params }) {
     const { id } = await params;
     const purchaseId = parseInt(id, 10);
 
-    const purchase = await prisma.purchaseOrder.findUnique({
-      where: { id: purchaseId },
-      include: purchaseInclude,
-    });
+    const purchase = await withDbRetry((db) =>
+      db.purchaseOrder.findUnique({
+        where: { id: purchaseId },
+        include: purchaseInclude,
+      })
+    );
 
     if (!purchase) {
       return Response.json({ error: "Purchase not found" }, { status: 404 });
@@ -80,10 +82,12 @@ export async function GET(req, { params }) {
 
     let vendorAccountBalance = 0;
     if (purchase.vendorAccountId) {
-      const acc = await prisma.account.findUnique({
-        where: { id: purchase.vendorAccountId },
-        select: { balance: true },
-      });
+      const acc = await withDbRetry((db) =>
+        db.account.findUnique({
+          where: { id: purchase.vendorAccountId },
+          select: { balance: true },
+        })
+      );
       vendorAccountBalance = acc?.balance ?? 0;
     }
 
@@ -103,6 +107,7 @@ export async function GET(req, { params }) {
     });
   } catch (error) {
     console.error("Fetch purchase error:", error);
+    if (isTransientDbError(error)) return dbUnavailableResponse(error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

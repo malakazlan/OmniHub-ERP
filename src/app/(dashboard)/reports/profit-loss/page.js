@@ -1,12 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
-import { PageHeader, StatCard } from "@/components/layout/PageHeader";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/Button";
-import { PieChart, Loader2, ArrowLeft, TrendingUp, TrendingDown, DollarSign, Truck } from "lucide-react";
+import ReportShell, { ReportDateFilter } from "@/components/reports/ReportShell";
+import { PieChart, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -35,12 +32,12 @@ export default function ProfitLossReportPage() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
 
-  const fetchReport = async () => {
+  const fetchReport = async (fromVal = from, toVal = to) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (from) params.set("from", from);
-      if (to) params.set("to", to);
+      if (fromVal) params.set("from", fromVal);
+      if (toVal) params.set("to", toVal);
       const res = await fetch(`/api/reports/profit-loss?${params.toString()}`);
       const data = await res.json();
       if (res.ok) {
@@ -54,91 +51,75 @@ export default function ProfitLossReportPage() {
     }
   };
 
-  useEffect(() => { fetchReport(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchReport();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="space-y-8 page-enter pb-10">
-      <PageHeader
-        module="accounts"
-        title="Profit & Loss"
-        description="Revenue minus cost of goods sold, expenses, and transport."
-        icon={PieChart}
-        breadcrumbs={[{ label: "Reports", href: "/reports" }, { label: "Profit & Loss" }]}
-        actions={
-          <Link href="/reports"><Button variant="outline" className="border-slate-200 text-slate-600"><ArrowLeft className="w-4 h-4" /> Back</Button></Link>
-        }
-      />
-
-      <Card>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">From</label>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-field text-xs" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">To</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-field text-xs" />
-          </div>
-          <Button onClick={fetchReport} className="bg-acc-accounts hover:bg-indigo-600 border-0">Apply Filter</Button>
-          {(from || to) && (
-            <button type="button" onClick={() => { setFrom(""); setTo(""); setTimeout(fetchReport, 0); }} className="text-xs text-slate-500 hover:text-slate-800 underline">Clear</button>
+    <ReportShell
+      badge="Finance"
+      badgeIcon={PieChart}
+      title="Profit & loss statement"
+      description="Revenue minus cost of goods sold, operating expenses, and transport costs."
+      loadingOnly={loading && monthlyTrend.length === 0 && summary.revenue === 0}
+      filterBar={
+        <ReportDateFilter
+          from={from}
+          to={to}
+          onFromChange={setFrom}
+          onToChange={setTo}
+          onApply={() => fetchReport(from, to)}
+          onClear={() => { setFrom(""); setTo(""); fetchReport("", ""); }}
+          accentBtnClass="bg-acc-accounts hover:bg-indigo-600"
+        />
+      }
+      stats={[
+        { label: "Revenue", value: formatCurrency(summary.revenue), icon: TrendingUp },
+        { label: "Cost of goods", value: formatCurrency(summary.cogs), icon: TrendingDown, valueClass: "text-red-600" },
+        { label: "Gross profit", value: formatCurrency(summary.grossProfit), icon: DollarSign },
+        {
+          label: "Net profit",
+          value: formatCurrency(summary.netProfit),
+          icon: DollarSign,
+          valueClass: summary.netProfit >= 0 ? "text-emerald-600" : "text-red-600",
+        },
+      ]}
+      registerTitle="Statement breakdown"
+      registerMeta={from || to ? `${from || "…"} to ${to || "…"}` : "All time"}
+    >
+      <div className="erp-reports-pl-layout">
+        <div className="erp-reports-pl-chart">
+          <h3>Monthly revenue trend</h3>
+          {monthlyTrend.length === 0 ? (
+            <p className="text-sm text-slate-500 py-10 text-center">Not enough data to chart a trend.</p>
+          ) : (
+            <div className="h-72 w-full px-4 pb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#0f172a" }}
+                    formatter={(value) => formatCurrency(value)}
+                  />
+                  <Bar dataKey="total" fill="#4338CA" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           )}
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 text-acc-accounts animate-spin" /></div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard module="accounts" label="Revenue" value={formatCurrency(summary.revenue)} icon={TrendingUp} />
-            <StatCard module="accounts" label="Cost of Goods" value={formatCurrency(summary.cogs)} icon={TrendingDown} valueClassName="text-red-500" />
-            <StatCard module="accounts" label="Gross Profit" value={formatCurrency(summary.grossProfit)} icon={DollarSign} />
-            <StatCard
-              module="accounts" label="Net Profit" value={formatCurrency(summary.netProfit)} icon={DollarSign}
-              valueClassName={summary.netProfit >= 0 ? "text-emerald-600" : "text-red-500"}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <Card className="xl:col-span-2">
-              <CardContent>
-                <h2 className="text-sm font-bold text-slate-900 mb-4">Monthly Revenue Trend</h2>
-                {monthlyTrend.length === 0 ? (
-                  <p className="text-sm text-slate-500 py-10 text-center">Not enough data to chart a trend.</p>
-                ) : (
-                  <div className="h-72 w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} />
-                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
-                        <Tooltip
-                          contentStyle={{ backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#0f172a" }}
-                          formatter={(value) => formatCurrency(value)}
-                        />
-                        <Bar dataKey="total" fill="#4338CA" radius={[6, 6, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent>
-                <h2 className="text-sm font-bold text-slate-900 mb-2">Statement Breakdown</h2>
-                <DetailRow label="Revenue" value={formatCurrency(summary.revenue)} positive />
-                <DetailRow label="Cost of Goods Sold" value={`(${formatCurrency(summary.cogs)})`} positive={false} />
-                <DetailRow label="Gross Profit" value={formatCurrency(summary.grossProfit)} bold />
-                <DetailRow label="Operating Expenses" value={`(${formatCurrency(summary.operatingExpenses)})`} positive={false} />
-                <DetailRow label="Transport Costs" value={`(${formatCurrency(summary.transportCosts)})`} positive={false} />
-                <DetailRow label="Net Profit" value={formatCurrency(summary.netProfit)} bold positive={summary.netProfit >= 0} />
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      )}
-    </div>
+        </div>
+        <div className="erp-reports-pl-breakdown">
+          <h3>Income statement</h3>
+          <DetailRow label="Revenue" value={formatCurrency(summary.revenue)} positive />
+          <DetailRow label="Cost of Goods Sold" value={`(${formatCurrency(summary.cogs)})`} positive={false} />
+          <DetailRow label="Gross Profit" value={formatCurrency(summary.grossProfit)} bold />
+          <DetailRow label="Operating Expenses" value={`(${formatCurrency(summary.operatingExpenses)})`} positive={false} />
+          <DetailRow label="Transport Costs" value={`(${formatCurrency(summary.transportCosts)})`} positive={false} />
+          <DetailRow label="Net Profit" value={formatCurrency(summary.netProfit)} bold positive={summary.netProfit >= 0} />
+        </div>
+      </div>
+    </ReportShell>
   );
 }

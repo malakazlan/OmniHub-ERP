@@ -11,6 +11,7 @@ const PREFIXES = {
   gatePass: "GP",
   journal: "JE",
   customerOrder: "ORD",
+  ownerWithdrawal: "WD",
 };
 
 /**
@@ -34,6 +35,7 @@ export async function generateDocumentNumber(type, date = new Date()) {
     gatePass: () => prisma.gatePass.findMany({ where: { gatePassNumber: { startsWith: pattern } }, select: { gatePassNumber: true }, orderBy: { gatePassNumber: "desc" }, take: 1 }),
     journal: () => prisma.journalEntry.findMany({ where: { entryNumber: { startsWith: pattern } }, select: { entryNumber: true }, orderBy: { entryNumber: "desc" }, take: 1 }),
     customerOrder: () => prisma.customerOrder.findMany({ where: { orderNumber: { startsWith: pattern } }, select: { orderNumber: true }, orderBy: { orderNumber: "desc" }, take: 1 }),
+    ownerWithdrawal: () => prisma.ownerWithdrawal.findMany({ where: { withdrawalNumber: { startsWith: pattern } }, select: { withdrawalNumber: true }, orderBy: { withdrawalNumber: "desc" }, take: 1 }),
   };
 
   const fieldMap = {
@@ -47,6 +49,7 @@ export async function generateDocumentNumber(type, date = new Date()) {
     gatePass: "gatePassNumber",
     journal: "entryNumber",
     customerOrder: "orderNumber",
+    ownerWithdrawal: "withdrawalNumber",
   };
 
   const fetcher = counters[type];

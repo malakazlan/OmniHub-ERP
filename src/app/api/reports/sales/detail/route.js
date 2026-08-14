@@ -14,7 +14,11 @@ export async function GET(req) {
     if (from || to) {
       dateFilter.saleDate = {};
       if (from) dateFilter.saleDate.gte = new Date(from);
-      if (to) dateFilter.saleDate.lte = new Date(to);
+      if (to) {
+        const end = new Date(to);
+        end.setHours(23, 59, 59, 999);
+        dateFilter.saleDate.lte = end;
+      }
     }
 
     const sales = await prisma.saleOrder.findMany({

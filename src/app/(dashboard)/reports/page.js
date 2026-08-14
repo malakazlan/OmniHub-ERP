@@ -1,50 +1,78 @@
 "use client";
 
 import Link from "next/link";
-import { PageHeader } from "@/components/layout/PageHeader";
-import { Card, CardContent } from "@/components/ui/Card";
 import {
   BarChart3, TrendingUp, ShoppingCart, Package, Truck, PieChart,
+  CalendarCheck, Wallet2, CreditCard, Scale, Users,
 } from "lucide-react";
 
-const REPORTS = [
-  { href: "/reports/sales", title: "Sales Report", desc: "By date, customer, product, salesperson", icon: TrendingUp, module: "sales", color: "text-acc-sales bg-green-50 border-green-100" },
-  { href: "/reports/orders", title: "Order Report", desc: "Pending, accepted, converted pipeline", icon: BarChart3, module: "orders", color: "text-orange-700 bg-orange-50 border-orange-100" },
-  { href: "/reports/purchases", title: "Purchase Report", desc: "By date, vendor, product", icon: ShoppingCart, module: "purchases", color: "text-acc-purchases bg-red-50 border-red-100" },
-  { href: "/reports/inventory", title: "Inventory Report", desc: "Stock levels and movements", icon: Package, module: "products", color: "text-acc-products bg-violet-50 border-violet-100" },
-  { href: "/reports/profit-loss", title: "Profit & Loss", desc: "Revenue − COGS − expenses", icon: PieChart, module: "accounts", color: "text-acc-accounts bg-indigo-50 border-indigo-100" },
-  { href: "/reports/transport", title: "Transport Report", desc: "Delivery costs and utilization", icon: Truck, module: "transport", color: "text-acc-transport bg-cyan-50 border-cyan-100" },
+const SECTIONS = [
+  {
+    title: "Sales & Operations",
+    reports: [
+      { href: "/reports/sales", title: "Sales Report", desc: "Invoices, revenue, collections & outstanding", icon: TrendingUp, color: "is-sales" },
+      { href: "/reports/purchases", title: "Purchase Report", desc: "Vendor bills, spend & payables", icon: ShoppingCart, color: "is-purchases" },
+      { href: "/reports/orders", title: "Order Pipeline", desc: "Pending, accepted & converted orders", icon: BarChart3, color: "is-orders" },
+      { href: "/reports/inventory", title: "Inventory Report", desc: "Stock levels, valuation & low-stock alerts", icon: Package, color: "is-products" },
+    ],
+  },
+  {
+    title: "Finance & Accounts",
+    reports: [
+      { href: "/reports/profit-loss", title: "Profit & Loss", desc: "Revenue, COGS, expenses & net profit", icon: PieChart, color: "is-accounts" },
+      { href: "/reports/receivables", title: "Receivables & Payables", desc: "Customer dues and vendor balances", icon: Scale, color: "is-accounts" },
+      { href: "/reports/expenses", title: "Expense Report", desc: "Operating expenses by category", icon: Wallet2, color: "is-accounts" },
+      { href: "/reports/payments", title: "Payment Register", desc: "All payments by method and date", icon: CreditCard, color: "is-accounts" },
+    ],
+  },
+  {
+    title: "HR & Logistics",
+    reports: [
+      { href: "/reports/attendance", title: "Attendance Report", desc: "Monthly presence, absence & attendance rate", icon: CalendarCheck, color: "is-hr" },
+      { href: "/hr/salary", title: "Salary Register", desc: "Payroll processing & salary slips", icon: Users, color: "is-hr" },
+      { href: "/reports/transport", title: "Transport Report", desc: "Trips, freight costs & fleet utilization", icon: Truck, color: "is-transport" },
+    ],
+  },
 ];
 
 export default function ReportsPage() {
   return (
-    <div className="space-y-8 page-enter">
-      <PageHeader
-        module="reports"
-        title="Reports & Analytics"
-        description="Business intelligence across sales, purchases, inventory, and logistics."
-        icon={BarChart3}
-      />
+    <div className="erp-reports-surface page-enter pb-10">
+      <div className="erp-reports-page space-y-6">
+        <header className="erp-reports-page-header">
+          <div>
+            <div className="erp-reports-page-badge">
+              <BarChart3 className="w-3.5 h-3.5" />
+              Business intelligence
+            </div>
+            <h1 className="erp-reports-page-title">Reports & analytics</h1>
+            <p className="erp-reports-page-desc">
+              Operational registers, financial statements, HR summaries, and logistics — all with print and PDF export.
+            </p>
+          </div>
+        </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {REPORTS.map((r) => {
-          const Icon = r.icon;
-          return (
-            <Link key={r.href} href={r.href}>
-              <Card className="hover:border-slate-300 transition-all hover:shadow-md h-full">
-                <CardContent className="flex items-start gap-4">
-                  <div className={`p-3 rounded-xl border ${r.color}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900">{r.title}</h3>
-                    <p className="text-xs text-slate-500 mt-1">{r.desc}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          );
-        })}
+        {SECTIONS.map((section) => (
+          <section key={section.title} className="erp-reports-hub-section">
+            <h2 className="erp-reports-hub-section-title">{section.title}</h2>
+            <div className="erp-reports-hub-grid">
+              {section.reports.map((r) => {
+                const Icon = r.icon;
+                return (
+                  <Link key={r.href} href={r.href} className={`erp-reports-hub-card ${r.color}`}>
+                    <div className="erp-reports-hub-card-icon">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="erp-reports-hub-card-title">{r.title}</h3>
+                      <p className="erp-reports-hub-card-desc">{r.desc}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

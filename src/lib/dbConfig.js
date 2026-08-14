@@ -29,10 +29,13 @@ export function parseDatabaseUrl(connectionString) {
     user: decodeURIComponent(url.username || "root"),
     password: decodeURIComponent(url.password || ""),
     database,
-    connectTimeout: 15_000,
-    connectionLimit: 15,
-    acquireTimeout: 15_000,
-    idleTimeout: 60_000,
+    connectTimeout: 20_000,
+    connectionLimit: 10,
+    acquireTimeout: 20_000,
+    idleTimeout: 30_000,
+    minimumIdle: 1,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: 10_000,
     prepareCacheLength: 0,
   };
 }

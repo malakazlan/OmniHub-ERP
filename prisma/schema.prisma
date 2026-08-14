@@ -30,6 +30,7 @@ model User {
   primaryCashAccount       Account?        @relation("UserPrimaryCash", fields: [cashAccountId], references: [id], onDelete: SetNull, map: "users_cash_account_id_fkey")
   customerOrdersCreated    CustomerOrder[] @relation("CustomerOrderCreatedBy")
   customerOrdersReviewed   CustomerOrder[] @relation("CustomerOrderReviewedBy")
+  ownerWithdrawals         OwnerWithdrawal[]
 
   @@map("users")
 }
@@ -76,6 +77,7 @@ model Account {
 
   ledgerEntries   LedgerEntry[]
   journalLines    JournalLine[]
+  ownerWithdrawals OwnerWithdrawal[]
 
   @@index([category])
   @@index([type])
@@ -771,6 +773,26 @@ model SalaryRecord {
   @@unique([employeeId, month, year])
   @@index([employeeId])
   @@map("salary_records")
+}
+
+model OwnerWithdrawal {
+  id               Int      @id @default(autoincrement())
+  withdrawalNumber String   @unique
+  withdrawalDate   DateTime
+  amount           Float
+  paymentMethod    String   // cash, bank_transfer
+  sourceAccountId  Int
+  notes            String?  @db.Text
+  journalEntryId   Int?
+  createdById      Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  sourceAccount    Account  @relation(fields: [sourceAccountId], references: [id])
+  createdBy        User?    @relation(fields: [createdById], references: [id])
+
+  @@index([withdrawalDate])
+  @@map("owner_withdrawals")
 }
 
 model Setting {

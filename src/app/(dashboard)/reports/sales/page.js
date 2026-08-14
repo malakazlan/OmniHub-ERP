@@ -1,32 +1,43 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
-import { PageHeader, StatCard } from "@/components/layout/PageHeader";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/Button";
-import { DataTable } from "@/components/ui/DataTable";
-import { TrendingUp, Loader2, ArrowLeft, DollarSign, Wallet, Hash } from "lucide-react";
+import ReportShell, { ReportDateFilter } from "@/components/reports/ReportShell";
+import TransactionReportRegister from "@/components/reports/TransactionReportRegister";
+import { useRegisterExport } from "@/hooks/useRegisterExport";
+import { TrendingUp, Hash, DollarSign, Wallet } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+
+const PRINT_COLS = [
+  { key: "inv", label: "Invoice #", get: (r) => r.invoiceNumber || "—", pdfWidth: 24 },
+  { key: "date", label: "Date", get: (r) => formatDate(r.saleDate), pdfWidth: 22 },
+  { key: "cust", label: "Customer", get: (r) => r.company?.name || r.shop?.name || r.customerName || "—", pdfWidth: 36 },
+  { key: "total", label: "Total", align: "right", get: (r) => formatCurrency(r.totalAmount), pdfWidth: 26 },
+  { key: "paid", label: "Paid", align: "right", get: (r) => formatCurrency(r.paidAmount), pdfWidth: 24 },
+  { key: "due", label: "Due", align: "right", get: (r) => formatCurrency((r.totalAmount || 0) - (r.paidAmount || 0)), pdfWidth: 24 },
+  { key: "status", label: "Status", get: (r) => r.status, pdfWidth: 18 },
+];
 
 export default function SalesReportPage() {
   const router = useRouter();
   const { showToast } = useToast();
+  const printRef = useRef(null);
+
   const [summary, setSummary] = useState({ count: 0, total: 0, paid: 0, outstanding: 0 });
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [companySettings, setCompanySettings] = useState(null);
 
-  const fetchReport = async () => {
+  const fetchReport = async (fromVal = from, toVal = to) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (from) params.set("from", from);
-      if (to) params.set("to", to);
+      if (fromVal) params.set("from", fromVal);
+      if (toVal) params.set("to", toVal);
       const res = await fetch(`/api/reports/sales/detail?${params.toString()}`);
       const data = await res.json();
       if (res.ok) {
@@ -40,66 +51,92 @@ export default function SalesReportPage() {
     }
   };
 
-  useEffect(() => { fetchReport(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    fetchReport();
+    fetch("/api/settings").then((r) => r.json()).then((d) => { if (d.settings) setCompanySettings(d.settings); }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const columns = [
-    { header: "Sale #", accessor: "saleNumber", cell: (row) => <span className="font-mono text-xs font-semibold text-acc-sales">{row.saleNumber}</span> },
-    { header: "Date", accessor: "saleDate", cell: (row) => <span className="text-xs text-slate-500">{formatDate(row.saleDate)}</span> },
-    { header: "Customer", accessor: "customerName", cell: (row) => <span className="text-sm text-slate-800">{row.company?.name || row.shop?.name || row.customerName || "—"}</span> },
-    { header: "Items", accessor: "items", cell: (row) => <span className="text-xs text-slate-500">{(row.items || []).length}</span> },
-    { header: "Total", accessor: "totalAmount", cell: (row) => <span className="font-mono text-xs font-bold text-slate-900">{formatCurrency(row.totalAmount)}</span> },
-    { header: "Paid", accessor: "paidAmount", cell: (row) => <span className="font-mono text-xs text-emerald-600">{formatCurrency(row.paidAmount)}</span> },
-    { header: "Status", accessor: "status", cell: (row) => <Badge variant={row.status === "cancelled" ? "danger" : "success"} className="capitalize">{row.status}</Badge> },
-  ];
+  const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return sales;
+    return sales.filter(
+      (s) =>
+        s.invoiceNumber?.toLowerCase().includes(q) ||
+        s.customerName?.toLowerCase().includes(q) ||
+        s.company?.name?.toLowerCase().includes(q) ||
+        s.shop?.name?.toLowerCase().includes(q)
+    );
+  }, [sales, searchQuery]);
+
+  const filteredTotal = filtered.reduce((s, r) => s + (r.totalAmount || 0), 0);
+
+  const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
+    printRef,
+    title: "Sales Report",
+    subtitle: `${filtered.length} invoices · ${from || to ? `${from || "…"} to ${to || "…"}` : "All dates"}`,
+    company: companySettings,
+    columns: PRINT_COLS,
+    rows: filtered,
+    footers: [{ label: "Total revenue", value: formatCurrency(filteredTotal), valueColumn: "total", labelColumn: "paid" }],
+    filename: `sales-report-${new Date().toISOString().slice(0, 10)}.pdf`,
+  });
 
   return (
-    <div className="space-y-8 page-enter pb-10">
-      <PageHeader
+    <ReportShell
+      badge="Sales"
+      badgeIcon={TrendingUp}
+      title="Sales report"
+      description="Invoice register with revenue, collections, and outstanding balances."
+      accentClass="text-acc-sales"
+      filterBar={
+        <ReportDateFilter
+          from={from}
+          to={to}
+          onFromChange={setFrom}
+          onToChange={setTo}
+          onApply={() => fetchReport(from, to)}
+          onClear={() => { setFrom(""); setTo(""); fetchReport("", ""); }}
+          accentBtnClass="bg-acc-sales hover:bg-green-600"
+        />
+      }
+      stats={[
+        { label: "Invoices", value: summary.count, icon: Hash },
+        { label: "Revenue", value: formatCurrency(summary.total), icon: DollarSign },
+        { label: "Collected", value: formatCurrency(summary.paid), icon: Wallet },
+        { label: "Outstanding", value: formatCurrency(summary.outstanding), icon: Wallet, valueClass: "text-red-600" },
+      ]}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+      searchPlaceholder="Search invoice, customer..."
+      registerTitle="Sales register"
+      registerMeta={`${filtered.length} invoice${filtered.length === 1 ? "" : "s"}`}
+      onPrint={onPrint}
+      onExportPdf={onExportPdf}
+      pdfLoading={pdfLoading}
+      exportCount={filtered.length}
+      exportLabel="invoices"
+      loading={loading && sales.length === 0}
+      loadingOnly={loading && sales.length === 0}
+      printRef={printRef}
+      printTitle="Sales Report"
+      printSubtitle={`Total ${formatCurrency(filteredTotal)}`}
+      companySettings={companySettings}
+      printColumns={PRINT_COLS}
+      printRows={filtered}
+      printFooters={[{ label: "Total revenue", value: formatCurrency(filteredTotal), valueColumn: "total", labelColumn: "paid" }]}
+    >
+      <TransactionReportRegister
+        rows={filtered}
+        loading={loading}
         module="sales"
-        title="Sales Report"
-        description="By date, customer, and product performance."
-        icon={TrendingUp}
-        breadcrumbs={[{ label: "Reports", href: "/reports" }, { label: "Sales" }]}
-        actions={
-          <Link href="/reports"><Button variant="outline" className="border-slate-200 text-slate-600"><ArrowLeft className="w-4 h-4" /> Back</Button></Link>
-        }
+        numberKey="invoiceNumber"
+        numberLabel="Invoice #"
+        dateKey="saleDate"
+        partyLabel="Customer"
+        getPartyName={(r) => r.company?.name || r.shop?.name || r.customerName || "—"}
+        onRowClick={(row) => router.push(`/sales/${row.id}`)}
       />
-
-      <Card>
-        <CardContent className="flex flex-wrap items-end gap-3">
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">From</label>
-            <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="input-field text-xs" />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">To</label>
-            <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="input-field text-xs" />
-          </div>
-          <Button onClick={fetchReport} className="bg-acc-sales hover:bg-green-600 border-0">Apply Filter</Button>
-          {(from || to) && (
-            <button type="button" onClick={() => { setFrom(""); setTo(""); setTimeout(fetchReport, 0); }} className="text-xs text-slate-500 hover:text-slate-800 underline">Clear</button>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard module="sales" label="Total Sales" value={summary.count} icon={Hash} />
-        <StatCard module="sales" label="Revenue" value={formatCurrency(summary.total)} icon={DollarSign} />
-        <StatCard module="sales" label="Collected" value={formatCurrency(summary.paid)} icon={Wallet} />
-        <StatCard module="sales" label="Outstanding" value={formatCurrency(summary.outstanding)} icon={Wallet} valueClassName="text-red-500" />
-      </div>
-
-      <Card>
-        <CardContent>
-          {loading ? (
-            <div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 text-acc-sales animate-spin" /></div>
-          ) : sales.length === 0 ? (
-            <p className="text-sm text-slate-500 py-10 text-center">No sales found for the selected period.</p>
-          ) : (
-            <DataTable columns={columns} data={sales} onRowClick={(row) => router.push(`/sales/${row.id}`)} />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    </ReportShell>
   );
 }
