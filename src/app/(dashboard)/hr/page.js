@@ -126,7 +126,7 @@ export default function HRPage() {
       <PageHeader
         module="hr"
         title="HR & Employees"
-        description="Attendance and payroll. Register staff and drivers in All Accounts."
+        description="Attendance and payroll. Register employees and driver accounts in All Accounts."
         icon={Users}
         actions={
           <div className="flex items-center gap-2 flex-wrap">
@@ -145,16 +145,16 @@ export default function HRPage() {
                 <Plus className="w-4 h-4" /> Add Employee
               </Button>
             </Link>
-            <Link href="/accounts?category=transport&mode=driver&create=1">
+            <Link href="/accounts?category=transport&create=1">
               <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
-                <Plus className="w-4 h-4" /> Add Driver
+                <Plus className="w-4 h-4" /> Add Driver Account
               </Button>
             </Link>
           </div>
         }
       />
 
-      <DirectoryRegisterBanner category="salary" label="employee or driver" />
+      <DirectoryRegisterBanner category="salary" label="employee" />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="hr" label="Total Employees" value={employees.length} icon={UserPlus} />

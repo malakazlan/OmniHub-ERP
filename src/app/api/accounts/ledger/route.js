@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { userCanAccessAccount } from "@/lib/accountAccess";
+import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
+import { enrichLedgerEntriesWithLineItems } from "@/lib/ledgerEnrichment";
 
 export async function GET(req) {
   try {
@@ -27,25 +29,45 @@ export async function GET(req) {
       if (to) where.date.lte = new Date(to);
     }
 
-    // When no specific account is selected, this behaves as a combined
-    // General Ledger across every account (most recent transactions first).
+    // Statement order: oldest at top, newest at bottom.
     const entries = await prisma.ledgerEntry.findMany({
       where,
       include: accountId
         ? undefined
-        : { account: { select: { id: true, name: true, code: true, type: true, category: true } } },
-      orderBy: { date: "desc" },
-      take: accountId ? 200 : 300,
+        : {
+            account: {
+              select: {
+                id: true,
+                name: true,
+                code: true,
+                type: true,
+                category: true,
+                phone: true,
+              },
+            },
+          },
+      orderBy: LEDGER_ENTRY_ORDER,
+      ...(accountId ? {} : { take: 1000 }),
     });
 
     const account = accountId
       ? await prisma.account.findUnique({
           where: { id: parseInt(accountId) },
-          select: { id: true, name: true, code: true, balance: true, type: true, category: true },
+          select: {
+            id: true,
+            name: true,
+            code: true,
+            balance: true,
+            type: true,
+            category: true,
+            phone: true,
+          },
         })
       : null;
 
-    return Response.json({ success: true, account, entries });
+    const enrichedEntries = await enrichLedgerEntriesWithLineItems(prisma, entries);
+
+    return Response.json({ success: true, account, entries: enrichedEntries });
   } catch (error) {
     console.error("Ledger fetch error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

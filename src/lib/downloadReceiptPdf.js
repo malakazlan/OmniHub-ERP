@@ -36,39 +36,77 @@ const LAYOUT_PROPS = [
 const COLOR_PROPS = [
   "color",
   "background-color",
+  "background",
   "border-color",
   "border-top-color",
   "border-bottom-color",
   "border-left-color",
   "border-right-color",
+  "outline-color",
+  "text-decoration-color",
+  "column-rule-color",
 ];
 
 const UNSUPPORTED_COLOR = /lab\(|oklch\(|lch\(|color\(/i;
 
-/** Resolve any CSS color (including lab/oklch) to #rrggbb for html2canvas. */
-function resolveColorToHex(doc, colorValue, fallback = "#000000") {
+function rgbBytesToHex(r, g, b) {
+  return `#${[r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function rgbStringToHex(value) {
+  const m = value.match(/rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)/);
+  if (!m) return null;
+  return rgbBytesToHex(
+    Math.round(Number(m[1])),
+    Math.round(Number(m[2])),
+    Math.round(Number(m[3]))
+  );
+}
+
+/** Read any CSS color as sRGB via 1×1 canvas pixel (works for lab/oklch in modern browsers). */
+function colorToHexViaCanvas(doc, colorValue, fallback = "#000000") {
   if (!colorValue || colorValue === "transparent" || colorValue === "rgba(0, 0, 0, 0)") {
     return colorValue || fallback;
   }
+  if (colorValue.startsWith("#")) return colorValue;
+  const fromRgb = rgbStringToHex(colorValue);
+  if (fromRgb) return fromRgb;
 
   const canvas = doc.createElement("canvas");
   canvas.width = 1;
   canvas.height = 1;
-  const ctx = canvas.getContext("2d");
-  if (ctx) {
-    try {
-      ctx.fillStyle = fallback;
-      ctx.fillStyle = colorValue;
-      const resolved = ctx.fillStyle;
-      if (resolved && !UNSUPPORTED_COLOR.test(resolved)) return resolved;
-    } catch {
-      /* probe fallback */
-    }
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return fallback;
+
+  try {
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.fillStyle = fallback;
+    ctx.fillStyle = colorValue;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+    if (a === 0) return fallback;
+    return rgbBytesToHex(r, g, b);
+  } catch {
+    return fallback;
+  }
+}
+
+/** Resolve any CSS color to #rrggbb for html2canvas. */
+function resolveColorToHex(doc, colorValue, fallback = "#000000") {
+  if (!colorValue || colorValue === "transparent" || colorValue === "rgba(0, 0, 0, 0)") {
+    return colorValue || fallback;
+  }
+  if (colorValue.startsWith("#")) return colorValue;
+
+  const rgbHex = rgbStringToHex(colorValue);
+  if (rgbHex) return rgbHex;
+
+  if (UNSUPPORTED_COLOR.test(colorValue)) {
+    return colorToHexViaCanvas(doc, colorValue, fallback);
   }
 
-  if (!UNSUPPORTED_COLOR.test(colorValue)) {
-    return colorValue;
-  }
+  const canvasHex = colorToHexViaCanvas(doc, colorValue, fallback);
+  if (canvasHex && !UNSUPPORTED_COLOR.test(canvasHex)) return canvasHex;
 
   const probe = doc.createElement("span");
   probe.style.cssText =
@@ -83,16 +121,7 @@ function resolveColorToHex(doc, colorValue, fallback = "#000000") {
   if (UNSUPPORTED_COLOR.test(rgb)) rgb = cs.backgroundColor;
   probe.remove();
 
-  if (ctx && rgb && UNSUPPORTED_COLOR.test(rgb)) {
-    try {
-      ctx.fillStyle = rgb;
-      return ctx.fillStyle;
-    } catch {
-      return fallback;
-    }
-  }
-
-  return UNSUPPORTED_COLOR.test(rgb) ? fallback : rgb;
+  return colorToHexViaCanvas(doc, rgb, fallback);
 }
 
 function applySafeComputedStyles(source, clone, colorDoc) {
@@ -109,8 +138,14 @@ function applySafeComputedStyles(source, clone, colorDoc) {
   for (const prop of COLOR_PROPS) {
     const value = computed.getPropertyValue(prop);
     if (!value) continue;
-    const safe = resolveColorToHex(colorDoc, value, prop.includes("background") ? "#ffffff" : "#0f172a");
-    clone.style.setProperty(prop, safe);
+    const fb = prop.includes("background") ? "#ffffff" : "#0f172a";
+    const safe = resolveColorToHex(colorDoc, value, fb);
+    if (prop === "background") {
+      clone.style.setProperty("background-color", safe);
+      clone.style.removeProperty("background");
+    } else {
+      clone.style.setProperty(prop, safe);
+    }
   }
 
   const borderWidth = computed.getPropertyValue("border-width");
@@ -121,6 +156,25 @@ function applySafeComputedStyles(source, clone, colorDoc) {
   }
 
   clone.style.setProperty("box-shadow", "none");
+}
+
+/** Strip any remaining lab/oklch from inline styles on the clone tree. */
+function sanitizeCloneColors(root, colorDoc) {
+  if (!(root instanceof Element)) return;
+  if (root.style?.cssText && UNSUPPORTED_COLOR.test(root.style.cssText)) {
+    for (const prop of COLOR_PROPS) {
+      const val = root.style.getPropertyValue(prop);
+      if (val && UNSUPPORTED_COLOR.test(val)) {
+        const fb = prop.includes("background") ? "#ffffff" : "#0f172a";
+        root.style.setProperty(prop, resolveColorToHex(colorDoc, val, fb));
+      }
+    }
+    if (root.style.background && UNSUPPORTED_COLOR.test(root.style.background)) {
+      root.style.setProperty("background-color", "#ffffff");
+      root.style.removeProperty("background");
+    }
+  }
+  for (const child of root.children) sanitizeCloneColors(child, colorDoc);
 }
 
 function buildSafeCloneTree(source, targetDoc, colorDoc) {
@@ -176,6 +230,7 @@ async function renderInvoiceCanvas(target, scale) {
   const safeRoot = buildSafeCloneTree(target, frameDoc, doc);
   safeRoot.style.width = `${w}px`;
   safeRoot.style.maxWidth = `${w}px`;
+  sanitizeCloneColors(safeRoot, doc);
   frameDoc.body.appendChild(safeRoot);
 
   try {
@@ -193,6 +248,9 @@ async function renderInvoiceCanvas(target, scale) {
       scrollY: 0,
       foreignObjectRendering: false,
       window: frameDoc.defaultView,
+      onclone: (clonedDoc) => {
+        sanitizeCloneColors(clonedDoc.body, doc);
+      },
     });
   } finally {
     iframe.remove();

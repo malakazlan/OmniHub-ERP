@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
 import { cashAccountWhereForDirectory, canBrowseAllCashAccounts } from "@/lib/accountAccess";
@@ -45,9 +45,12 @@ export async function POST(req) {
     const blocked = directoryCreateBlocked(body);
     if (blocked) return blocked;
 
-    const { name, openingBalance, assignToUserId, assignToAdmin } = body;
+    const { name, openingBalance, assignToUserId, assignToAdmin, phone } = body;
     if (!name?.trim()) {
-      return Response.json({ error: "Cash account name is required" }, { status: 400 });
+      return Response.json({ error: "Account name is required" }, { status: 400 });
+    }
+    if (!phone?.trim()) {
+      return Response.json({ error: "Phone is required" }, { status: 400 });
     }
 
     let ownerUserId = assignToUserId ? parseInt(assignToUserId, 10) : null;
@@ -62,11 +65,12 @@ export async function POST(req) {
       ownerUserId = adminUser.id;
     }
 
-    const account = await prisma.$transaction(async (tx) => {
+    const account = await runTransaction(async (tx) => {
       const created = await createCashLedgerAccount(tx, {
         name: name.trim(),
         openingBalance,
         ownerUserId,
+        phone: phone.trim(),
       });
       if (ownerUserId) {
         await assignUserPrimaryCash(tx, ownerUserId, created.id);

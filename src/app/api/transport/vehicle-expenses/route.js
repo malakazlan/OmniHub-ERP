@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
@@ -49,7 +49,7 @@ export async function POST(req) {
     const parsedAmount = parseFloat(amount) || 0;
     const date = expenseDate ? new Date(expenseDate) : new Date();
 
-    const expense = await prisma.$transaction(async (tx) => {
+    const expense = await runTransaction(async (tx) => {
       const created = await tx.vehicleExpense.create({
         data: {
           vehicleId: parseInt(vehicleId, 10),

@@ -1,7 +1,8 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
+import { applyOpeningBalance } from "@/lib/accountOpening";
 
 // GET: List all farmers
 export async function GET(req) {
@@ -59,16 +60,23 @@ export async function POST(req) {
     const adminOnly = requireProjectAccountsAdmin(user);
     if (adminOnly) return adminOnly;
 
-    const { name, fatherName, cnic, phone, whatsappNumber, city, village, address, bankName, bankAccountNo, notes } = body;
+    const { name, fatherName, cnic, phone, whatsappNumber, city, village, address, bankName, bankAccountNo, notes, openingBalance } = body;
 
-    if (!name) {
-      return Response.json({ error: "Farmer name is required" }, { status: 452 });
+    if (!name?.trim()) {
+      return Response.json({ error: "Name is required" }, { status: 400 });
+    }
+    if (!phone?.trim()) {
+      return Response.json({ error: "Phone is required" }, { status: 400 });
     }
 
-    // Check if CNIC already exists
-    if (cnic) {
+    const trimOrNull = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
+    const farmerName = name.trim();
+    const farmerPhone = phone.trim();
+    const farmerCnic = trimOrNull(cnic);
+
+    if (farmerCnic) {
       const existingFarmer = await prisma.farmer.findUnique({
-        where: { cnic },
+        where: { cnic: farmerCnic },
       });
       if (existingFarmer) {
         return Response.json({ error: "Farmer with this CNIC already exists" }, { status: 400 });
@@ -76,35 +84,36 @@ export async function POST(req) {
     }
 
     // Create Farmer and Account within a Prisma transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await runTransaction(async (tx) => {
       // 1. Create a matching general ledger account
       const account = await tx.account.create({
         data: {
-          name: `${name} (Farmer)`,
-          type: "liability", // Payable account (we buy from them)
+          name: farmerName,
+          type: "liability",
           category: "farmer",
-          city,
-          phone,
-          whatsappNumber,
-          cnic,
-          address,
+          city: trimOrNull(city),
+          phone: farmerPhone,
+          whatsappNumber: trimOrNull(whatsappNumber),
+          cnic: farmerCnic,
+          address: trimOrNull(address),
         },
       });
 
-      // 2. Create Farmer record linked to the ledger account
+      await applyOpeningBalance(tx, account.id, "liability", openingBalance);
+
       const newFarmer = await tx.farmer.create({
         data: {
-          name,
-          fatherName,
-          cnic,
-          phone,
-          whatsappNumber,
-          city,
-          village,
-          address,
-          bankName,
-          bankAccountNo,
-          notes,
+          name: farmerName,
+          fatherName: trimOrNull(fatherName),
+          cnic: farmerCnic,
+          phone: farmerPhone,
+          whatsappNumber: trimOrNull(whatsappNumber),
+          city: trimOrNull(city),
+          village: trimOrNull(village),
+          address: trimOrNull(address),
+          bankName: trimOrNull(bankName),
+          bankAccountNo: trimOrNull(bankAccountNo),
+          notes: trimOrNull(notes),
           accountId: account.id,
         },
       });
@@ -117,6 +126,18 @@ export async function POST(req) {
     return Response.json({ success: true, farmer: result }, { status: 201 });
   } catch (error) {
     console.error("Register farmer error:", error);
+    if (error.code === "P2028") {
+      return Response.json(
+        { error: "Database busy — check MySQL is running and retry in a moment." },
+        { status: 503 }
+      );
+    }
+    if (error.code === "P2002") {
+      return Response.json(
+        { error: "A farmer with this CNIC already exists." },
+        { status: 400 }
+      );
+    }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

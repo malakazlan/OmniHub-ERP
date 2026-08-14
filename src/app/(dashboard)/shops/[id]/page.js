@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { DataTable } from "@/components/ui/DataTable";
+import LedgerTable from "@/components/accounts/LedgerTable";
 import {
   Store, Loader2, ArrowLeft, Pencil, Trash2, MapPin, Phone,
   Wallet, DollarSign, Landmark, StickyNote,
@@ -196,7 +197,7 @@ export default function ShopDetailPage() {
               {ledgerEntries.length === 0 ? (
                 <p className="text-sm text-slate-500 py-6 text-center">No ledger entries yet.</p>
               ) : (
-                <DataTable columns={ledgerColumns} data={ledgerEntries} />
+                <LedgerTable columns={ledgerColumns} data={ledgerEntries} />
               )}
             </CardContent>
           </Card>

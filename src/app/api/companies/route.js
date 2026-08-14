@@ -1,7 +1,8 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
+import { applyOpeningBalance } from "@/lib/accountOpening";
 
 function getAccountType(companyType) {
   if (companyType === "supplier") return "liability";
@@ -54,25 +55,28 @@ export async function POST(req) {
 
     const {
       name, contactPerson, phone, whatsappNumber, email, ntn, strn,
-      city, address, companyType, bankName, bankAccountNo, creditLimit, notes,
+      city, address, companyType, bankName, bankAccountNo, creditLimit, notes, openingBalance,
     } = body;
 
-    if (!name) return Response.json({ error: "Company name is required" }, { status: 400 });
+    if (!name?.trim()) return Response.json({ error: "Company name is required" }, { status: 400 });
+    if (!phone?.trim()) return Response.json({ error: "Phone is required" }, { status: 400 });
 
     const type = companyType || "both";
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await runTransaction(async (tx) => {
       const account = await tx.account.create({
         data: {
-          name: `${name} (Company)`,
+          name: name.trim(),
           type: getAccountType(type),
           category: "company",
-          city,
-          phone,
-          whatsappNumber,
-          address,
+          city: city || null,
+          phone: phone.trim(),
+          whatsappNumber: whatsappNumber || null,
+          address: address || null,
         },
       });
+
+      await applyOpeningBalance(tx, account.id, getAccountType(type), openingBalance);
 
       const company = await tx.company.create({
         data: {

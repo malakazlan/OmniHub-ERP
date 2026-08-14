@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
+import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 
 // GET: Fetch a single farmer's details and transaction logs
 export async function GET(req, { params }) {
@@ -38,8 +39,7 @@ export async function GET(req, { params }) {
 
       ledgerEntries = await prisma.ledgerEntry.findMany({
         where: { accountId: farmer.accountId },
-        orderBy: { date: "desc" },
-        take: 20,
+        orderBy: LEDGER_ENTRY_ORDER,
       });
     }
 
@@ -75,39 +75,41 @@ export async function PUT(req, { params }) {
       return Response.json({ error: "Farmer not found" }, { status: 404 });
     }
 
-    // Update both Farmer and Account inside transaction
+    const trimOrNull = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
+    const farmerName = trimOrNull(body.name) || farmer.name;
+    const farmerPhone = trimOrNull(body.phone) ?? farmer.phone;
+    const farmerCnic = body.cnic !== undefined ? trimOrNull(body.cnic) : farmer.cnic;
+
     const updatedFarmer = await prisma.$transaction(async (tx) => {
-      // 1. Update Farmer
       const f = await tx.farmer.update({
         where: { id: farmerId },
         data: {
-          name: body.name,
-          fatherName: body.fatherName,
-          cnic: body.cnic,
-          phone: body.phone,
-          whatsappNumber: body.whatsappNumber,
-          city: body.city,
-          village: body.village,
-          address: body.address,
-          bankName: body.bankName,
-          bankAccountNo: body.bankAccountNo,
-          notes: body.notes,
+          name: farmerName,
+          fatherName: body.fatherName !== undefined ? trimOrNull(body.fatherName) : farmer.fatherName,
+          cnic: farmerCnic,
+          phone: farmerPhone,
+          whatsappNumber: body.whatsappNumber !== undefined ? trimOrNull(body.whatsappNumber) : farmer.whatsappNumber,
+          city: body.city !== undefined ? trimOrNull(body.city) : farmer.city,
+          village: body.village !== undefined ? trimOrNull(body.village) : farmer.village,
+          address: body.address !== undefined ? trimOrNull(body.address) : farmer.address,
+          bankName: body.bankName !== undefined ? trimOrNull(body.bankName) : farmer.bankName,
+          bankAccountNo: body.bankAccountNo !== undefined ? trimOrNull(body.bankAccountNo) : farmer.bankAccountNo,
+          notes: body.notes !== undefined ? trimOrNull(body.notes) : farmer.notes,
           isActive: body.isActive !== undefined ? body.isActive : farmer.isActive,
         },
       });
 
-      // 2. Update linked Account
       if (farmer.accountId) {
         await tx.account.update({
           where: { id: farmer.accountId },
           data: {
-            name: `${body.name || f.name} (Farmer)`,
-            city: body.city,
-            phone: body.phone,
-            whatsappNumber: body.whatsappNumber,
-            cnic: body.cnic,
-            address: body.address,
-            isActive: body.isActive !== undefined ? body.isActive : farmer.isActive,
+            name: farmerName,
+            city: f.city,
+            phone: farmerPhone,
+            whatsappNumber: f.whatsappNumber,
+            cnic: farmerCnic,
+            address: f.address,
+            isActive: f.isActive,
           },
         });
       }

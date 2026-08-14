@@ -300,7 +300,12 @@ function NewSalePageInner() {
 
       if (res.ok) {
         showToast(status === "confirmed" ? "Sale confirmed" : "Draft saved", "success");
-        router.push(`/sales/${data.sale?.id || data.id}`);
+        const saleId = data.sale?.id || data.id;
+        if (status === "confirmed" && saleId) {
+          router.push(`/sales?invoice=${saleId}`);
+        } else {
+          router.push("/sales");
+        }
       } else {
         showToast(data.error || "Failed to create sale", "error");
       }

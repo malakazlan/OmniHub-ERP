@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import {
   parseNum,
@@ -72,7 +72,7 @@ export async function POST(req, { params }) {
       }
     }
 
-    const purchase = await prisma.$transaction(async (tx) => {
+    const purchase = await runTransaction(async (tx) => {
       const orderForLedger = {
         ...existing,
         cashAccountId: cashAccountId || existing.cashAccountId,

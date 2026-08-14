@@ -1,362 +1,264 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import React, { useCallback, useEffect, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
-import { PageHeader, StatCard } from "@/components/layout/PageHeader";
-import { DataTable } from "@/components/ui/DataTable";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Modal } from "@/components/ui/Modal";
-import { Button } from "@/components/Button";
-import { Car, Loader2, ArrowLeft, Truck, Pencil, Fuel, Plus } from "lucide-react";
-import { DirectoryRegisterBanner } from "@/components/accounts/DirectoryShell";
+import { Loader2 } from "lucide-react";
+import FleetListView from "@/components/fleet/FleetListView";
+import FleetDetailView from "@/components/fleet/FleetDetailView";
+import FleetReportView from "@/components/fleet/FleetReportView";
+import RegisterVehicleModal from "@/components/fleet/RegisterVehicleModal";
+import RecordExpenseModal from "@/components/fleet/RecordExpenseModal";
 
-const emptyForm = {
-  registrationNumber: "",
-  vehicleType: "truck",
-  make: "",
-  model: "",
-  year: "",
-  capacity: "",
-  driverName: "",
-  driverPhone: "",
-  isOwned: true,
-  isActive: true,
-  notes: "",
-};
-
-const VEHICLE_TYPES = ["truck", "pickup", "trailer", "dumper", "van", "other"];
-
-export default function VehiclesPage() {
+function FleetHubContent() {
   const { showToast } = useToast();
-  const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const fetchVehicles = async () => {
+  const [vehicles, setVehicles] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [expenses, setExpenses] = useState([]);
+  const [cashAccounts, setCashAccounts] = useState([]);
+  const [bankAccounts, setBankAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expensesLoading, setExpensesLoading] = useState(false);
+
+  const [view, setView] = useState("list");
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [reportFocusVehicle, setReportFocusVehicle] = useState(null);
+
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [editVehicle, setEditVehicle] = useState(null);
+  const [expenseOpen, setExpenseOpen] = useState(false);
+
+  const syncUrl = useCallback((nextView, vehicleId) => {
+    const params = new URLSearchParams();
+    if (nextView === "detail" && vehicleId) {
+      params.set("id", String(vehicleId));
+    } else if (nextView === "report") {
+      params.set("report", "1");
+      if (vehicleId) params.set("id", String(vehicleId));
+    } else if (nextView === "register") {
+      params.set("register", "1");
+    }
+    const qs = params.toString();
+    router.replace(qs ? `/transport/vehicles?${qs}` : "/transport/vehicles", { scroll: false });
+  }, [router]);
+
+  const fetchFleet = useCallback(async () => {
     try {
-      const res = await fetch("/api/transport/vehicles");
-      const data = await res.json();
-      if (res.ok) setVehicles(data.vehicles || []);
-      else showToast(data.error || "Failed to load vehicles", "error");
+      const [vRes, eRes, aRes] = await Promise.all([
+        fetch("/api/transport/vehicles"),
+        fetch("/api/transport/vehicle-expenses"),
+        fetch("/api/accounts"),
+      ]);
+      const vData = await vRes.json();
+      const eData = await eRes.json();
+      const aData = await aRes.json();
+
+      if (vRes.ok) {
+        setVehicles(vData.vehicles || []);
+        setSummary(vData.summary || null);
+      } else showToast(vData.error || "Failed to load fleet", "error");
+
+      if (eRes.ok) setExpenses(eData.expenses || []);
+
+      if (aRes.ok) {
+        const accounts = aData.accounts || [];
+        setCashAccounts(accounts.filter((a) => a.category === "cash" && a.isActive));
+        setBankAccounts(accounts.filter((a) => a.category === "bank" && a.isActive));
+      }
     } catch {
       showToast("Error connecting to server", "error");
     } finally {
       setLoading(false);
+      setExpensesLoading(false);
     }
-  };
+  }, [showToast]);
 
-  useEffect(() => {
-    fetchVehicles();
-  }, []);
-
-  const openEdit = (row) => {
-    setEditingId(row.id);
-    setForm({
-      registrationNumber: row.registrationNumber || "",
-      vehicleType: row.vehicleType || "truck",
-      make: row.make || "",
-      model: row.model || "",
-      year: row.year ? String(row.year) : "",
-      capacity: row.capacity ? String(row.capacity) : "",
-      driverName: row.driverName || "",
-      driverPhone: row.driverPhone || "",
-      isOwned: row.isOwned !== false,
-      isActive: row.isActive !== false,
-      notes: row.notes || "",
-    });
-    setModalOpen(true);
-  };
-
-  const handleChange = (field) => (e) => {
-    const val = e.target.type === "checkbox" ? e.target.checked : e.target.value;
-    setForm({ ...form, [field]: val });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.registrationNumber || !form.vehicleType) {
-      showToast("Registration and type are required", "warning");
-      return;
-    }
-    setSubmitting(true);
+  const fetchVehicleExpenses = useCallback(async (vehicleId) => {
+    setExpensesLoading(true);
     try {
-      if (!editingId) {
-        showToast("Register new vehicles in All Accounts", "warning");
-        return;
-      }
-      const res = await fetch(`/api/transport/vehicles/${editingId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(`/api/transport/vehicle-expenses?vehicleId=${vehicleId}`);
       const data = await res.json();
       if (res.ok) {
-        showToast("Vehicle updated!", "success");
-        setModalOpen(false);
-        fetchVehicles();
-      } else showToast(data.error || "Failed to save vehicle", "error");
+        setExpenses((prev) => {
+          const other = prev.filter((e) => e.vehicleId !== vehicleId);
+          return [...other, ...(data.expenses || [])];
+        });
+      }
+    } finally {
+      setExpensesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFleet();
+  }, [fetchFleet]);
+
+  useEffect(() => {
+    if (loading || !vehicles.length) {
+      if (searchParams.get("register") === "1") setRegisterOpen(true);
+      return;
+    }
+
+    const id = searchParams.get("id");
+    const report = searchParams.get("report") === "1";
+    const register = searchParams.get("register") === "1";
+
+    if (register) {
+      setView("list");
+      setRegisterOpen(true);
+      return;
+    }
+
+    if (id) {
+      const v = vehicles.find((x) => String(x.id) === id);
+      if (v) {
+        setSelectedVehicle(v);
+        if (report) {
+          setView("report");
+          setReportFocusVehicle(v);
+        } else {
+          setView("detail");
+          fetchVehicleExpenses(v.id);
+        }
+        return;
+      }
+    }
+
+    if (report) {
+      setView("report");
+      setReportFocusVehicle(null);
+      return;
+    }
+
+    setView("list");
+    setSelectedVehicle(null);
+    setReportFocusVehicle(null);
+  }, [loading, vehicles, searchParams, fetchVehicleExpenses]);
+
+  const openVehicle = (v) => {
+    setSelectedVehicle(v);
+    setView("detail");
+    syncUrl("detail", v.id);
+    fetchVehicleExpenses(v.id);
+  };
+
+  const openReport = (v = null) => {
+    setReportFocusVehicle(v);
+    setView("report");
+    syncUrl("report", v?.id);
+  };
+
+  const backToList = () => {
+    setView("list");
+    setSelectedVehicle(null);
+    setReportFocusVehicle(null);
+    syncUrl("list");
+  };
+
+  const handleRegisterSuccess = async () => {
+    showToast("Vehicle saved", "success");
+    await fetchFleet();
+  };
+
+  const handleExpenseSuccess = async () => {
+    showToast("Expense recorded", "success");
+    setExpensesLoading(true);
+    await fetchFleet();
+    if (selectedVehicle) await fetchVehicleExpenses(selectedVehicle.id);
+  };
+
+  const handleDeleteExpense = async (expense) => {
+    if (!window.confirm(`Delete this ${expense.expenseType} expense?`)) return;
+    try {
+      const res = await fetch(`/api/transport/vehicle-expenses/${expense.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Expense deleted", "success");
+        await fetchFleet();
+        if (selectedVehicle) await fetchVehicleExpenses(selectedVehicle.id);
+      } else showToast(data.error || "Failed to delete", "error");
     } catch {
       showToast("Error processing request", "error");
-    } finally {
-      setSubmitting(false);
     }
   };
 
-  const activeCount = vehicles.filter((v) => v.isActive).length;
-  const ownedCount = vehicles.filter((v) => v.isOwned).length;
-
-  const columns = [
-    {
-      header: "Registration",
-      accessor: "registrationNumber",
-      cell: (row) => (
-        <span className="font-mono text-xs font-bold text-acc-transport">
-          {row.registrationNumber}
-        </span>
-      ),
-    },
-    {
-      header: "Type",
-      accessor: "vehicleType",
-      cell: (row) => (
-        <span className="text-xs capitalize text-slate-700">{row.vehicleType}</span>
-      ),
-    },
-    {
-      header: "Make / Model",
-      accessor: "make",
-      cell: (row) => (
-        <span className="text-xs text-slate-600">
-          {[row.make, row.model].filter(Boolean).join(" ") || "—"}
-        </span>
-      ),
-    },
-    {
-      header: "Capacity",
-      accessor: "capacity",
-      cell: (row) => (
-        <span className="text-xs text-slate-600">
-          {row.capacity ? `${row.capacity} tons` : "—"}
-        </span>
-      ),
-    },
-    {
-      header: "Driver",
-      accessor: "driverName",
-      cell: (row) => (
-        <div className="text-xs">
-          <p className="text-slate-900">{row.driverName || "—"}</p>
-          {row.driverPhone && <p className="text-slate-500">{row.driverPhone}</p>}
-        </div>
-      ),
-    },
-    {
-      header: "Ownership",
-      accessor: "isOwned",
-      cell: (row) => (
-        <Badge variant={row.isOwned ? "success" : "info"}>
-          {row.isOwned ? "Owned" : "Hired"}
-        </Badge>
-      ),
-    },
-    {
-      header: "Status",
-      accessor: "isActive",
-      cell: (row) => (
-        <Badge variant={row.isActive ? "success" : "neutral"}>
-          {row.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
-    },
-    {
-      header: "",
-      accessor: "id",
-      cell: (row) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            openEdit(row);
-          }}
-          className="p-1.5 rounded-lg hover:bg-cyan-50 text-slate-400 hover:text-acc-transport transition-colors cursor-pointer"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-      ),
-    },
-  ];
+  const vehicleExpenses = selectedVehicle
+    ? expenses.filter((e) => e.vehicleId === selectedVehicle.id).sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate))
+    : [];
 
   return (
-    <div className="space-y-8 page-enter">
-      <PageHeader
-        module="transport"
-        title="Fleet Vehicles"
-        description="Manage owned and hired vehicles in your fleet."
-        icon={Car}
-        breadcrumbs={[
-          { label: "Transport", href: "/transport" },
-          { label: "Fleet" },
-        ]}
-        actions={
-          <div className="flex items-center gap-2">
-            <Link href="/transport">
-              <Button variant="outline" className="border-slate-200 text-slate-600">
-                <ArrowLeft className="w-4 h-4" /> Back
-              </Button>
-            </Link>
-            <Link href="/transport/vehicles/expenses">
-              <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
-                <Fuel className="w-4 h-4" /> Expenses
-              </Button>
-            </Link>
-            <Link href="/accounts?category=transport&mode=vehicle&create=1">
-              <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
-                <Plus className="w-4 h-4" /> Register in All Accounts
-              </Button>
-            </Link>
-          </div>
-        }
+    <div className="pb-8">
+      {view === "list" && (
+        <FleetListView
+          vehicles={vehicles}
+          summary={summary}
+          loading={loading}
+          viewMode={view}
+          onViewModeChange={() => setView("list")}
+          onRegister={() => { setEditVehicle(null); setRegisterOpen(true); syncUrl("register"); }}
+          onOpenReport={() => openReport()}
+          onOpenVehicle={openVehicle}
+          onEditVehicle={(v) => { setEditVehicle(v); setRegisterOpen(true); }}
+          onOpenVehicleReport={(v) => openReport(v)}
+        />
+      )}
+
+      {view === "detail" && selectedVehicle && (
+        <FleetDetailView
+          vehicle={selectedVehicle}
+          expenses={vehicleExpenses}
+          loading={expensesLoading}
+          onBack={backToList}
+          onEdit={() => { setEditVehicle(selectedVehicle); setRegisterOpen(true); }}
+          onAddExpense={() => setExpenseOpen(true)}
+          onViewReport={() => openReport(selectedVehicle)}
+          onDeleteExpense={handleDeleteExpense}
+        />
+      )}
+
+      {view === "report" && (
+        <FleetReportView
+          vehicles={vehicles}
+          expenses={expenses}
+          loading={loading}
+          focusVehicle={reportFocusVehicle}
+          onBack={backToList}
+          onOpenVehicle={openVehicle}
+        />
+      )}
+
+      <RegisterVehicleModal
+        isOpen={registerOpen}
+        onClose={() => {
+          setRegisterOpen(false);
+          setEditVehicle(null);
+          if (view === "detail" && selectedVehicle) syncUrl("detail", selectedVehicle.id);
+          else if (view === "report") syncUrl("report", reportFocusVehicle?.id);
+          else syncUrl("list");
+        }}
+        vehicle={editVehicle}
+        onSuccess={handleRegisterSuccess}
       />
 
-      <DirectoryRegisterBanner category="transport" label="vehicle" />
-
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <StatCard module="transport" label="Total Vehicles" value={vehicles.length} icon={Car} />
-        <StatCard module="transport" label="Active" value={activeCount} icon={Truck} />
-        <StatCard module="transport" label="Owned Fleet" value={ownedCount} icon={Car} />
-      </div>
-
-      <Card>
-        <CardContent>
-          {loading ? (
-            <div className="h-48 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-acc-transport animate-spin" />
-            </div>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={vehicles}
-              searchKey="registrationNumber"
-              placeholder="Search registration..."
-            />
-          )}
-        </CardContent>
-      </Card>
-
-      <Modal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Edit Vehicle"
-        size="lg"
-      >
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Registration No. *
-              </label>
-              <input
-                type="text"
-                value={form.registrationNumber}
-                onChange={handleChange("registrationNumber")}
-                required
-                className="input-field"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Vehicle Type *
-              </label>
-              <select
-                value={form.vehicleType}
-                onChange={handleChange("vehicleType")}
-                className="input-field"
-              >
-                {VEHICLE_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {[
-              ["make", "Make"],
-              ["model", "Model"],
-              ["year", "Year"],
-              ["capacity", "Capacity (tons)"],
-              ["driverName", "Default Driver"],
-              ["driverPhone", "Driver Phone"],
-            ].map(([key, label]) => (
-              <div key={key} className="space-y-1">
-                <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  {label}
-                </label>
-                <input
-                  type={key === "year" || key === "capacity" ? "number" : "text"}
-                  value={form[key]}
-                  onChange={handleChange(key)}
-                  className="input-field"
-                />
-              </div>
-            ))}
-            <div className="space-y-1 flex items-center gap-4 md:col-span-2">
-              <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isOwned}
-                  onChange={handleChange("isOwned")}
-                  className="rounded border-slate-300"
-                />
-                Company owned
-              </label>
-              {editingId && (
-                <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={form.isActive}
-                    onChange={handleChange("isActive")}
-                    className="rounded border-slate-300"
-                  />
-                  Active
-                </label>
-              )}
-            </div>
-            <div className="space-y-1 md:col-span-2">
-              <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                Notes
-              </label>
-              <textarea
-                value={form.notes}
-                onChange={handleChange("notes")}
-                className="input-field h-16 resize-none"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={() => setModalOpen(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-900 border border-slate-200 cursor-pointer transition-colors"
-            >
-              Cancel
-            </button>
-            <Button type="submit" disabled={submitting} className="bg-acc-transport hover:bg-cyan-600 border-0">
-              {submitting ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...
-                </>
-              ) : (
-                "Save Vehicle"
-              )}
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      <RecordExpenseModal
+        isOpen={expenseOpen}
+        onClose={() => setExpenseOpen(false)}
+        vehicle={selectedVehicle}
+        cashAccounts={cashAccounts}
+        bankAccounts={bankAccounts}
+        onSuccess={handleExpenseSuccess}
+      />
     </div>
+  );
+}
+
+export default function FleetHubPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[400px] flex items-center justify-center"><Loader2 className="w-8 h-8 text-[#2563EB] animate-spin" /></div>}>
+      <FleetHubContent />
+    </Suspense>
   );
 }

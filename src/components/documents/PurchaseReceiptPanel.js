@@ -4,12 +4,26 @@ import React from "react";
 import { Button } from "@/components/Button";
 import PurchaseReceipt from "@/components/documents/PurchaseReceipt";
 import { DocumentReceiptPanel } from "@/components/documents/DocumentReceiptPanel";
-import { FileText } from "lucide-react";
+import { FileText, Wallet } from "lucide-react";
+import { formatCurrency } from "@/lib/formatters";
 
-export function PurchaseReceiptPanel({ purchase, company, open, onClose, title = "Supplier purchase bill" }) {
+export function PurchaseReceiptPanel({
+  purchase,
+  company,
+  open,
+  onClose,
+  title = "Supplier purchase bill",
+  onPay,
+}) {
   if (!purchase) return null;
 
   const pdfFilename = `${purchase.purchaseNumber || "purchase"}-bill.pdf`.replace(/\s+/g, "-");
+  const balanceDue = Math.max((purchase.totalAmount || 0) - (purchase.paidAmount || 0), 0);
+  const canPay =
+    balanceDue > 0 &&
+    onPay &&
+    purchase.status !== "draft" &&
+    purchase.status !== "cancelled";
 
   return (
     <DocumentReceiptPanel
@@ -18,6 +32,17 @@ export function PurchaseReceiptPanel({ purchase, company, open, onClose, title =
       title={title}
       hint="Compact ERP bill — scroll if needed. Print/PDF uses full document size."
       pdfFilename={pdfFilename}
+      actions={
+        canPay ? (
+          <Button
+            type="button"
+            onClick={onPay}
+            className="bg-teal-700 hover:bg-teal-800 border-0 min-h-[40px] text-sm"
+          >
+            <Wallet className="w-4 h-4" /> Pay {formatCurrency(balanceDue)}
+          </Button>
+        ) : null
+      }
     >
       <PurchaseReceipt purchase={purchase} company={company} />
     </DocumentReceiptPanel>

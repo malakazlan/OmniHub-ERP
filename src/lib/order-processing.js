@@ -69,7 +69,7 @@ async function ensureFarmerLedgerAccount(tx, farmerId) {
   const code = await generateAccountCode("farmer", tx);
   const account = await tx.account.create({
     data: {
-      name: `${farmer.name} (Farmer)`,
+      name: farmer.name,
       code,
       type: "liability",
       category: "farmer",
@@ -103,7 +103,7 @@ async function ensureCompanyLedgerAccount(tx, companyId, { forPurchase = false }
 
   const account = await tx.account.create({
     data: {
-      name: `${company.name} (Company)`,
+      name: company.name,
       code,
       type: accountType,
       category: "company",
@@ -133,7 +133,7 @@ async function ensureShopLedgerAccount(tx, shopId) {
   const code = await generateAccountCode("shop", tx);
   const account = await tx.account.create({
     data: {
-      name: `${shop.name} (Shop)`,
+      name: shop.name,
       code,
       type: "asset",
       category: "shop",

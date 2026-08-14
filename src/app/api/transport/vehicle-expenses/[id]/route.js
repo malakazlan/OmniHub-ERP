@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
@@ -16,7 +16,7 @@ export async function DELETE(req, { params }) {
     const expense = await prisma.vehicleExpense.findUnique({ where: { id: expenseId } });
     if (!expense) return Response.json({ error: "Expense not found" }, { status: 404 });
 
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       if (expense.accountId) {
         await createLedgerEntry(tx, {
           accountId: expense.accountId,

@@ -3,7 +3,7 @@ import { generateAccountCode } from "@/lib/receipt";
 /**
  * Create a cash ledger account inside an existing transaction.
  */
-export async function createCashLedgerAccount(tx, { name, openingBalance = 0, ownerUserId = null }) {
+export async function createCashLedgerAccount(tx, { name, openingBalance = 0, ownerUserId = null, phone = null }) {
   const code = await generateAccountCode("cash", tx);
   const opening = parseFloat(openingBalance) || 0;
 
@@ -13,6 +13,7 @@ export async function createCashLedgerAccount(tx, { name, openingBalance = 0, ow
       code,
       type: "asset",
       category: "cash",
+      phone: phone || null,
       openingBalance: opening,
       balance: opening,
       ownerUserId: ownerUserId ? parseInt(ownerUserId, 10) : null,

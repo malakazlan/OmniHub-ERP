@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
-import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
+import { aggregateFleetExpenses } from "@/lib/fleetStats";
 
 export async function GET(req) {
   try {
@@ -9,14 +9,37 @@ export async function GET(req) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const vehicles = await prisma.vehicle.findMany({
-      orderBy: { createdAt: "desc" },
-      include: {
-        _count: { select: { transports: true } },
+    const [vehicles, expenses] = await Promise.all([
+      prisma.vehicle.findMany({
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: { select: { transports: true, expenses: true } },
+        },
+      }),
+      prisma.vehicleExpense.findMany({
+        select: { vehicleId: true, amount: true, expenseDate: true, expenseType: true },
+      }),
+    ]);
+
+    const { byVehicle, fleetMonth, fleetAllTime } = aggregateFleetExpenses(expenses);
+
+    const vehiclesWithStats = vehicles.map((v) => ({
+      ...v,
+      expenseStats: byVehicle[v.id] || { total: 0, month: 0, fuel: 0, count: 0 },
+    }));
+
+    const activeCount = vehicles.filter((v) => v.isActive).length;
+
+    return Response.json({
+      success: true,
+      vehicles: vehiclesWithStats,
+      summary: {
+        registered: vehicles.length,
+        active: activeCount,
+        expensesThisMonth: fleetMonth,
+        allTimeCost: fleetAllTime,
       },
     });
-
-    return Response.json({ success: true, vehicles });
   } catch (error) {
     console.error("List vehicles error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
@@ -31,11 +54,6 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const blocked = directoryCreateBlocked(body);
-    if (blocked) return blocked;
-    const adminOnly = requireProjectAccountsAdmin(user);
-    if (adminOnly) return adminOnly;
-
     const {
       registrationNumber,
       vehicleType,
@@ -47,52 +65,35 @@ export async function POST(req) {
       driverPhone,
       isOwned,
       notes,
-      linkDriverAccount,
     } = body;
 
-    if (!registrationNumber || !vehicleType) {
-      return Response.json(
-        { error: "Registration number and vehicle type are required" },
-        { status: 400 }
-      );
+    if (!registrationNumber?.trim()) {
+      return Response.json({ error: "Registration number is required" }, { status: 400 });
+    }
+    if (!vehicleType?.trim()) {
+      return Response.json({ error: "Vehicle type is required" }, { status: 400 });
     }
 
     const existing = await prisma.vehicle.findUnique({
-      where: { registrationNumber },
+      where: { registrationNumber: registrationNumber.trim() },
     });
     if (existing) {
       return Response.json({ error: "Vehicle with this registration already exists" }, { status: 400 });
     }
 
-    const vehicle = await prisma.$transaction(async (tx) => {
-      let driverAccountId = null;
-      if (linkDriverAccount && driverName) {
-        const driverAccount = await tx.account.create({
-          data: {
-            name: `${driverName} (Driver · ${registrationNumber})`,
-            type: "liability",
-            category: "transport",
-            phone: driverPhone || null,
-          },
-        });
-        driverAccountId = driverAccount.id;
-      }
-
-      return tx.vehicle.create({
-        data: {
-          registrationNumber,
-          vehicleType,
-          make: make || null,
-          model: model || null,
-          year: year ? parseInt(year) : null,
-          capacity: parseFloat(capacity) || 0,
-          driverName: driverName || null,
-          driverPhone: driverPhone || null,
-          driverAccountId,
-          isOwned: isOwned !== undefined ? Boolean(isOwned) : true,
-          notes: notes || null,
-        },
-      });
+    const vehicle = await prisma.vehicle.create({
+      data: {
+        registrationNumber: registrationNumber.trim(),
+        vehicleType: vehicleType.trim(),
+        make: make?.trim() || null,
+        model: model?.trim() || null,
+        year: year ? parseInt(year, 10) : null,
+        capacity: parseFloat(capacity) || 0,
+        driverName: driverName?.trim() || null,
+        driverPhone: driverPhone?.trim() || null,
+        isOwned: isOwned !== undefined ? Boolean(isOwned) : true,
+        notes: notes?.trim() || null,
+      },
     });
 
     return Response.json({ success: true, vehicle }, { status: 201 });

@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/Button";
+import { SaleInvoicePanel } from "@/components/documents/SaleInvoicePanel";
 import {
   DollarSign,
   Plus,
@@ -15,6 +16,7 @@ import {
   Receipt,
   TrendingUp,
   AlertCircle,
+  FileText,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
@@ -32,11 +34,28 @@ const PAYMENT_VARIANTS = {
   paid: "success",
 };
 
-export default function SalesPage() {
+function SalesPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [invoiceSale, setInvoiceSale] = useState(null);
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [companySettings, setCompanySettings] = useState(null);
+
+  const openInvoice = useCallback(async (id) => {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/sales/${id}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load invoice");
+      setInvoiceSale(data.sale);
+      setInvoiceOpen(true);
+    } catch (err) {
+      showToast(err.message || "Could not open invoice", "error");
+    }
+  }, [showToast]);
 
   const fetchSales = async () => {
     try {
@@ -54,6 +73,20 @@ export default function SalesPage() {
   useEffect(() => {
     fetchSales();
   }, []);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => { if (d.settings) setCompanySettings(d.settings); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const invoiceId = searchParams.get("invoice");
+    if (!invoiceId) return;
+    openInvoice(invoiceId);
+    router.replace("/sales", { scroll: false });
+  }, [searchParams, openInvoice, router]);
 
   const totalAmount = sales.reduce((s, sale) => s + (sale.totalAmount || 0), 0);
   const confirmedCount = sales.filter((s) =>
@@ -112,6 +145,24 @@ export default function SalesPage() {
         <Badge variant={STATUS_VARIANTS[row.status] || "neutral"}>{row.status || "draft"}</Badge>
       ),
     },
+    {
+      header: "",
+      accessor: "id",
+      sortable: false,
+      cell: (row) =>
+        row.status !== "draft" && row.status !== "cancelled" ? (
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => openInvoice(row.id)}
+              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+              title="View invoice"
+            >
+              <FileText className="w-4 h-4" />
+            </button>
+          </div>
+        ) : null,
+    },
   ];
 
   return (
@@ -155,11 +206,36 @@ export default function SalesPage() {
               data={sales}
               searchKey="invoiceNumber"
               placeholder="Search invoice or customer…"
-              onRowClick={(row) => router.push(`/sales/${row.id}`)}
+              onRowClick={(row) => {
+                if (row.status !== "draft" && row.status !== "cancelled") {
+                  openInvoice(row.id);
+                }
+              }}
             />
           )}
         </div>
       </div>
+
+      <SaleInvoicePanel
+        sale={invoiceSale}
+        company={companySettings}
+        open={invoiceOpen}
+        onClose={() => { setInvoiceOpen(false); setInvoiceSale(null); }}
+      />
     </div>
+  );
+}
+
+export default function SalesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-48 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-acc-sales animate-spin" />
+        </div>
+      }
+    >
+      <SalesPageContent />
+    </Suspense>
   );
 }

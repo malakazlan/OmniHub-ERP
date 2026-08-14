@@ -3,6 +3,9 @@ import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { logActivity } from "@/lib/activityLog";
 import {
+  findOutstandingPurchasesForLedgerAccount,
+} from "@/lib/purchase-settlement";
+import {
   parseNum,
   computeItemSubtotal,
   normalizeItems,
@@ -84,16 +87,37 @@ export async function GET(req) {
     const status = searchParams.get("status");
     const farmerId = searchParams.get("farmerId");
     const companyId = searchParams.get("companyId");
+    const vendorAccountId = searchParams.get("vendorAccountId");
+    const ledgerAccountId = searchParams.get("ledgerAccountId");
+    const outstanding = searchParams.get("outstanding") === "true";
+
+    if (outstanding && (ledgerAccountId || vendorAccountId)) {
+      const accountId = parseInt(ledgerAccountId || vendorAccountId, 10);
+      const purchases = await findOutstandingPurchasesForLedgerAccount(prisma, accountId);
+      const withInclude = await prisma.purchaseOrder.findMany({
+        where: { id: { in: purchases.map((p) => p.id) } },
+        include: purchaseInclude,
+        orderBy: [{ purchaseDate: "asc" }, { id: "asc" }],
+      });
+      return Response.json({ success: true, purchases: withInclude });
+    }
 
     const where = {};
     if (status) where.status = status;
     if (farmerId) where.farmerId = parseInt(farmerId, 10);
     if (companyId) where.companyId = parseInt(companyId, 10);
+    if (vendorAccountId) where.vendorAccountId = parseInt(vendorAccountId, 10);
+    if (outstanding) {
+      where.status = { in: ["confirmed", "received"] };
+      where.paymentStatus = { in: ["unpaid", "partial"] };
+    }
 
     const purchases = await prisma.purchaseOrder.findMany({
       where,
       include: purchaseInclude,
-      orderBy: { purchaseDate: "desc" },
+      orderBy: outstanding
+        ? [{ purchaseDate: "asc" }, { id: "asc" }]
+        : { purchaseDate: "desc" },
     });
 
     return Response.json({ success: true, purchases });

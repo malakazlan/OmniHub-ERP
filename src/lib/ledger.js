@@ -1,5 +1,8 @@
 import prisma from "./prisma";
 
+/** Oldest first — new entries appear at the bottom (statement / register order). */
+export const LEDGER_ENTRY_ORDER = [{ date: "asc" }, { id: "asc" }];
+
 /**
  * Create a ledger entry and update account running balance.
  */
@@ -16,12 +19,14 @@ export async function createLedgerEntry(tx, {
   const account = await tx.account.findUnique({ where: { id: accountId } });
   if (!account) throw new Error(`Account ${accountId} not found`);
 
+  const entryDate = date ? new Date(date) : new Date();
+
   const newBalance = account.balance + debit - credit;
 
   const entry = await tx.ledgerEntry.create({
     data: {
       accountId,
-      date: date || new Date(),
+      date: entryDate,
       description,
       reference,
       referenceType,
@@ -111,7 +116,7 @@ export async function getAccountBalance(accountId) {
 /**
  * Get ledger entries for an account with optional date range.
  */
-export async function getAccountLedger(accountId, { from, to, limit = 100 } = {}) {
+export async function getAccountLedger(accountId, { from, to, limit } = {}) {
   const where = { accountId };
   if (from || to) {
     where.date = {};
@@ -121,8 +126,8 @@ export async function getAccountLedger(accountId, { from, to, limit = 100 } = {}
 
   return prisma.ledgerEntry.findMany({
     where,
-    orderBy: { date: "desc" },
-    take: limit,
+    orderBy: LEDGER_ENTRY_ORDER,
+    ...(limit != null ? { take: limit } : {}),
   });
 }
 

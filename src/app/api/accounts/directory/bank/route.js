@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
 import { generateAccountCode } from "@/lib/receipt";
@@ -43,27 +43,29 @@ export async function POST(req) {
       branchName,
       openingBalance,
       ledgerName,
+      phone,
     } = body;
 
-    if (!bankName || !accountTitle || !accountNumber) {
-      return Response.json(
-        { error: "Bank name, account title, and account number are required" },
-        { status: 400 }
-      );
+    const displayName = ledgerName?.trim() || accountTitle?.trim() || bankName?.trim();
+    if (!displayName) {
+      return Response.json({ error: "Account name is required" }, { status: 400 });
+    }
+    if (!phone?.trim()) {
+      return Response.json({ error: "Phone is required" }, { status: 400 });
     }
 
     const code = await generateAccountCode("bank");
     const opening = parseFloat(openingBalance) || 0;
-    const displayName = ledgerName?.trim() || `${bankName} — ${accountTitle}`;
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await runTransaction(async (tx) => {
       const account = await tx.account.create({
         data: {
           name: displayName,
           code,
           type: "asset",
           category: "bank",
-          reference: accountNumber,
+          phone: phone.trim(),
+          reference: accountNumber?.trim() || null,
           openingBalance: opening,
           balance: opening,
         },
@@ -84,9 +86,9 @@ export async function POST(req) {
 
       const bankMeta = await tx.bankAccount.create({
         data: {
-          bankName,
-          accountTitle,
-          accountNumber,
+          bankName: bankName?.trim() || displayName,
+          accountTitle: accountTitle?.trim() || displayName,
+          accountNumber: accountNumber?.trim() || "—",
           branchCode: branchCode || null,
           branchName: branchName || null,
           ledgerAccountId: account.id,

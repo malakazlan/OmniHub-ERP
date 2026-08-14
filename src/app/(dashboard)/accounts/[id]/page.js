@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { DataTable } from "@/components/ui/DataTable";
+import LedgerTable from "@/components/accounts/LedgerTable";
 import {
   BookOpen, Loader2, ArrowLeft, MapPin, Phone, Hash, Wallet,
   ArrowDownCircle, ArrowUpCircle,
@@ -23,26 +23,29 @@ export default function AccountLedgerPage() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchLedger() {
-      try {
-        const res = await fetch(`/api/accounts/ledger?accountId=${id}`);
-        const data = await res.json();
-        if (res.ok) {
-          setAccount(data.account);
-          setEntries(data.entries || []);
-        } else {
-          showToast(data.error || "Failed to load ledger", "error");
-        }
-      } catch {
-        showToast("Error connecting to server", "error");
-      } finally {
-        setLoading(false);
+  const fetchLedger = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/accounts/ledger?accountId=${id}`);
+      const data = await res.json();
+      if (res.ok) {
+        setAccount(data.account);
+        setEntries(data.entries || []);
+      } else {
+        showToast(data.error || "Failed to load ledger", "error");
       }
+    } catch {
+      showToast("Error connecting to server", "error");
+    } finally {
+      setLoading(false);
     }
-    if (id) fetchLedger();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, showToast]);
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      fetchLedger();
+    }
+  }, [id, fetchLedger]);
 
   const totalDebit = entries.reduce((s, e) => s + (e.debit || 0), 0);
   const totalCredit = entries.reduce((s, e) => s + (e.credit || 0), 0);
@@ -137,7 +140,7 @@ export default function AccountLedgerPage() {
               <p className="text-xs text-slate-400 mt-1">Transactions posted to this account will appear here.</p>
             </div>
           ) : (
-            <DataTable columns={columns} data={entries} />
+            <LedgerTable columns={columns} data={entries} loading={loading} />
           )}
         </CardContent>
       </Card>

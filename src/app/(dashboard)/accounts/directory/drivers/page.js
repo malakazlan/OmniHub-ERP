@@ -1,5 +1,5 @@
-import AccountsDirectoryRedirect from "../redirect";
+import { redirect } from "next/navigation";
 
 export default function DriversRedirect() {
-  return <AccountsDirectoryRedirect category="transport" mode="driver" />;
+  redirect("/accounts?category=transport");
 }

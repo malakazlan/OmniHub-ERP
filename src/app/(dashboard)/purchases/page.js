@@ -1,21 +1,21 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 import { DataTable } from "@/components/ui/DataTable";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/Button";
 import { PurchasePayModal } from "@/components/purchases/PurchasePayModal";
+import { PurchaseReceiptPanel } from "@/components/documents/PurchaseReceiptPanel";
 import {
   ShoppingCart,
   Plus,
   Loader2,
   FileText,
   AlertCircle,
-  Eye,
   Wallet,
   Pencil,
 } from "lucide-react";
@@ -34,13 +34,30 @@ const PAYMENT_VARIANTS = {
   paid: "success",
 };
 
-export default function PurchasesPage() {
+function PurchasesPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("all");
   const [payPurchase, setPayPurchase] = useState(null);
+  const [receiptPurchase, setReceiptPurchase] = useState(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [companySettings, setCompanySettings] = useState(null);
+
+  const openBill = useCallback(async (id) => {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/purchases/${id}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load bill");
+      setReceiptPurchase(data.purchase);
+      setReceiptOpen(true);
+    } catch (err) {
+      showToast(err.message || "Could not open bill", "error");
+    }
+  }, [showToast]);
 
   const fetchPurchases = useCallback(async () => {
     setLoading(true);
@@ -61,6 +78,20 @@ export default function PurchasesPage() {
   useEffect(() => {
     fetchPurchases();
   }, [fetchPurchases]);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((d) => { if (d.settings) setCompanySettings(d.settings); })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const billId = searchParams.get("bill");
+    if (!billId) return;
+    openBill(billId);
+    router.replace("/purchases", { scroll: false });
+  }, [searchParams, openBill, router]);
 
   const totalAmount = purchases.reduce((s, p) => s + (p.totalAmount || 0), 0);
   const confirmedCount = purchases.filter((p) => p.status === "confirmed" || p.status === "received").length;
@@ -143,6 +174,7 @@ export default function PurchasesPage() {
       cell: (row) => {
         const balance = Math.max((row.totalAmount || 0) - (row.paidAmount || 0), 0);
         const canPay = row.status !== "draft" && row.status !== "cancelled" && balance > 0;
+        const canPrint = row.status !== "draft" && row.status !== "cancelled";
         return (
           <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
             {row.status === "draft" && (
@@ -166,14 +198,16 @@ export default function PurchasesPage() {
                 <Wallet className="w-4 h-4" />
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => router.push(`/purchases/${row.id}`)}
-              className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
-              title="View"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
+            {canPrint && (
+              <button
+                type="button"
+                onClick={() => openBill(row.id)}
+                className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+                title="View bill"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+            )}
           </div>
         );
       },
@@ -242,7 +276,13 @@ export default function PurchasesPage() {
               data={purchases}
               searchKey="purchaseNumber"
               placeholder="Search PO number or vendor…"
-              onRowClick={(row) => router.push(`/purchases/${row.id}`)}
+              onRowClick={(row) => {
+                if (row.status === "draft") {
+                  router.push(`/purchases/new?edit=${row.id}`);
+                } else if (row.status !== "cancelled") {
+                  openBill(row.id);
+                }
+              }}
             />
           )}
         </div>
@@ -254,6 +294,28 @@ export default function PurchasesPage() {
         onClose={() => setPayPurchase(null)}
         onPaid={() => fetchPurchases()}
       />
+
+      <PurchaseReceiptPanel
+        purchase={receiptPurchase}
+        company={companySettings}
+        open={receiptOpen}
+        onClose={() => { setReceiptOpen(false); setReceiptPurchase(null); }}
+        title="Supplier purchase bill"
+      />
     </div>
+  );
+}
+
+export default function PurchasesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="h-48 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-acc-purchases animate-spin" />
+        </div>
+      }
+    >
+      <PurchasesPageContent />
+    </Suspense>
   );
 }

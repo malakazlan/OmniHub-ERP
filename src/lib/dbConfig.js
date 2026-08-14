@@ -30,7 +30,7 @@ export function parseDatabaseUrl(connectionString) {
     password: decodeURIComponent(url.password || ""),
     database,
     connectTimeout: 15_000,
-    connectionLimit: 10,
+    connectionLimit: 15,
     acquireTimeout: 15_000,
     idleTimeout: 60_000,
     prepareCacheLength: 0,

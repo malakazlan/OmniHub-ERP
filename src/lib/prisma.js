@@ -20,7 +20,7 @@ function getPrismaClient() {
 
 /** Interactive transaction defaults — stock/ledger flows can exceed Prisma's 5s default. */
 export const PRISMA_TX_OPTIONS = {
-  maxWait: 15_000,
+  maxWait: 30_000,
   timeout: 30_000,
 };
 

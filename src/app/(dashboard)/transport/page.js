@@ -17,6 +17,7 @@ import {
   DollarSign,
   Package,
   Car,
+  FileText,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
@@ -133,19 +134,29 @@ export default function TransportPage() {
     <div className="space-y-8 page-enter">
       <PageHeader
         module="transport"
-        title="Transport & Logistics"
-        description="Manage freight trips, routes, and delivery costs."
+        title="Transport Trips"
+        description="Manage freight trips and delivery routes. Register fleet vehicles separately."
         icon={Truck}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Link href="/transport/vehicles">
               <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
                 <Car className="w-4 h-4" /> Fleet
               </Button>
             </Link>
+            <Link href="/transport/vehicles?register=1">
+              <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
+                <Plus className="w-4 h-4" /> Register Vehicle
+              </Button>
+            </Link>
+            <Link href="/transport/vehicles?report=1">
+              <Button variant="outline" className="border-cyan-200 text-acc-transport hover:bg-cyan-50">
+                <FileText className="w-4 h-4" /> Fleet Report
+              </Button>
+            </Link>
             <Link href="/transport/new">
               <Button className="bg-acc-transport hover:bg-cyan-600 border-0 shadow-lg shadow-cyan-900/20">
-                <Plus className="w-4 h-4" /> New Transport
+                <Plus className="w-4 h-4" /> New Trip
               </Button>
             </Link>
           </div>

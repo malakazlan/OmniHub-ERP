@@ -185,13 +185,15 @@ export async function PUT(req, { params }) {
       });
 
       if (existing.accountId) {
+        const isDriver = (body.role ?? existing.role) === "driver";
         await tx.account.update({
           where: { id: existing.accountId },
           data: {
-            name: `${updatedName} (Salary)`,
+            name: updatedName,
             phone: updatedPhone,
-            cnic: body.cnic ?? existing.cnic,
+            cnic: body.cnic !== undefined ? (body.cnic?.trim() || null) : existing.cnic,
             address: body.address ?? existing.address,
+            category: isDriver ? "transport" : "salary",
             isActive: body.isActive !== undefined ? Boolean(body.isActive) : existing.isActive,
           },
         });

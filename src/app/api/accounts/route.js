@@ -3,6 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { generateAccountCode } from "@/lib/receipt";
 import { cashAccountWhereForUser } from "@/lib/accountAccess";
 import { directoryCreateBlocked } from "@/lib/directoryCreate";
+import { attachPartyMetaToAccounts } from "@/lib/accountRelations";
 
 export async function GET(req) {
   try {
@@ -33,7 +34,9 @@ export async function GET(req) {
       orderBy: [{ type: "asc" }, { name: "asc" }],
     });
 
-    return Response.json({ success: true, accounts });
+    const withParty = await attachPartyMetaToAccounts(accounts);
+
+    return Response.json({ success: true, accounts: withParty });
   } catch (error) {
     console.error("List accounts error:", error);
     const msg = String(error?.message || "");

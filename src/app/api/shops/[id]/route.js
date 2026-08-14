@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
+import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
 
 export async function GET(req, { params }) {
@@ -26,8 +27,7 @@ export async function GET(req, { params }) {
       balance = account?.balance || 0;
       ledgerEntries = await prisma.ledgerEntry.findMany({
         where: { accountId: shop.accountId },
-        orderBy: { date: "desc" },
-        take: 20,
+        orderBy: LEDGER_ENTRY_ORDER,
       });
     }
 
@@ -75,7 +75,7 @@ export async function PUT(req, { params }) {
         await tx.account.update({
           where: { id: shop.accountId },
           data: {
-            name: `${body.name || s.name} (Shop)`,
+            name: body.name || s.name,
             city: body.city,
             phone: body.phone,
             whatsappNumber: body.whatsappNumber,

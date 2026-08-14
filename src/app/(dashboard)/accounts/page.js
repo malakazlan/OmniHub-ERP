@@ -12,7 +12,7 @@ import { DirectoryAdminNotice, DirectoryAdminActions, confirmDirectoryDelete, us
 import { PageHeader, StatCard } from "@/components/layout/PageHeader";
 import {
   BookOpen, Loader2, Landmark, Users, Wallet,
-  Banknote, Building, Store, Plus, Search, ArrowLeft, Sprout, Truck, Car, UserCircle,
+  Banknote, Building, Store, Plus, Search, ArrowLeft, Sprout, Truck,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -26,7 +26,7 @@ const CATEGORY_LABELS = {
   company: "Companies",
   shop: "Shops",
   salary: "Employees",
-  transport: "Transport",
+  transport: "Driver Accounts",
 };
 
 const CATEGORY_DESC = {
@@ -36,7 +36,7 @@ const CATEGORY_DESC = {
   company: "Suppliers & buyers",
   shop: "Retail & wholesale customers",
   salary: "Staff salary accounts",
-  transport: "Drivers & fleet",
+  transport: "Driver payables & freight staff",
 };
 
 const CATEGORY_ICONS = {
@@ -73,7 +73,7 @@ const CATEGORY_GROUPS = [
     items: ["shop"],
   },
   {
-    title: "People & Fleet",
+    title: "People",
     items: ["salary", "transport"],
   },
 ];
@@ -91,7 +91,6 @@ function AccountsPageContent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState(null);
-  const [transportMode, setTransportMode] = useState("driver");
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
@@ -118,15 +117,13 @@ function AccountsPageContent() {
     if (cat === "all") setActiveCategory("all");
     else if (cat && PROJECT_CATEGORIES.includes(cat)) setActiveCategory(cat);
     else if (cat) router.replace("/accounts", { scroll: false });
-    if (mode === "vehicle" || mode === "driver") setTransportMode(mode);
     if (create === "1" && cat && PROJECT_CATEGORIES.includes(cat)) setModalOpen(true);
   }, [searchParams, router]);
 
-  const updateUrl = (category, create = false, mode) => {
+  const updateUrl = (category, create = false) => {
     const params = new URLSearchParams();
     if (category) params.set("category", category);
     if (create) params.set("create", "1");
-    if (mode) params.set("mode", mode);
     const qs = params.toString();
     router.replace(qs ? `/accounts?${qs}` : "/accounts", { scroll: false });
   };
@@ -145,7 +142,7 @@ function AccountsPageContent() {
 
   const openCreateModal = () => {
     setModalOpen(true);
-    updateUrl(activeCategory, true, activeCategory === "transport" ? transportMode : undefined);
+    updateUrl(activeCategory, true);
   };
 
   const handleEditAccount = useCallback((row) => {
@@ -190,7 +187,10 @@ function AccountsPageContent() {
       const matchesSearch =
         a.name.toLowerCase().includes(q) ||
         (a.code && a.code.toLowerCase().includes(q)) ||
-        (a.phone && a.phone.toLowerCase().includes(q));
+        (a.phone && a.phone.toLowerCase().includes(q)) ||
+        (a.party?.name && a.party.name.toLowerCase().includes(q)) ||
+        (a.party?.subtitle && a.party.subtitle.toLowerCase().includes(q)) ||
+        (a.party?.contactPerson && a.party.contactPerson.toLowerCase().includes(q));
       return matchesCategory && matchesSearch;
     });
   }, [accounts, activeCategory, searchQuery]);
@@ -206,14 +206,28 @@ function AccountsPageContent() {
     .reduce((s, a) => s + a.balance, 0);
 
   const columns = useMemo(() => {
+    const accountNameCell = (row) => {
+      if (row.party?.name) {
+        return (
+          <div className="min-w-0">
+            <p className="font-semibold text-[var(--text-primary)] truncate">{row.party.name}</p>
+            {row.party.subtitle && (
+              <p className="text-[10px] text-slate-500 truncate mt-0.5">
+                {row.party.kind === "company" ? `Contact: ${row.party.subtitle}` : row.party.subtitle}
+              </p>
+            )}
+          </div>
+        );
+      }
+      return <span className="font-semibold text-[var(--text-primary)]">{row.name}</span>;
+    };
+
     const cols = [
       {
         header: "Account name",
         accessor: "name",
         wrap: false,
-        cell: (row) => (
-          <span className="font-semibold text-[var(--text-primary)]">{row.name}</span>
-        ),
+        cell: (row) => accountNameCell(row),
       },
       {
         header: "Code",
@@ -242,7 +256,7 @@ function AccountsPageContent() {
         accessor: "phone",
         wrap: false,
         cell: (row) => (
-          <span className="text-sm text-[var(--text-primary)] tabular-nums">{row.phone || "—"}</span>
+          <span className="text-sm text-[var(--text-primary)] tabular-nums">{row.party?.phone || row.phone || "—"}</span>
         ),
       },
       {
@@ -250,7 +264,7 @@ function AccountsPageContent() {
         accessor: "city",
         wrap: false,
         cell: (row) => (
-          <span className="text-sm text-[var(--text-secondary)]">{row.city || "—"}</span>
+          <span className="text-sm text-[var(--text-secondary)]">{row.party?.city || row.city || "—"}</span>
         ),
       },
       {
@@ -316,7 +330,7 @@ function AccountsPageContent() {
         description={
           activeCategory
             ? CATEGORY_DESC[activeCategory] || "Manage accounts in this category."
-            : "Register and manage all business party accounts — cash, bank, suppliers, customers, staff & fleet."
+            : "Register cash, bank, suppliers, customers, staff and drivers — only name and phone required."
         }
         icon={BookOpen}
         breadcrumbs={
@@ -415,33 +429,13 @@ function AccountsPageContent() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search name or code..."
+                placeholder="Search name, contact, code or phone..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
               />
             </div>
           </div>
-
-          {activeCategory === "transport" && isAdmin && (
-            <div className="inline-flex gap-1 p-1 bg-slate-100 rounded-lg border border-slate-200">
-              {[
-                { key: "driver", label: "Drivers", icon: UserCircle },
-                { key: "vehicle", label: "Vehicles", icon: Car },
-              ].map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => { setTransportMode(key); updateUrl(activeCategory, false, key); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-colors ${
-                    transportMode === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-600 hover:text-slate-900"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" /> {label}
-                </button>
-              ))}
-            </div>
-          )}
 
           {activeCategory !== "all" && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -495,10 +489,9 @@ function AccountsPageContent() {
           isOpen={modalOpen}
           onClose={() => {
             setModalOpen(false);
-            updateUrl(activeCategory, false, activeCategory === "transport" ? transportMode : undefined);
+            updateUrl(activeCategory, false);
           }}
           category={activeCategory}
-          transportMode={transportMode}
           onSuccess={fetchAccounts}
         />
       )}

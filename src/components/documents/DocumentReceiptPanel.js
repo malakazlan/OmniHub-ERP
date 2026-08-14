@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { downloadReceiptPdf, waitForInvoiceElement } from "@/lib/downloadReceiptPdf";
 import { downloadSaleInvoicePdf } from "@/lib/saleInvoicePdf";
+import { downloadPaymentReceiptPdf } from "@/lib/paymentReceiptPdf";
 import { Printer, Download, Loader2 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 
@@ -26,6 +27,8 @@ export function DocumentReceiptPanel({
   autoAction = null,
   onAutoActionDone,
   saleInvoicePdf = null,
+  paymentReceiptPdf = null,
+  actions = null,
   children,
 }) {
   const receiptRef = useRef(null);
@@ -45,6 +48,16 @@ export function DocumentReceiptPanel({
         downloadSaleInvoicePdf(
           saleInvoicePdf.sale,
           saleInvoicePdf.company,
+          pdfFilename
+        );
+        showToast("PDF downloaded", "success");
+        return;
+      }
+
+      if (paymentReceiptPdf?.receipt) {
+        downloadPaymentReceiptPdf(
+          paymentReceiptPdf.receipt,
+          paymentReceiptPdf.company,
           pdfFilename
         );
         showToast("PDF downloaded", "success");
@@ -93,7 +106,8 @@ export function DocumentReceiptPanel({
       <div className="space-y-3">
         {hint && <p className="text-[11px] text-slate-500 px-1">{hint}</p>}
 
-        <div className="flex flex-wrap gap-2 no-print">
+        <div className="flex flex-wrap items-center gap-2 no-print">
+          {actions}
           <Button
             type="button"
             onClick={() => handlePrint()}

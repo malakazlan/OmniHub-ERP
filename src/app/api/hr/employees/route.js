@@ -1,9 +1,10 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest, hashPassword } from "@/lib/auth";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
 import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccounts";
 import { attachCashAccountsToEmployees } from "@/lib/accountRelations";
 import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePresets";
+import { applyOpeningBalance } from "@/lib/accountOpening";
 
 export async function GET(req) {
   try {
@@ -68,18 +69,24 @@ export async function POST(req) {
       loginPassword,
       loginRole,
       allowedModules,
+      openingBalance,
     } = body;
 
-    if (!name) {
-      return Response.json({ error: "Employee name is required" }, { status: 400 });
+    if (!name?.trim()) {
+      return Response.json({ error: "Name is required" }, { status: 400 });
+    }
+    if (!phone?.trim()) {
+      return Response.json({ error: "Phone is required" }, { status: 400 });
     }
 
-    if (cnic) {
-      const existing = await prisma.employee.findUnique({ where: { cnic } });
+    if (cnic?.trim()) {
+      const existing = await prisma.employee.findUnique({ where: { cnic: cnic.trim() } });
       if (existing) {
         return Response.json({ error: "Employee with this CNIC already exists" }, { status: 400 });
       }
     }
+
+    const employeeCnic = cnic?.trim() || null;
 
     if (createLogin) {
       if (!loginEmail || !loginPassword) {
@@ -91,7 +98,7 @@ export async function POST(req) {
       }
     }
 
-    const employee = await prisma.$transaction(async (tx) => {
+    const employee = await runTransaction(async (tx) => {
       let accountId = null;
       let cashAccountId = null;
       let linkedUserId = assignUserId ? parseInt(assignUserId, 10) : null;
@@ -121,15 +128,16 @@ export async function POST(req) {
         const isDriver = role === "driver";
         const account = await tx.account.create({
           data: {
-            name: isDriver ? `${name} (Driver)` : `${name} (Salary)`,
+            name: name.trim(),
             type: "liability",
             category: isDriver ? "transport" : "salary",
-            phone: phone || null,
-            cnic: cnic || null,
+            phone: phone.trim(),
+            cnic: employeeCnic,
             address: address || null,
           },
         });
         accountId = account.id;
+        await applyOpeningBalance(tx, account.id, "liability", openingBalance);
       }
 
       if (createCashAccount !== false) {
@@ -149,7 +157,7 @@ export async function POST(req) {
         data: {
           name,
           fatherName: fatherName || null,
-          cnic: cnic || null,
+          cnic: employeeCnic,
           phone: phone || null,
           role: role || null,
           designation: designation || null,

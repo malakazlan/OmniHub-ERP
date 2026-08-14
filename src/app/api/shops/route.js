@@ -1,7 +1,8 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
+import { applyOpeningBalance } from "@/lib/accountOpening";
 
 export async function GET(req) {
   try {
@@ -48,23 +49,26 @@ export async function POST(req) {
 
     const {
       name, ownerName, phone, whatsappNumber, city, area, address,
-      shopType, creditLimit, assignedTo, notes,
+      shopType, creditLimit, assignedTo, notes, openingBalance,
     } = body;
 
-    if (!name) return Response.json({ error: "Shop name is required" }, { status: 400 });
+    if (!name?.trim()) return Response.json({ error: "Shop name is required" }, { status: 400 });
+    if (!phone?.trim()) return Response.json({ error: "Phone is required" }, { status: 400 });
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await runTransaction(async (tx) => {
       const account = await tx.account.create({
         data: {
-          name: `${name} (Shop)`,
+          name: name.trim(),
           type: "asset",
           category: "shop",
-          city,
-          phone,
-          whatsappNumber,
-          address,
+          city: city || null,
+          phone: phone.trim(),
+          whatsappNumber: whatsappNumber || null,
+          address: address || null,
         },
       });
+
+      await applyOpeningBalance(tx, account.id, "asset", openingBalance);
 
       const shop = await tx.shop.create({
         data: {

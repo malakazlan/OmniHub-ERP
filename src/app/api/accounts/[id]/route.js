@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { userCanAccessAccount } from "@/lib/accountAccess";
+import { findPartyEntityByAccount } from "@/lib/accountRelations";
+import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 
 export async function GET(req, { params }) {
   try {
@@ -18,11 +20,19 @@ export async function GET(req, { params }) {
 
     const ledgerEntries = await prisma.ledgerEntry.findMany({
       where: { accountId },
-      orderBy: { date: "desc" },
-      take: 50,
+      orderBy: LEDGER_ENTRY_ORDER,
     });
 
-    return Response.json({ success: true, account, ledgerEntries });
+    const { partyEntity, bankMeta, entityId } = await findPartyEntityByAccount(account);
+
+    return Response.json({
+      success: true,
+      account,
+      ledgerEntries,
+      partyEntity,
+      bankMeta,
+      entityId,
+    });
   } catch (error) {
     console.error("Fetch account error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
@@ -43,13 +53,13 @@ export async function PUT(req, { params }) {
     const account = await prisma.account.update({
       where: { id: accountId },
       data: {
-        name: body.name,
-        city: body.city,
-        phone: body.phone,
-        whatsappNumber: body.whatsappNumber,
-        address: body.address,
-        reference: body.reference,
-        isActive: body.isActive,
+        name: body.name?.trim() || undefined,
+        city: body.city !== undefined ? body.city : undefined,
+        phone: body.phone !== undefined ? body.phone : undefined,
+        whatsappNumber: body.whatsappNumber !== undefined ? body.whatsappNumber : undefined,
+        address: body.address !== undefined ? body.address : undefined,
+        reference: body.reference !== undefined ? body.reference : undefined,
+        isActive: body.isActive !== undefined ? body.isActive : undefined,
         ownerUserId:
           body.ownerUserId === null || body.ownerUserId === ""
             ? null
@@ -58,6 +68,25 @@ export async function PUT(req, { params }) {
               : undefined,
       },
     });
+
+    if (body.bankMeta && account.category === "bank") {
+      const bm = body.bankMeta;
+      const existingBank = await prisma.bankAccount.findFirst({
+        where: { ledgerAccountId: accountId },
+      });
+      if (existingBank) {
+        await prisma.bankAccount.update({
+          where: { id: existingBank.id },
+          data: {
+            bankName: bm.bankName ?? existingBank.bankName,
+            accountTitle: bm.accountTitle ?? existingBank.accountTitle,
+            accountNumber: bm.accountNumber ?? existingBank.accountNumber,
+            branchCode: bm.branchCode ?? existingBank.branchCode,
+            branchName: bm.branchName ?? existingBank.branchName,
+          },
+        });
+      }
+    }
 
     if (body.ownerUserId !== undefined && account.category === "cash") {
       const ownerId =

@@ -25,6 +25,7 @@ import SearchPicker from "@/components/ui/SearchPicker";
 import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { useDefaultCashAccountId, applyDefaultCashAccount } from "@/hooks/useDefaultCashAccount";
+import { FleetVehicleDriverFields } from "@/components/fleet/FleetVehicleDriverFields";
 
 function FieldLabel({ children, className = "" }) {
   return (
@@ -154,7 +155,7 @@ export default function NewPurchasePage() {
           }
           if (po.status !== "draft") {
             showToast("Only draft purchases can be edited", "warning");
-            router.push(`/purchases/${editId}`);
+            router.push(`/purchases?bill=${editId}`);
             return;
           }
           setVendorType(po.farmerId ? "farmer" : "company");
@@ -378,7 +379,11 @@ export default function NewPurchasePage() {
       if (res.ok) {
         const poId = data.purchase?.id || editId;
         showToast(status === "confirmed" ? "Purchase confirmed" : "Draft saved", "success");
-        router.push(`/purchases/${poId}`);
+        if (status === "confirmed") {
+          router.push(`/purchases?bill=${poId}`);
+        } else {
+          router.push("/purchases");
+        }
       } else {
         showToast(data.error || "Failed to save purchase", "error");
       }
@@ -545,28 +550,12 @@ export default function NewPurchasePage() {
                 className="input-field w-full min-h-[42px]"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <FieldLabel>Vehicle reg.</FieldLabel>
-                <input
-                  type="text"
-                  value={form.vehicleNumber}
-                  onChange={handleChange("vehicleNumber")}
-                  className="input-field w-full"
-                  placeholder="—"
-                />
-              </div>
-              <div>
-                <FieldLabel>Driver name</FieldLabel>
-                <input
-                  type="text"
-                  value={form.driverName}
-                  onChange={handleChange("driverName")}
-                  className="input-field w-full"
-                  placeholder="—"
-                />
-              </div>
-            </div>
+            <FleetVehicleDriverFields
+              vehicleNumber={form.vehicleNumber}
+              driverName={form.driverName}
+              onVehicleNumberChange={(value) => setForm((f) => ({ ...f, vehicleNumber: value }))}
+              onDriverNameChange={(value) => setForm((f) => ({ ...f, driverName: value }))}
+            />
           </div>
         </DocSection>
       </div>

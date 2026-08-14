@@ -3,6 +3,9 @@ import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { logActivity } from "@/lib/activityLog";
 import {
+  findOutstandingSalesForLedgerAccount,
+} from "@/lib/purchase-settlement";
+import {
   parseNum,
   computeItemSubtotal,
   normalizeItems,
@@ -82,6 +85,20 @@ export async function GET(req) {
     const status = searchParams.get("status");
     const companyId = searchParams.get("companyId");
     const shopId = searchParams.get("shopId");
+    const customerAccountId = searchParams.get("customerAccountId");
+    const ledgerAccountId = searchParams.get("ledgerAccountId");
+    const outstanding = searchParams.get("outstanding") === "true";
+
+    if (outstanding && (ledgerAccountId || customerAccountId)) {
+      const accountId = parseInt(ledgerAccountId || customerAccountId, 10);
+      const sales = await findOutstandingSalesForLedgerAccount(prisma, accountId);
+      const withInclude = await prisma.saleOrder.findMany({
+        where: { id: { in: sales.map((s) => s.id) } },
+        include: saleInclude,
+        orderBy: [{ saleDate: "asc" }, { id: "asc" }],
+      });
+      return Response.json({ success: true, sales: withInclude });
+    }
 
     const where = {};
     if (status) where.status = status;
