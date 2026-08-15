@@ -18,11 +18,10 @@ import {
   CreditCard,
   Truck,
   FileText,
-  ClipboardCheck,
-  CheckCircle2,
   Undo2,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/formatters";
+import { resolveSalePayment } from "@/lib/salePayment";
 import { SaleInvoicePanel, SaleInvoicePreviewCard } from "@/components/documents/SaleInvoicePanel";
 
 const STATUS_VARIANTS = {
@@ -55,13 +54,6 @@ export default function SaleDetailPage() {
   const { showToast } = useToast();
   const [sale, setSale] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [gatePassModal, setGatePassModal] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [gatePassForm, setGatePassForm] = useState({
-    driverName: "",
-    vehicleNumber: "",
-    notes: "",
-  });
   const [returns, setReturns] = useState([]);
   const [returnModal, setReturnModal] = useState(false);
   const [returnLines, setReturnLines] = useState([]);
@@ -145,13 +137,6 @@ export default function SaleDetailPage() {
       const data = await res.json();
       if (res.ok) {
         setSale(data.sale || data);
-        if (data.sale?.driverName || data.sale?.vehicleNumber) {
-          setGatePassForm({
-            driverName: data.sale.driverName || "",
-            vehicleNumber: data.sale.vehicleNumber || "",
-            notes: "",
-          });
-        }
       } else {
         showToast(data.error || "Failed to load sale", "error");
       }
@@ -175,41 +160,6 @@ export default function SaleDetailPage() {
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
-
-  const handleGenerateGatePass = async (e) => {
-    e.preventDefault();
-    if (!gatePassForm.driverName || !gatePassForm.vehicleNumber) {
-      showToast("Driver name and vehicle number are required", "warning");
-      return;
-    }
-
-    setGenerating(true);
-    try {
-      const res = await fetch("/api/sales/gate-pass", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          saleOrderId: parseInt(id, 10),
-          driverName: gatePassForm.driverName,
-          vehicleNumber: gatePassForm.vehicleNumber,
-          notes: gatePassForm.notes,
-        }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        showToast(`Gate pass ${data.gatePass?.gatePassNumber || ""} generated!`, "success");
-        setGatePassModal(false);
-        fetchSale();
-      } else {
-        showToast(data.error || "Failed to generate gate pass", "error");
-      }
-    } catch {
-      showToast("Error processing request", "error");
-    } finally {
-      setGenerating(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -245,8 +195,8 @@ export default function SaleDetailPage() {
     );
   }
 
-  const balanceDue = Math.max((sale.totalAmount || 0) - (sale.paidAmount || 0), 0);
-  const canGenerateGatePass = sale.status !== "draft" && sale.status !== "cancelled" && !sale.gatePassGenerated;
+  const payment = resolveSalePayment(sale);
+  const balanceDue = payment.balanceDue;
   const canReturn = sale.status === "confirmed" || sale.status === "dispatched" || sale.status === "delivered";
 
   return (
@@ -263,22 +213,9 @@ export default function SaleDetailPage() {
         actions={
           <div className="flex items-center gap-2 flex-wrap no-print">
             <Badge variant={STATUS_VARIANTS[sale.status] || "neutral"}>{sale.status}</Badge>
-            <Badge variant={PAYMENT_VARIANTS[sale.paymentStatus] || "neutral"}>
-              {sale.paymentStatus}
+            <Badge variant={PAYMENT_VARIANTS[payment.paymentStatus] || "neutral"}>
+              {payment.paymentStatus}
             </Badge>
-            {sale.gatePassGenerated && (
-              <Badge variant="success">
-                <CheckCircle2 className="w-3 h-3" /> Gate Pass Issued
-              </Badge>
-            )}
-            {canGenerateGatePass && (
-              <Button
-                onClick={() => setGatePassModal(true)}
-                className="bg-acc-sales hover:bg-green-700 border-0"
-              >
-                <ClipboardCheck className="w-4 h-4" /> Generate Gate Pass
-              </Button>
-            )}
             {canReturn && (
               <Button onClick={openReturnModal} variant="outline" className="border-slate-200 text-slate-700">
                 <Undo2 className="w-4 h-4" /> Record Return
@@ -354,23 +291,6 @@ export default function SaleDetailPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Gate Pass Info */}
-          {sale.gatePass && (
-            <Card>
-              <CardHeader>
-                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <ClipboardCheck className="w-4 h-4 text-acc-sales" /> Gate Pass
-                </h2>
-              </CardHeader>
-              <CardContent>
-                <DetailRow label="Gate Pass No." value={sale.gatePass.gatePassNumber} mono />
-                <DetailRow label="Driver" value={sale.gatePass.driverName} />
-                <DetailRow label="Vehicle" value={sale.gatePass.vehicleNumber} />
-                <DetailRow label="Dispatched" value={formatDateTime(sale.gatePass.dispatchedAt)} />
-              </CardContent>
-            </Card>
-          )}
 
           {/* Returns */}
           {returns.length > 0 && (
@@ -483,7 +403,7 @@ export default function SaleDetailPage() {
           </Card>
 
           {/* Transport */}
-          {(sale.vehicleNumber || sale.driverName) && !sale.gatePass && (
+          {(sale.vehicleNumber || sale.driverName) && (
             <Card>
               <CardHeader>
                 <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -498,73 +418,6 @@ export default function SaleDetailPage() {
           )}
         </div>
       </div>
-
-      <Modal
-        isOpen={gatePassModal}
-        onClose={() => setGatePassModal(false)}
-        title="Generate Gate Pass"
-        size="md"
-      >
-        <form onSubmit={handleGenerateGatePass} className="space-y-4">
-          <p className="text-xs text-slate-500">
-            Issue a gate pass for invoice <span className="font-mono font-bold text-slate-900">{sale.invoiceNumber}</span> to authorize dispatch.
-          </p>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              Driver Name *
-            </label>
-            <input
-              type="text"
-              value={gatePassForm.driverName}
-              onChange={(e) => setGatePassForm({ ...gatePassForm, driverName: e.target.value })}
-              required
-              className="input-field"
-              placeholder="Driver full name"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              Vehicle Number *
-            </label>
-            <input
-              type="text"
-              value={gatePassForm.vehicleNumber}
-              onChange={(e) => setGatePassForm({ ...gatePassForm, vehicleNumber: e.target.value })}
-              required
-              className="input-field"
-              placeholder="e.g. LEA-1234"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              Notes
-            </label>
-            <textarea
-              value={gatePassForm.notes}
-              onChange={(e) => setGatePassForm({ ...gatePassForm, notes: e.target.value })}
-              className="input-field h-16 resize-none"
-              placeholder="Optional dispatch notes..."
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
-            <button
-              type="button"
-              onClick={() => setGatePassModal(false)}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-700 border border-slate-200 cursor-pointer transition-colors"
-            >
-              Cancel
-            </button>
-            <Button type="submit" disabled={generating} className="bg-acc-sales hover:bg-green-700 border-0">
-              {generating ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <ClipboardCheck className="w-3.5 h-3.5" />
-              )}
-              Generate Gate Pass
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       <Modal
         isOpen={returnModal}

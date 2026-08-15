@@ -14,6 +14,11 @@ import { SaleInvoicePanel } from "@/components/documents/SaleInvoicePanel";
 import { PaymentReceiptPanel } from "@/components/documents/PaymentReceiptPanel";
 import { ledgerEntryOpensInvoice } from "@/lib/ledgerEnrichment";
 import {
+  getSaleWhatsAppPhone,
+  getPurchaseWhatsAppPhone,
+  getPaymentReceiptWhatsAppPhone,
+} from "@/lib/invoicePartyContact";
+import {
   filterLedgerEntries,
   formatLedgerTotals,
   ledgerPrintTitle,
@@ -467,6 +472,11 @@ export default function GeneralLedgerPage() {
           setPaymentReceiptOpen(false);
           setPaymentReceipt(null);
         }}
+        whatsappPhone={
+          getPaymentReceiptWhatsAppPhone(paymentReceipt) ||
+          account?.whatsappNumber ||
+          account?.phone
+        }
       />
 
       <PurchaseReceiptPanel
@@ -475,6 +485,11 @@ export default function GeneralLedgerPage() {
         open={receiptOpen}
         onClose={() => { setReceiptOpen(false); setPurchaseDoc(null); }}
         title="Purchase bill"
+        whatsappPhone={
+          getPurchaseWhatsAppPhone(purchaseDoc) ||
+          account?.whatsappNumber ||
+          account?.phone
+        }
       />
 
       <SaleInvoicePanel
@@ -482,6 +497,11 @@ export default function GeneralLedgerPage() {
         company={companySettings}
         open={invoiceOpen}
         onClose={() => { setInvoiceOpen(false); setSaleDoc(null); }}
+        whatsappPhone={
+          getSaleWhatsAppPhone(saleDoc) ||
+          account?.whatsappNumber ||
+          account?.phone
+        }
       />
     </div>
   );

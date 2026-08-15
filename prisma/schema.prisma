@@ -105,6 +105,7 @@ model Farmer {
 
   // Relations
   purchases       PurchaseOrder[]
+  saleOrders      SaleOrder[]
 
   @@map("farmers")
 }
@@ -313,6 +314,7 @@ model SaleOrder {
   saleDate            DateTime
   companyId           Int?
   shopId              Int?
+  farmerId            Int?
   customerName        String
   customerAccountId   Int?
 
@@ -350,6 +352,7 @@ model SaleOrder {
   // Relations
   company             Company?      @relation(fields: [companyId], references: [id])
   shop                Shop?         @relation(fields: [shopId], references: [id])
+  farmer              Farmer?       @relation(fields: [farmerId], references: [id])
   createdBy           User?         @relation(fields: [createdById], references: [id])
   items               SaleItem[]
   returns             SaleReturn[]
@@ -359,6 +362,7 @@ model SaleOrder {
 
   @@index([companyId])
   @@index([shopId])
+  @@index([farmerId])
   @@index([saleDate])
   @@index([status])
   @@map("sale_orders")

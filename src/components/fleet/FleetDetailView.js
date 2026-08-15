@@ -2,10 +2,11 @@
 
 import React, { useMemo, useState } from "react";
 import {
-  ChevronLeft, FileText, Pencil, Plus, Wallet, Loader2, Trash2,
+  ChevronLeft, FileText, Pencil, Plus, Wallet, Loader2,
 } from "lucide-react";
-import { formatCurrency, formatDate } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { vehicleLabel } from "@/lib/fleetStats";
+import FleetExpensesRegister from "@/components/fleet/FleetExpensesRegister";
 import { EXPENSE_TYPES, EXPENSE_FILTER_ALL } from "@/components/fleet/fleetConstants";
 
 export default function FleetDetailView({
@@ -17,6 +18,7 @@ export default function FleetDetailView({
   onAddExpense,
   onViewReport,
   onDeleteExpense,
+  canDeleteExpense,
 }) {
   const [typeFilter, setTypeFilter] = useState(EXPENSE_FILTER_ALL);
 
@@ -38,116 +40,100 @@ export default function FleetDetailView({
   if (!vehicle) return null;
 
   return (
-    <div className="space-y-0 page-enter -mx-1 sm:mx-0">
-      <div className="rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#1D4ED8] text-white p-5 sm:p-6 shadow-lg shadow-blue-900/20">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <button type="button" onClick={onBack} className="mt-1 p-2 rounded-lg bg-white/10 hover:bg-white/20 cursor-pointer transition-colors">
+    <div className="erp-fleet-surface page-enter pb-8">
+      <div className="erp-fleet-page space-y-5">
+        <header className="erp-fleet-detail-banner">
+          <div className="erp-fleet-detail-top">
+            <button type="button" onClick={onBack} className="erp-fleet-back-btn">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl sm:text-3xl font-black tracking-tight">{vehicle.registrationNumber}</h1>
-                <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
-                  vehicle.isActive ? "bg-emerald-400/20 text-emerald-100 border border-emerald-300/30" : "bg-white/10 text-white/70"
-                }`}>
+                <h1 className="erp-fleet-detail-plate">{vehicle.registrationNumber}</h1>
+                <span className={`erp-fleet-status${vehicle.isActive ? " is-active" : ""}`}>
                   {vehicle.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
-              <p className="text-blue-100/90 text-sm mt-1 capitalize">{vehicleLabel(vehicle)}</p>
+              <p className="erp-fleet-detail-sub capitalize">{vehicleLabel(vehicle)}</p>
+              {(vehicle.driverName || vehicle.capacity) && (
+                <p className="erp-fleet-detail-meta">
+                  {[vehicle.driverName, vehicle.capacity ? `${vehicle.capacity} ton` : null].filter(Boolean).join(" · ")}
+                </p>
+              )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={onViewReport} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-semibold cursor-pointer">
-              <FileText className="w-4 h-4" /> View report
+          <div className="erp-fleet-detail-actions">
+            <button type="button" onClick={onViewReport} className="erp-fleet-banner-btn">
+              <FileText className="w-4 h-4" /> Report
             </button>
-            <button type="button" onClick={onEdit} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-semibold cursor-pointer">
+            <button type="button" onClick={onEdit} className="erp-fleet-banner-btn">
               <Pencil className="w-4 h-4" /> Edit
             </button>
-            <button type="button" onClick={onAddExpense} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#F97316] hover:bg-orange-500 text-sm font-bold shadow-md cursor-pointer">
-              <Plus className="w-4 h-4" /> Add expense
+            <button type="button" onClick={onAddExpense} className="erp-fleet-banner-btn is-primary">
+              <Wallet className="w-4 h-4" /> Pay expense
             </button>
           </div>
-        </div>
-      </div>
+        </header>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 bg-white border border-slate-200 border-t-0 rounded-b-2xl overflow-hidden shadow-sm -mt-px">
-        {[
-          { label: "Total expenses", value: formatCurrency(stats.total), color: "text-rose-600" },
-          { label: "This month", value: formatCurrency(stats.month), color: "text-rose-600" },
-          { label: "Fuel cost", value: formatCurrency(stats.fuel), color: "text-rose-600" },
-          { label: "Entries", value: stats.count, color: "text-slate-900" },
-        ].map(({ label, value, color }, i) => (
-          <div key={label} className={`px-4 py-4 text-center ${i < 3 ? "border-r border-slate-100" : ""}`}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</p>
-            <p className={`text-lg sm:text-xl font-black tabular-nums mt-1 ${color}`}>{value}</p>
+        <div className="erp-fleet-stats erp-fleet-stats-inline">
+          <div className="erp-fleet-stat">
+            <p className="erp-fleet-stat-label">Total paid</p>
+            <p className="erp-fleet-stat-value text-red-600">{formatCurrency(stats.total)}</p>
           </div>
-        ))}
-      </div>
+          <div className="erp-fleet-stat">
+            <p className="erp-fleet-stat-label">This month</p>
+            <p className="erp-fleet-stat-value">{formatCurrency(stats.month)}</p>
+          </div>
+          <div className="erp-fleet-stat">
+            <p className="erp-fleet-stat-label">Fuel cost</p>
+            <p className="erp-fleet-stat-value">{formatCurrency(stats.fuel)}</p>
+          </div>
+          <div className="erp-fleet-stat">
+            <p className="erp-fleet-stat-label">Payments</p>
+            <p className="erp-fleet-stat-value">{stats.count}</p>
+          </div>
+        </div>
 
-      <div className="mt-5 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Expense history</p>
-          <div className="flex flex-wrap gap-1">
-            {[EXPENSE_FILTER_ALL, ...EXPENSE_TYPES.map((t) => t.key)].map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setTypeFilter(key)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold capitalize cursor-pointer ${
-                  typeFilter === key ? "bg-[#2563EB] text-white" : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                {key === EXPENSE_FILTER_ALL ? "All" : key}
+        <div className="erp-fleet-register">
+          <div className="erp-fleet-register-head">
+            <div>
+              <p className="erp-fleet-register-title">Payment history</p>
+              <p className="erp-fleet-register-meta">All fleet charges paid for this vehicle</p>
+            </div>
+            <div className="erp-fleet-type-filters">
+              {[EXPENSE_FILTER_ALL, ...EXPENSE_TYPES.map((t) => t.key)].map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setTypeFilter(key)}
+                  className={`erp-fleet-filter-btn${typeFilter === key ? " is-active" : ""}`}
+                >
+                  {key === EXPENSE_FILTER_ALL ? "All" : key}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="h-48 flex items-center justify-center">
+              <Loader2 className="w-7 h-7 text-cyan-600 animate-spin" />
+            </div>
+          ) : filteredExpenses.length === 0 ? (
+            <div className="erp-ac-empty py-16">
+              <Wallet className="w-10 h-10 text-cyan-200 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-600">No payments for this vehicle</p>
+              <button type="button" onClick={onAddExpense} className="mt-3 text-sm font-bold text-cyan-700 hover:underline cursor-pointer">
+                <Plus className="w-3.5 h-3.5 inline mr-1" /> Pay first expense
               </button>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <FleetExpensesRegister
+              rows={filteredExpenses}
+              onDeleteExpense={onDeleteExpense}
+              canDelete={canDeleteExpense}
+            />
+          )}
         </div>
-
-        {loading ? (
-          <div className="h-48 flex items-center justify-center">
-            <Loader2 className="w-7 h-7 text-[#2563EB] animate-spin" />
-          </div>
-        ) : filteredExpenses.length === 0 ? (
-          <div className="py-16 text-center px-4">
-            <Wallet className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm font-semibold text-slate-600">No expenses yet</p>
-            <p className="text-xs text-slate-400 mt-1 mb-3">Record fuel, maintenance, or repair costs for this vehicle.</p>
-            <button type="button" onClick={onAddExpense} className="text-sm font-bold text-[#2563EB] hover:underline cursor-pointer">
-              Add expense
-            </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px]">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/80">
-                  {["Date", "Type", "Description", "Amount", "Payment", ""].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 text-left">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredExpenses.map((e) => (
-                  <tr key={e.id} className="border-b border-slate-50 hover:bg-slate-50/50">
-                    <td className="px-4 py-3 text-xs text-slate-600">{formatDate(e.expenseDate)}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-600 capitalize">{e.expenseType}</span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-slate-700">{e.description || "—"}</td>
-                    <td className="px-4 py-3 text-sm font-bold tabular-nums text-rose-600">{formatCurrency(e.amount)}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 capitalize">{e.paymentMethod?.replace("_", " ") || "—"}</td>
-                    <td className="px-4 py-3">
-                      <button type="button" onClick={() => onDeleteExpense(e)} className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 cursor-pointer">
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
     </div>
   );

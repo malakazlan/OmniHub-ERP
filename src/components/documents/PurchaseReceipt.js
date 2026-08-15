@@ -9,14 +9,39 @@ function moneyPlain(val) {
   return formatCurrency(val ?? 0, false);
 }
 
+function positiveAmount(val) {
+  const n = parseFloat(val);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
 function partyMeta(purchase) {
-  const phone = purchase.farmer?.phone || purchase.company?.phone || "N/A";
+  const phone =
+    purchase.farmer?.phone ||
+    purchase.farmer?.whatsappNumber ||
+    purchase.company?.phone ||
+    purchase.company?.whatsappNumber ||
+    "";
   const city = purchase.farmer?.city || purchase.company?.city || "—";
-  return { phone, city };
+  return { phone: phone || "—", city };
+}
+
+function vendorTypeLabel(purchase) {
+  if (purchase.farmerId) return "Farmer";
+  if (purchase.companyId) return "Company";
+  return "Vendor";
+}
+
+function PaymentBadge({ status }) {
+  const s = status || "unpaid";
+  return (
+    <span className={`erp-pi-pay-badge is-${s}`}>
+      {s.toUpperCase()}
+    </span>
+  );
 }
 
 /**
- * Purchase invoice / receipt — party header, items, charges, balances (print/PDF).
+ * Professional purchase invoice — print, PDF, and WhatsApp capture.
  */
 export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY }) {
   if (!purchase) return null;
@@ -35,187 +60,198 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
     computeVendorBalancesForPurchase(purchase, vendorBal).currentBalance;
 
   const materialQty = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
-  const outerCharges =
-    (parseFloat(purchase.transportCost) || 0) +
-    (parseFloat(purchase.loadingCost) || 0) +
-    (parseFloat(purchase.labourCost) || 0);
 
-  const th =
-    "border border-slate-400 px-2 py-1.5 text-[10px] font-bold uppercase bg-slate-700 text-white";
-  const td = "border border-slate-300 px-2 py-1.5 text-[11px]";
+  const serviceCharges = [
+    ["Transport", purchase.transportCost],
+    ["Loading", purchase.loadingCost],
+    ["Labour", purchase.labourCost],
+    ["Tax / GST", purchase.taxAmount],
+  ].filter(([, v]) => positiveAmount(v) != null);
+
+  const totalServiceCharges = serviceCharges.reduce((s, [, v]) => s + positiveAmount(v), 0);
+  const discount = positiveAmount(purchase.discountAmount);
+
+  const paymentLines = [{ label: "Bill amount", value: purchase.subtotal }];
+  if (positiveAmount(purchase.labourCost) != null) {
+    paymentLines.push({ label: "Labour", value: purchase.labourCost });
+  }
+  if (positiveAmount(purchase.transportCost) != null) {
+    paymentLines.push({ label: "Transport", value: purchase.transportCost });
+  }
+  if (positiveAmount(purchase.loadingCost) != null) {
+    paymentLines.push({ label: "Loading", value: purchase.loadingCost });
+  }
+  if (positiveAmount(purchase.taxAmount) != null) {
+    paymentLines.push({ label: "Tax / GST", value: purchase.taxAmount });
+  }
+  if (discount != null) {
+    paymentLines.push({ label: "Discount", value: discount, discount: true });
+  }
+  paymentLines.push({ label: "Total amount", value: purchase.totalAmount, grand: true });
+  paymentLines.push({ label: "Total received", value: purchase.paidAmount ?? 0 });
+  paymentLines.push({
+    label: "Remaining due (this bill)",
+    value: balanceDue,
+    due: balanceDue > 0,
+    settled: balanceDue <= 0,
+  });
 
   return (
-    <article className="erp-document-bill w-full max-w-[640px] mx-auto bg-white text-slate-900 border border-slate-300 shadow-sm overflow-hidden text-[12px]">
-      {/* Company + title */}
-      <header className="px-4 pt-4 pb-2 text-center border-b border-slate-300">
-        <p className="text-base font-black uppercase tracking-wide text-slate-900">{c.company_name}</p>
-        {c.tagline && <p className="text-[10px] text-slate-500 uppercase mt-0.5">{c.tagline}</p>}
-        {c.company_address && (
-          <p className="text-[10px] text-slate-600 mt-1">{c.company_address}</p>
-        )}
-        <h1 className="mt-3 text-sm font-black uppercase tracking-[0.2em] border-b-2 border-slate-800 inline-block pb-0.5">
-          Purchase invoice
-        </h1>
+    <article className="erp-purchase-invoice">
+      <header className="erp-pi-header">
+        <div className="erp-pi-header-inner">
+          <div className="erp-pi-brand">
+            <h1 className="erp-pi-company-name">{c.company_name}</h1>
+            {c.tagline && <p className="erp-pi-company-tag">{c.tagline}</p>}
+            <div className="erp-pi-company-meta">
+              {[c.company_address, c.company_phone, c.company_email, c.ntn && `NTN ${c.ntn}`, c.strn && `STRN ${c.strn}`]
+                .filter(Boolean)
+                .join(" · ")}
+            </div>
+          </div>
+
+          <div className="erp-pi-doc-meta">
+            <p className="erp-pi-doc-kicker">Purchase invoice</p>
+            <p className="erp-pi-doc-no">{purchase.purchaseNumber || "—"}</p>
+            <p className="erp-pi-doc-date">
+              {purchase.purchaseDate ? formatDate(purchase.purchaseDate) : "—"}
+            </p>
+            <PaymentBadge status={purchase.paymentStatus} />
+          </div>
+        </div>
       </header>
 
-      {/* Party + invoice meta */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-b border-slate-300">
-        <div className="p-3 space-y-1.5 border-b sm:border-b-0 sm:border-r border-slate-300">
-          <MetaRow label="Party name" value={purchase.vendorName} bold />
-          <MetaRow label="Mobile / WhatsApp" value={phone} />
-          <MetaRow label="Location" value={city} />
-          <MetaRow label="Ref no." value={purchase.purchaseNumber} mono />
+      <section className="erp-pi-party">
+        <div className="erp-pi-party-grid">
+          <div className="erp-pi-party-cell">
+            <span className="erp-pi-cell-label">Party name</span>
+            <span className="erp-pi-cell-value is-name">{purchase.vendorName || "—"}</span>
+          </div>
+          <div className="erp-pi-party-cell">
+            <span className="erp-pi-cell-label">Vendor type</span>
+            <span className="erp-pi-cell-value">{vendorTypeLabel(purchase)}</span>
+          </div>
+          <div className="erp-pi-party-cell">
+            <span className="erp-pi-cell-label">Mobile / WhatsApp</span>
+            <span className="erp-pi-cell-value">{phone}</span>
+          </div>
+          <div className="erp-pi-party-cell">
+            <span className="erp-pi-cell-label">Location</span>
+            <span className="erp-pi-cell-value">{city}</span>
+          </div>
+          <div className="erp-pi-party-cell">
+            <span className="erp-pi-cell-label">Order status</span>
+            <span className="erp-pi-cell-value is-cap">{(purchase.status || "draft").replace(/_/g, " ")}</span>
+          </div>
+          <div className="erp-pi-party-cell">
+            <span className="erp-pi-cell-label">Reference</span>
+            <span className="erp-pi-cell-value font-mono">{purchase.purchaseNumber || "—"}</span>
+          </div>
         </div>
-        <div className="p-3 space-y-1.5 bg-slate-50/50">
-          <MetaRow label="Invoice no." value={purchase.purchaseNumber} mono bold />
-          <MetaRow label="Date" value={formatDate(purchase.purchaseDate)} />
-          <MetaRow label="Status" value={(purchase.status || "draft").toUpperCase()} />
-          <MetaRow label="Payment" value={(purchase.paymentStatus || "unpaid").toUpperCase()} />
-        </div>
-      </div>
+      </section>
 
-      {/* Items */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-[300px]">
+      <div className="erp-pi-table-wrap">
+        <table className="erp-pi-table">
           <thead>
             <tr>
-              <th className={`${th} w-8`}>S#</th>
-              <th className={th}>Product name</th>
-              <th className={`${th} text-right w-16`}>Qty</th>
-              <th className={`${th} text-right w-20`}>Rate</th>
-              <th className={`${th} text-right w-24`}>Amount</th>
+              <th className="w-10">#</th>
+              <th>Product</th>
+              <th className="text-right w-24">Qty</th>
+              <th className="text-right w-24">Rate</th>
+              <th className="text-right w-28">Amount</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, i) => (
               <tr key={item.id || i}>
-                <td className={`${td} text-center`}>{i + 1}</td>
-                <td className={`${td} font-medium`}>{item.productName}</td>
-                <td className={`${td} text-right tabular-nums`}>
-                  {formatQuantity(item.quantity, item.unit)}
-                </td>
-                <td className={`${td} text-right font-mono tabular-nums`}>{moneyPlain(item.rate)}</td>
-                <td className={`${td} text-right font-mono font-semibold tabular-nums`}>
-                  {moneyPlain(item.amount)}
-                </td>
+                <td className="text-center text-muted">{i + 1}</td>
+                <td className="font-medium">{item.productName}</td>
+                <td className="text-right tabular-nums">{formatQuantity(item.quantity, item.unit)}</td>
+                <td className="text-right font-mono tabular-nums">{moneyPlain(item.rate)}</td>
+                <td className="text-right font-mono font-semibold tabular-nums">{moneyPlain(item.amount)}</td>
               </tr>
             ))}
-            <tr className="bg-slate-100 font-bold">
-              <td colSpan={2} className={`${td} text-right uppercase text-[10px]`}>
-                Material sub-total
-              </td>
-              <td className={`${td} text-right tabular-nums`}>{materialQty.toLocaleString("en-PK")}</td>
-              <td className={td} />
-              <td className={`${td} text-right font-mono underline decoration-double`}>
-                {moneyPlain(purchase.subtotal)}
-              </td>
-            </tr>
           </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={2} className="erp-pi-subtotal-label">Material sub-total</td>
+              <td className="text-right tabular-nums font-semibold">{materialQty.toLocaleString("en-PK")}</td>
+              <td />
+              <td className="text-right font-mono font-bold">{moneyPlain(purchase.subtotal)}</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 
-      {/* Charges + totals */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-t border-slate-300">
-        <div className="p-3 border-b sm:border-b-0 sm:border-r border-slate-300">
-          <p className="text-[10px] font-bold uppercase text-sky-800 bg-sky-50 border border-sky-200 px-2 py-1 mb-2">
-            Cargo & service charges
-          </p>
-          <ChargeRow label="Transport" value={purchase.transportCost} />
-          <ChargeRow label="Loading" value={purchase.loadingCost} />
-          <ChargeRow label="Labour" value={purchase.labourCost} />
-          <ChargeRow label="Tax / GST" value={purchase.taxAmount} />
-          <div className="flex justify-between mt-2 pt-2 border-t border-slate-200 text-[11px] font-bold">
-            <span>Total charges</span>
-            <span className="font-mono">{moneyPlain(outerCharges + (parseFloat(purchase.taxAmount) || 0))}</span>
+      <div className={`erp-pi-bottom${serviceCharges.length ? "" : " is-single"}`}>
+        {serviceCharges.length > 0 && (
+          <div className="erp-pi-charges">
+            <p className="erp-pi-charges-title">Cargo & service charges</p>
+            <div className="erp-pi-charges-list">
+              {serviceCharges.map(([label, val]) => (
+                <div key={label} className="erp-pi-charge-row">
+                  <span>{label}</span>
+                  <span className="font-mono">{moneyPlain(val)}</span>
+                </div>
+              ))}
+            </div>
+            <div className="erp-pi-charges-total">
+              <span>Total charges</span>
+              <span className="font-mono">{moneyPlain(totalServiceCharges)}</span>
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="p-0">
-          <table className="w-full border-collapse text-[11px]">
-            <tbody>
-              <TotalRow label="Bill amount" value={purchase.subtotal} />
-              <TotalRow label="Labour" value={purchase.labourCost} />
-              <TotalRow label="Transport" value={purchase.transportCost} />
-              <TotalRow label="Loading" value={purchase.loadingCost} />
-              {parseFloat(purchase.discountAmount) > 0 && (
-                <TotalRow label="Discount" value={-purchase.discountAmount} danger />
-              )}
-              <TotalRow label="Total amount" value={purchase.totalAmount} bold />
-              <TotalRow label="Total received" value={purchase.paidAmount} bold />
-              <TotalRow label="Remaining due (this bill)" value={balanceDue} accent />
-              <tr className="bg-sky-100">
-                <td className="border border-slate-300 px-2 py-1.5 font-semibold">Previous balance</td>
-                <td className="border border-slate-300 px-2 py-1.5 text-right font-mono font-semibold">
-                  {formatCurrency(previousBalance)}
-                </td>
-              </tr>
-              <tr className="bg-sky-200">
-                <td className="border border-slate-300 px-2 py-1.5 font-black">Current balance</td>
-                <td className="border border-slate-300 px-2 py-1.5 text-right font-mono font-black">
-                  {formatCurrency(currentBalance)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div className="erp-pi-payment">
+          <p className="erp-pi-payment-title">Payment summary</p>
+          <div className="erp-pi-pay-grid">
+            <div className="erp-pi-pay-head">Particulars</div>
+            <div className="erp-pi-pay-head is-amt">Amount (Rs.)</div>
+
+            {paymentLines.map((row) => (
+              <React.Fragment key={row.label}>
+                <div
+                  className={`erp-pi-pay-label${
+                    row.grand ? " is-grand" : row.due ? " is-due" : row.settled ? " is-settled" : ""
+                  }${row.discount ? " is-discount" : ""}`}
+                >
+                  {row.label}
+                </div>
+                <div
+                  className={`erp-pi-pay-value${
+                    row.grand ? " is-grand" : row.due ? " is-due" : row.settled ? " is-settled" : ""
+                  }${row.discount ? " is-discount" : ""}`}
+                >
+                  {row.discount ? `− ${moneyPlain(row.value)}` : moneyPlain(row.value)}
+                </div>
+              </React.Fragment>
+            ))}
+
+            <div className="erp-pi-pay-label is-balance">Previous balance</div>
+            <div className="erp-pi-pay-value is-balance">{formatCurrency(previousBalance)}</div>
+
+            <div className="erp-pi-pay-label is-current">Current balance</div>
+            <div className="erp-pi-pay-value is-current">{formatCurrency(currentBalance)}</div>
+          </div>
         </div>
       </div>
 
       {purchase.notes && (
-        <p className="px-3 py-2 text-[10px] border-t border-slate-200 text-slate-600">
-          <span className="font-semibold">Notes: </span>
-          {purchase.notes}
-        </p>
+        <div className="erp-pi-notes">
+          <strong>Note:</strong> {purchase.notes}
+        </div>
       )}
 
-      <footer className="px-4 py-6 border-t border-slate-300 flex justify-between items-end">
+      <footer className="erp-pi-signature">
         <div>
-          <p className="text-[10px] font-bold uppercase text-slate-500">Prepared by</p>
-          <div className="w-40 border-t border-slate-500 mt-8" />
+          <div className="erp-pi-sig-line" />
+          <p className="erp-pi-sig-role">Prepared by</p>
         </div>
-        <p className="text-[9px] text-slate-400">Warraich Traders ERP · Computer generated</p>
       </footer>
+
+      <p className="erp-pi-footnote">
+        {c.company_name} · Computer-generated purchase invoice
+      </p>
     </article>
-  );
-}
-
-function MetaRow({ label, value, bold, mono }) {
-  return (
-    <div className="flex gap-2 text-[11px]">
-      <span className="text-slate-500 shrink-0 w-[100px]">{label}</span>
-      <span
-        className={`${bold ? "font-bold" : "font-medium"} ${mono ? "font-mono" : ""} text-slate-900 break-all`}
-      >
-        {value || "—"}
-      </span>
-    </div>
-  );
-}
-
-function ChargeRow({ label, value }) {
-  const n = parseFloat(value) || 0;
-  if (n <= 0) return null;
-  return (
-    <div className="flex justify-between text-[11px] py-0.5 border-b border-slate-100 last:border-0">
-      <span className="text-slate-600">{label}</span>
-      <span className="font-mono">{moneyPlain(n)}</span>
-    </div>
-  );
-}
-
-function TotalRow({ label, value, bold, accent, danger }) {
-  const n = parseFloat(value) || 0;
-  return (
-    <tr>
-      <td
-        className={`border border-slate-300 px-2 py-1 ${bold ? "font-bold" : ""} ${accent ? "font-semibold text-sky-900" : ""}`}
-      >
-        {label}
-      </td>
-      <td
-        className={`border border-slate-300 px-2 py-1 text-right font-mono w-[120px] ${bold ? "font-bold" : ""} ${danger ? "text-rose-700" : ""}`}
-      >
-        {moneyPlain(n)}
-      </td>
-    </tr>
   );
 }

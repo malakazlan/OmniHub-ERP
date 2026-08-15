@@ -88,8 +88,8 @@ export default function EmployeeForm({
                 <input type="text" value={form.fatherName} onChange={(e) => set("fatherName", e.target.value)} className="erp-finance-input" />
               </div>
               <div className="erp-finance-field">
-                <label className="erp-finance-label">CNIC</label>
-                <input type="text" value={form.cnic} onChange={(e) => set("cnic", e.target.value)} className="erp-finance-input font-mono" placeholder="35202-1234567-1" />
+                <label className="erp-finance-label">CNIC (optional)</label>
+                <input type="text" value={form.cnic} onChange={(e) => set("cnic", e.target.value)} className="erp-finance-input font-mono" placeholder="Leave blank if unknown" />
               </div>
               <div className="erp-finance-field">
                 <label className="erp-finance-label">Phone *</label>

@@ -15,13 +15,23 @@ import {
   applySaleStockAndLedger,
 } from "@/lib/order-processing";
 import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
+import { validateWalkInFullPayment } from "@/lib/saleCustomer";
 
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true } } } },
-  company: { select: { id: true, name: true, phone: true } },
-  shop: { select: { id: true, name: true, phone: true } },
-  gatePass: true,
+  company: { select: { id: true, name: true, phone: true, whatsappNumber: true } },
+  shop: { select: { id: true, name: true, phone: true, whatsappNumber: true } },
+  farmer: { select: { id: true, name: true, phone: true, whatsappNumber: true, city: true, village: true } },
 };
+
+function normalizeCustomerName(body) {
+  const type = body.customerType || "shop";
+  if (type === "walkin") {
+    const name = body.customerName?.trim();
+    return name || "—";
+  }
+  return body.customerName?.trim() || "";
+}
 
 function canManageSales(user) {
   return user && (user.role === "admin" || user.role === "manager" || user.role === "salesperson");
@@ -39,6 +49,7 @@ function buildSaleData(body, userId) {
   const bankAmount = parseNum(body.bankAmount);
   const paidAmount = cashAmount + bankAmount;
   const status = body.status || "draft";
+  const customerType = body.customerType || "shop";
 
   return {
     items,
@@ -49,11 +60,13 @@ function buildSaleData(body, userId) {
     paidAmount,
     paymentStatus: computePaymentStatus(paidAmount, totalAmount),
     status,
+    customerType,
     data: {
       saleDate: body.saleDate ? new Date(body.saleDate) : new Date(),
-      companyId: body.companyId ? parseInt(body.companyId, 10) : null,
-      shopId: body.shopId ? parseInt(body.shopId, 10) : null,
-      customerName: body.customerName,
+      companyId: customerType === "company" && body.companyId ? parseInt(body.companyId, 10) : null,
+      shopId: customerType === "shop" && body.shopId ? parseInt(body.shopId, 10) : null,
+      farmerId: customerType === "farmer" && body.farmerId ? parseInt(body.farmerId, 10) : null,
+      customerName: normalizeCustomerName(body),
       subtotal,
       transportCost,
       loadingCost,
@@ -65,6 +78,7 @@ function buildSaleData(body, userId) {
       bankAmount,
       cashAccountId: body.cashAccountId ? parseInt(body.cashAccountId, 10) : null,
       bankAccountId: body.bankAccountId ? parseInt(body.bankAccountId, 10) : null,
+      paymentStatus: computePaymentStatus(paidAmount, totalAmount),
       vehicleNumber: body.vehicleNumber || null,
       driverName: body.driverName || null,
       status,
@@ -108,7 +122,7 @@ export async function GET(req) {
     const sales = await prisma.saleOrder.findMany({
       where,
       include: saleInclude,
-      orderBy: { saleDate: "desc" },
+      orderBy: [{ saleDate: "desc" }, { id: "desc" }],
     });
 
     return Response.json({ success: true, sales });
@@ -140,14 +154,43 @@ export async function POST(req) {
       }
     }
 
-    if (!body.customerName) {
-      return Response.json({ error: "Customer name is required" }, { status: 400 });
-    }
     if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
       return Response.json({ error: "At least one item is required" }, { status: 400 });
     }
 
-    const { items, data, status } = buildSaleData(body, user.userId);
+    const customerType = body.customerType || "shop";
+    if (customerType === "farmer" && !body.farmerId) {
+      return Response.json({ error: "Please select a farmer" }, { status: 400 });
+    }
+    if (customerType === "shop" && !body.shopId) {
+      return Response.json({ error: "Please select a shop" }, { status: 400 });
+    }
+    if (customerType === "company" && !body.companyId) {
+      return Response.json({ error: "Please select a company" }, { status: 400 });
+    }
+    if (customerType !== "walkin" && !body.customerName?.trim()) {
+      return Response.json({ error: "Customer name is required" }, { status: 400 });
+    }
+
+    const { items, data, status, totalAmount, paidAmount, cashAmount, bankAmount } = buildSaleData(body, user.userId);
+
+    const walkInPaymentError = validateWalkInFullPayment({
+      customerType,
+      shopId: data.shopId,
+      companyId: data.companyId,
+      farmerId: data.farmerId,
+      status,
+      paidAmount,
+      totalAmount,
+      cashAmount,
+      bankAmount,
+      cashAccountId: data.cashAccountId,
+      bankAccountId: data.bankAccountId,
+    });
+    if (walkInPaymentError) {
+      return Response.json({ error: walkInPaymentError }, { status: 400 });
+    }
+
     const saleDate = data.saleDate;
     const invoiceNumber = await generateDocumentNumber("sale", saleDate);
 
@@ -155,6 +198,7 @@ export async function POST(req) {
       const customerAccountId = await resolveCustomerAccountId(tx, {
         companyId: data.companyId,
         shopId: data.shopId,
+        farmerId: data.farmerId,
       });
 
       const order = await tx.saleOrder.create({

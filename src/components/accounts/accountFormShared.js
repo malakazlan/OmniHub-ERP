@@ -217,7 +217,7 @@ export function AccountCategoryFields({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="City">{input({ value: form.city, onChange: (e) => set("city", e.target.value) })}</Field>
             <Field label="Village">{input({ value: form.village, onChange: (e) => set("village", e.target.value) })}</Field>
-            <Field label="CNIC">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value) })}</Field>
+            <Field label="CNIC (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
             <Field label="Father name">{input({ value: form.fatherName, onChange: (e) => set("fatherName", e.target.value) })}</Field>
             <Field label="WhatsApp">{input({ value: form.whatsappNumber, onChange: (e) => set("whatsappNumber", e.target.value) })}</Field>
             <div className="sm:col-span-2">
@@ -343,7 +343,7 @@ export function AccountCategoryFields({
         <FormSection title="Additional information" optional>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Department">{input({ value: form.department, onChange: (e) => set("department", e.target.value) })}</Field>
-            <Field label="CNIC">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value) })}</Field>
+            <Field label="CNIC (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
           </div>
           {!isEdit && loginFields}
         </FormSection>
@@ -369,7 +369,7 @@ export function AccountCategoryFields({
         </FormSection>
         <FormSection title="Additional information" optional>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="CNIC">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value) })}</Field>
+            <Field label="CNIC (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
             <Field label="Monthly salary">{input({ type: "number", value: form.salary, onChange: (e) => set("salary", e.target.value), placeholder: "0" })}</Field>
           </div>
         </FormSection>

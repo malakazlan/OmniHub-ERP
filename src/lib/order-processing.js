@@ -162,7 +162,10 @@ export async function resolveVendorAccountId(tx, { farmerId, companyId }) {
   return null;
 }
 
-export async function resolveCustomerAccountId(tx, { companyId, shopId }) {
+export async function resolveCustomerAccountId(tx, { companyId, shopId, farmerId }) {
+  if (farmerId) {
+    return ensureFarmerLedgerAccount(tx, farmerId);
+  }
   if (companyId) {
     return ensureCompanyLedgerAccount(tx, companyId, { forPurchase: false });
   }
@@ -425,10 +428,10 @@ export async function applySaleStockAndLedger(tx, sale, items) {
     });
   }
 
-  if (sale.customerAccountId) {
-    const ref = sale.invoiceNumber;
-    const { saleDate, totalAmount, paidAmount, cashAmount, bankAmount } = sale;
+  const ref = sale.invoiceNumber;
+  const { saleDate, paidAmount, cashAmount, bankAmount, totalAmount } = sale;
 
+  if (sale.customerAccountId) {
     await createLedgerEntry(tx, {
       accountId: sale.customerAccountId,
       date: saleDate,
@@ -450,29 +453,29 @@ export async function applySaleStockAndLedger(tx, sale, items) {
         credit: paidAmount,
       });
     }
+  }
 
-    if (cashAmount > 0 && sale.cashAccountId) {
-      await createLedgerEntry(tx, {
-        accountId: sale.cashAccountId,
-        date: saleDate,
-        description: `Cash received for ${ref}`,
-        reference: ref,
-        referenceType: "SaleOrder",
-        referenceId: sale.id,
-        debit: cashAmount,
-      });
-    }
+  if (cashAmount > 0 && sale.cashAccountId) {
+    await createLedgerEntry(tx, {
+      accountId: sale.cashAccountId,
+      date: saleDate,
+      description: `Cash received for ${ref}`,
+      reference: ref,
+      referenceType: "SaleOrder",
+      referenceId: sale.id,
+      debit: cashAmount,
+    });
+  }
 
-    if (bankAmount > 0 && sale.bankAccountId) {
-      await createLedgerEntry(tx, {
-        accountId: sale.bankAccountId,
-        date: saleDate,
-        description: `Bank received for ${ref}`,
-        reference: ref,
-        referenceType: "SaleOrder",
-        referenceId: sale.id,
-        debit: bankAmount,
-      });
-    }
+  if (bankAmount > 0 && sale.bankAccountId) {
+    await createLedgerEntry(tx, {
+      accountId: sale.bankAccountId,
+      date: saleDate,
+      description: `Bank received for ${ref}`,
+      reference: ref,
+      referenceType: "SaleOrder",
+      referenceId: sale.id,
+      debit: bankAmount,
+    });
   }
 }

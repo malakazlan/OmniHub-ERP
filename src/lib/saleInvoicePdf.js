@@ -1,5 +1,7 @@
 import { jsPDF } from "jspdf";
 import { formatDate, formatQuantity } from "@/lib/formatters";
+import { saleCustomerDisplayName, saleCustomerTypeLabel, saleCustomerPhone } from "@/lib/saleCustomer";
+import { resolveSalePayment, salePaymentStatusLabel } from "@/lib/salePayment";
 import { amountInWords } from "@/lib/amountInWords";
 
 const DEFAULT_COMPANY = {
@@ -174,8 +176,15 @@ function drawHeader(pdf, c, sale, grid, y) {
     size: TYPE.body,
     color: COLORS.slate400,
   });
+  const payment = resolveSalePayment(sale);
+  textAt(pdf, salePaymentStatusLabel(payment.paymentStatus).toUpperCase(), rx, y + 27, {
+    align: "right",
+    size: TYPE.label,
+    color: payment.paymentStatus === "paid" ? COLORS.teal200 : COLORS.slate400,
+    style: "bold",
+  });
   if (c.ntn) {
-    textAt(pdf, `NTN ${c.ntn}`, rx, y + 27, { align: "right", size: 6.5, color: COLORS.slate400 });
+    textAt(pdf, `NTN ${c.ntn}`, left + LAYOUT.pad, y + 27, { size: 6.5, color: COLORS.slate400 });
   }
 
   return y + h + LAYOUT.sectionGap;
@@ -184,15 +193,12 @@ function drawHeader(pdf, c, sale, grid, y) {
 function drawInfoBoxes(pdf, sale, grid, y) {
   const { left, right } = grid;
   const w = right - left;
-  const gap = 5;
-  const colW = (w - gap) / 2;
   const h = LAYOUT.infoBoxH;
 
-  setFill(pdf, COLORS.slate50);
-  setDraw(pdf, COLORS.slate200);
+  setFill(pdf, COLORS.teal50);
+  setDraw(pdf, COLORS.teal200);
   pdf.setLineWidth(0.2);
-  pdf.rect(left, y, colW, h, "FD");
-  pdf.rect(left + colW + gap, y, colW, h, "FD");
+  pdf.rect(left, y, w, h, "FD");
 
   const labelY = y + 5;
   const baseY = y + 11;
@@ -200,34 +206,34 @@ function drawInfoBoxes(pdf, sale, grid, y) {
 
   textAt(pdf, "Bill to", left + LAYOUT.pad, labelY, {
     size: TYPE.label,
-    color: COLORS.slate500,
-    style: "bold",
-  });
-  textAt(pdf, "Invoice details", left + colW + gap + LAYOUT.pad, labelY, {
-    size: TYPE.label,
-    color: COLORS.slate500,
+    color: COLORS.teal700,
     style: "bold",
   });
 
-  textAt(pdf, sale.customerName || "—", left + LAYOUT.pad, baseY, {
+  const phone = saleCustomerPhone(sale);
+  const party = saleCustomerTypeLabel(sale);
+  const name = saleCustomerDisplayName(sale);
+
+  textAt(pdf, name, left + LAYOUT.pad, baseY, {
     size: TYPE.customer,
     color: COLORS.slate900,
     style: "bold",
   });
+  textAt(pdf, `${party}${phone ? `  ·  ${phone}` : ""}`, left + LAYOUT.pad, baseY + line, {
+    size: TYPE.body,
+    color: COLORS.slate600,
+  });
+  textAt(pdf, `Order: ${(sale.status || "draft").replace(/_/g, " ")}`, left + LAYOUT.pad, baseY + line * 2, {
+    size: TYPE.body,
+    color: COLORS.slate600,
+  });
 
-  const phone = sale.shop?.phone || sale.company?.phone || "";
-  const party = sale.shopId ? "Shop account" : sale.companyId ? "Company account" : "Walk-in customer";
-  textAt(pdf, party, left + LAYOUT.pad, baseY + line, { size: TYPE.body, color: COLORS.slate600 });
-  if (phone) {
-    textAt(pdf, phone, left + LAYOUT.pad, baseY + line * 2, { size: TYPE.body, color: COLORS.slate600 });
-  }
-
-  const rx = left + colW + gap + LAYOUT.pad;
-  textAt(pdf, `Status: ${sale.status || "—"}`, rx, baseY, { size: TYPE.body, color: COLORS.slate700 });
-  const pay = (sale.paymentStatus || "unpaid").toUpperCase();
-  textAt(pdf, `Payment: ${pay}`, rx, baseY + line, { size: TYPE.body, color: COLORS.slate700 });
-  if (sale.vehicleNumber) {
-    textAt(pdf, `Vehicle: ${sale.vehicleNumber}`, rx, baseY + line * 2, {
+  if (sale.vehicleNumber || sale.driverName) {
+    const dispatch = [
+      sale.vehicleNumber ? `Vehicle ${sale.vehicleNumber}` : "",
+      sale.driverName ? `Driver ${sale.driverName}` : "",
+    ].filter(Boolean).join("  ·  ");
+    textAt(pdf, dispatch, left + LAYOUT.pad, baseY + line * 3, {
       size: TYPE.body,
       color: COLORS.slate600,
     });
@@ -296,6 +302,7 @@ function drawTableRow(pdf, grid, y, item, index) {
 }
 
 function drawSummary(pdf, grid, y, sale) {
+  const payment = resolveSalePayment(sale);
   const { summaryLeft, amountRight, right } = grid;
   const w = LAYOUT.summaryW;
   const pad = LAYOUT.pad;
@@ -353,7 +360,7 @@ function drawSummary(pdf, grid, y, sale) {
     color: COLORS.teal700,
     style: "bold",
   });
-  textAt(pdf, fmtMoney(sale.totalAmount), amountRight, sy + 5, {
+  textAt(pdf, fmtMoney(payment.totalAmount), amountRight, sy + 5, {
     align: "right",
     size: TYPE.subhead,
     color: COLORS.teal700,
@@ -362,23 +369,18 @@ function drawSummary(pdf, grid, y, sale) {
   sy += 11;
 
   textAt(pdf, "Received to date", summaryLeft + pad, sy, { size: TYPE.body, color: COLORS.slate600 });
-  moneyAt(pdf, amountRight, sy, sale.paidAmount);
+  moneyAt(pdf, amountRight, sy, payment.paidAmount);
   sy += 6;
 
-  const balanceDue = Math.max((sale.totalAmount || 0) - (sale.paidAmount || 0), 0);
-  if (balanceDue > 0) {
-    setFill(pdf, COLORS.rose50);
-    pdf.rect(summaryLeft + 0.5, sy - 2, w - 1, 8, "F");
-  }
   textAt(pdf, "Balance due", summaryLeft + pad, sy + 4, {
     size: TYPE.bodyLg,
-    color: balanceDue > 0 ? COLORS.rose700 : COLORS.teal700,
+    color: payment.balanceDue > 0 ? COLORS.rose700 : COLORS.teal700,
     style: "bold",
   });
-  textAt(pdf, fmtMoney(balanceDue), amountRight, sy + 4, {
+  textAt(pdf, fmtMoney(payment.balanceDue), amountRight, sy + 4, {
     align: "right",
     size: TYPE.bodyLg,
-    color: balanceDue > 0 ? COLORS.rose700 : COLORS.teal700,
+    color: payment.balanceDue > 0 ? COLORS.rose700 : COLORS.teal700,
     style: "bold",
   });
 

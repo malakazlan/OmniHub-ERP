@@ -105,6 +105,8 @@ export function buildPaymentReceipt({
     title: isPay ? "Payment voucher" : "Receipt voucher",
     partyName: partyAccount?.name || payment.accountName,
     partyCategory: partyAccount?.category || null,
+    partyWhatsApp: partyAccount?.whatsappNumber || partyAccount?.phone || null,
+    partyPhone: partyAccount?.phone || null,
     cashAmount: parseNum(cashAmount),
     bankAmount: parseNum(bankAmount),
     totalAmount: parseNum(totalAmount),

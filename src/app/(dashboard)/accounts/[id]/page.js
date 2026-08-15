@@ -8,7 +8,7 @@ import GeneralLedgerRegister from "@/components/accounts/GeneralLedgerRegister";
 import { PurchaseReceiptPanel } from "@/components/documents/PurchaseReceiptPanel";
 import { SaleInvoicePanel } from "@/components/documents/SaleInvoicePanel";
 import { PaymentReceiptPanel } from "@/components/documents/PaymentReceiptPanel";
-import { ledgerEntryOpensInvoice } from "@/lib/ledgerEnrichment";
+import { getSaleWhatsAppPhone, getPurchaseWhatsAppPhone, getPaymentReceiptWhatsAppPhone } from "@/lib/invoicePartyContact";
 import {
   BookOpen, Loader2, ArrowLeft, MapPin, Phone, Hash, Wallet,
   ArrowDownCircle, ArrowUpCircle, ExternalLink,
@@ -230,19 +230,22 @@ export default function AccountLedgerPage() {
         open={receiptOpen}
         onClose={() => { setReceiptOpen(false); setPurchaseDoc(null); }}
         purchase={purchaseDoc}
-        companySettings={companySettings}
+        company={companySettings}
+        whatsappPhone={getPurchaseWhatsAppPhone(purchaseDoc) || account?.whatsappNumber || account?.phone}
       />
       <SaleInvoicePanel
         open={invoiceOpen}
         onClose={() => { setInvoiceOpen(false); setSaleDoc(null); }}
         sale={saleDoc}
-        companySettings={companySettings}
+        company={companySettings}
+        whatsappPhone={getSaleWhatsAppPhone(saleDoc) || account?.whatsappNumber || account?.phone}
       />
       <PaymentReceiptPanel
         open={paymentReceiptOpen}
         onClose={() => { setPaymentReceiptOpen(false); setPaymentReceipt(null); }}
-        payment={paymentReceipt}
-        companySettings={companySettings}
+        receipt={paymentReceipt}
+        company={companySettings}
+        whatsappPhone={getPaymentReceiptWhatsAppPhone(paymentReceipt) || account?.whatsappNumber || account?.phone}
       />
     </div>
   );

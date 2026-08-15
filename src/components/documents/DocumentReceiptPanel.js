@@ -7,7 +7,8 @@ import { Button } from "@/components/Button";
 import { downloadReceiptPdf, waitForInvoiceElement } from "@/lib/downloadReceiptPdf";
 import { downloadSaleInvoicePdf } from "@/lib/saleInvoicePdf";
 import { downloadPaymentReceiptPdf } from "@/lib/paymentReceiptPdf";
-import { Printer, Download, Loader2 } from "lucide-react";
+import { shareInvoiceOnWhatsApp } from "@/lib/invoiceWhatsApp";
+import { Printer, Download, Loader2, MessageCircle } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 
 const A4_PRINT_STYLE = `
@@ -15,6 +16,8 @@ const A4_PRINT_STYLE = `
   @media print {
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .erp-document-bill { max-width: 100% !important; box-shadow: none !important; }
+    .erp-sale-invoice { max-width: 100% !important; box-shadow: none !important; border: none !important; }
+    .erp-purchase-invoice { max-width: 100% !important; box-shadow: none !important; border: none !important; }
   }
 `;
 
@@ -28,12 +31,16 @@ export function DocumentReceiptPanel({
   onAutoActionDone,
   saleInvoicePdf = null,
   paymentReceiptPdf = null,
+  whatsappPhone = null,
   actions = null,
   children,
 }) {
   const receiptRef = useRef(null);
   const { showToast } = useToast();
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [whatsappLoading, setWhatsappLoading] = useState(false);
+
+  const hasWhatsApp = Boolean(whatsappPhone?.trim());
 
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
@@ -77,6 +84,31 @@ export function DocumentReceiptPanel({
       showToast(err?.message || "Could not generate PDF", "error");
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  const handleWhatsApp = async () => {
+    if (!hasWhatsApp) {
+      showToast("No WhatsApp number saved for this account", "warning");
+      return;
+    }
+    if (!receiptRef.current) {
+      showToast("Invoice not ready", "warning");
+      return;
+    }
+
+    setWhatsappLoading(true);
+    try {
+      await shareInvoiceOnWhatsApp({
+        containerEl: receiptRef.current,
+        phone: whatsappPhone,
+      });
+      showToast("Invoice copied — open chat and press Ctrl+V to paste", "success");
+    } catch (err) {
+      console.error("WhatsApp share failed:", err);
+      showToast(err?.message || "Could not share on WhatsApp", "error");
+    } finally {
+      setWhatsappLoading(false);
     }
   };
 
@@ -124,6 +156,24 @@ export function DocumentReceiptPanel({
           >
             {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             PDF
+          </Button>
+          <Button
+            type="button"
+            disabled={whatsappLoading || !hasWhatsApp}
+            onClick={handleWhatsApp}
+            title={
+              hasWhatsApp
+                ? "Copy invoice image and open WhatsApp chat"
+                : "Add WhatsApp number on the account to enable"
+            }
+            className="bg-[#25D366] hover:bg-[#1ebe57] border-0 min-h-[40px] text-sm text-white disabled:opacity-45 disabled:bg-slate-300 disabled:hover:bg-slate-300"
+          >
+            {whatsappLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <MessageCircle className="w-4 h-4" />
+            )}
+            WhatsApp
           </Button>
         </div>
 

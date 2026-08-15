@@ -1,7 +1,8 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
+import { trimOrNull } from "@/lib/stringUtils";
 
 // GET: Fetch a single farmer's details and transaction logs
 export async function GET(req, { params }) {
@@ -75,26 +76,35 @@ export async function PUT(req, { params }) {
       return Response.json({ error: "Farmer not found" }, { status: 404 });
     }
 
-    const trimOrNull = (v) => (typeof v === "string" && v.trim() ? v.trim() : null);
-    const farmerName = trimOrNull(body.name) || farmer.name;
-    const farmerPhone = trimOrNull(body.phone) ?? farmer.phone;
-    const farmerCnic = body.cnic !== undefined ? trimOrNull(body.cnic) : farmer.cnic;
+    const trim = trimOrNull;
+    const farmerName = trim(body.name) || farmer.name;
+    const farmerPhone = body.phone !== undefined ? trim(body.phone) : farmer.phone;
+    const farmerCnic = body.cnic !== undefined ? trim(body.cnic) : farmer.cnic;
 
-    const updatedFarmer = await prisma.$transaction(async (tx) => {
+    if (farmerCnic && farmerCnic !== farmer.cnic) {
+      const duplicate = await prisma.farmer.findFirst({
+        where: { cnic: farmerCnic, NOT: { id: farmerId } },
+      });
+      if (duplicate) {
+        return Response.json({ error: "Another farmer already uses this CNIC" }, { status: 400 });
+      }
+    }
+
+    const updatedFarmer = await runTransaction(async (tx) => {
       const f = await tx.farmer.update({
         where: { id: farmerId },
         data: {
           name: farmerName,
-          fatherName: body.fatherName !== undefined ? trimOrNull(body.fatherName) : farmer.fatherName,
+          fatherName: body.fatherName !== undefined ? trim(body.fatherName) : farmer.fatherName,
           cnic: farmerCnic,
           phone: farmerPhone,
-          whatsappNumber: body.whatsappNumber !== undefined ? trimOrNull(body.whatsappNumber) : farmer.whatsappNumber,
-          city: body.city !== undefined ? trimOrNull(body.city) : farmer.city,
-          village: body.village !== undefined ? trimOrNull(body.village) : farmer.village,
-          address: body.address !== undefined ? trimOrNull(body.address) : farmer.address,
-          bankName: body.bankName !== undefined ? trimOrNull(body.bankName) : farmer.bankName,
-          bankAccountNo: body.bankAccountNo !== undefined ? trimOrNull(body.bankAccountNo) : farmer.bankAccountNo,
-          notes: body.notes !== undefined ? trimOrNull(body.notes) : farmer.notes,
+          whatsappNumber: body.whatsappNumber !== undefined ? trim(body.whatsappNumber) : farmer.whatsappNumber,
+          city: body.city !== undefined ? trim(body.city) : farmer.city,
+          village: body.village !== undefined ? trim(body.village) : farmer.village,
+          address: body.address !== undefined ? trim(body.address) : farmer.address,
+          bankName: body.bankName !== undefined ? trim(body.bankName) : farmer.bankName,
+          bankAccountNo: body.bankAccountNo !== undefined ? trim(body.bankAccountNo) : farmer.bankAccountNo,
+          notes: body.notes !== undefined ? trim(body.notes) : farmer.notes,
           isActive: body.isActive !== undefined ? body.isActive : farmer.isActive,
         },
       });
@@ -120,6 +130,15 @@ export async function PUT(req, { params }) {
     return Response.json({ success: true, farmer: updatedFarmer });
   } catch (error) {
     console.error("Update farmer error:", error);
+    if (error.code === "P2028") {
+      return Response.json(
+        { error: "Database busy — check MySQL is running and retry in a moment." },
+        { status: 503 }
+      );
+    }
+    if (error.code === "P2002") {
+      return Response.json({ error: "A farmer with this CNIC already exists." }, { status: 400 });
+    }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -155,7 +174,7 @@ export async function DELETE(req, { params }) {
     }
 
     // Delete farmer and account inside transaction
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       await tx.farmer.delete({
         where: { id: farmerId },
       });

@@ -3,6 +3,7 @@ import { getUserFromRequest, hashPassword } from "@/lib/auth";
 import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePresets";
 import { MODULES } from "@/lib/constants";
 import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccounts";
+import { trimOrNull } from "@/lib/stringUtils";
 
 async function fetchLoginUser(userId) {
   if (!userId) return null;
@@ -168,7 +169,7 @@ export async function PUT(req, { params }) {
         data: {
           name: updatedName,
           fatherName: body.fatherName ?? existing.fatherName,
-          cnic: body.cnic ?? existing.cnic,
+          cnic: body.cnic !== undefined ? trimOrNull(body.cnic) : existing.cnic,
           phone: updatedPhone,
           role: body.role ?? existing.role,
           designation: body.designation ?? existing.designation,
@@ -191,7 +192,7 @@ export async function PUT(req, { params }) {
           data: {
             name: updatedName,
             phone: updatedPhone,
-            cnic: body.cnic !== undefined ? (body.cnic?.trim() || null) : existing.cnic,
+            cnic: body.cnic !== undefined ? trimOrNull(body.cnic) : existing.cnic,
             address: body.address ?? existing.address,
             category: isDriver ? "transport" : "salary",
             isActive: body.isActive !== undefined ? Boolean(body.isActive) : existing.isActive,

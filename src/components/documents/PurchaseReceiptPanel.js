@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "@/components/Button";
 import PurchaseReceipt from "@/components/documents/PurchaseReceipt";
 import { DocumentReceiptPanel } from "@/components/documents/DocumentReceiptPanel";
+import { getPurchaseWhatsAppPhone } from "@/lib/invoicePartyContact";
 import { FileText, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
@@ -14,10 +15,12 @@ export function PurchaseReceiptPanel({
   onClose,
   title = "Supplier purchase bill",
   onPay,
+  whatsappPhone = null,
 }) {
   if (!purchase) return null;
 
   const pdfFilename = `${purchase.purchaseNumber || "purchase"}-bill.pdf`.replace(/\s+/g, "-");
+  const waPhone = whatsappPhone || getPurchaseWhatsAppPhone(purchase);
   const balanceDue = Math.max((purchase.totalAmount || 0) - (purchase.paidAmount || 0), 0);
   const canPay =
     balanceDue > 0 &&
@@ -30,8 +33,9 @@ export function PurchaseReceiptPanel({
       open={open}
       onClose={onClose}
       title={title}
-      hint="Compact ERP bill — scroll if needed. Print/PDF uses full document size."
+      hint="Supplier bill — print, PDF, or WhatsApp (image copied to clipboard)."
       pdfFilename={pdfFilename}
+      whatsappPhone={waPhone}
       actions={
         canPay ? (
           <Button

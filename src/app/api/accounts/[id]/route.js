@@ -1,8 +1,9 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { userCanAccessAccount } from "@/lib/accountAccess";
 import { findPartyEntityByAccount } from "@/lib/accountRelations";
 import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
+import { trimOrNull } from "@/lib/stringUtils";
 
 export async function GET(req, { params }) {
   try {
@@ -54,11 +55,12 @@ export async function PUT(req, { params }) {
       where: { id: accountId },
       data: {
         name: body.name?.trim() || undefined,
-        city: body.city !== undefined ? body.city : undefined,
-        phone: body.phone !== undefined ? body.phone : undefined,
-        whatsappNumber: body.whatsappNumber !== undefined ? body.whatsappNumber : undefined,
-        address: body.address !== undefined ? body.address : undefined,
-        reference: body.reference !== undefined ? body.reference : undefined,
+        city: body.city !== undefined ? trimOrNull(body.city) : undefined,
+        phone: body.phone !== undefined ? trimOrNull(body.phone) : undefined,
+        whatsappNumber: body.whatsappNumber !== undefined ? trimOrNull(body.whatsappNumber) : undefined,
+        cnic: body.cnic !== undefined ? trimOrNull(body.cnic) : undefined,
+        address: body.address !== undefined ? trimOrNull(body.address) : undefined,
+        reference: body.reference !== undefined ? trimOrNull(body.reference) : undefined,
         isActive: body.isActive !== undefined ? body.isActive : undefined,
         ownerUserId:
           body.ownerUserId === null || body.ownerUserId === ""
@@ -134,7 +136,7 @@ export async function DELETE(req, { params }) {
       );
     }
 
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       await tx.user.updateMany({
         where: { cashAccountId: accountId },
         data: { cashAccountId: null },

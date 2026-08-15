@@ -14,6 +14,8 @@ import {
   Trash2,
   Store,
   Building2,
+  Wheat,
+  UserRound,
   ArrowLeft,
   Save,
   CheckCircle2,
@@ -113,11 +115,13 @@ function NewSalePageInner() {
   const [customerType, setCustomerType] = useState("shop");
   const [shops, setShops] = useState([]);
   const [companies, setCompanies] = useState([]);
+  const [farmers, setFarmers] = useState([]);
   const [products, setProducts] = useState([]);
   const [accounts, setAccounts] = useState([]);
 
   const [form, setForm] = useState({
     customerId: "",
+    walkInName: "",
     saleDate: new Date().toISOString().slice(0, 10),
     transportCost: "",
     loadingCost: "",
@@ -163,22 +167,25 @@ function NewSalePageInner() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [shopsRes, companiesRes, productsRes, ordersRes, accountsRes] = await Promise.all([
+        const [shopsRes, companiesRes, farmersRes, productsRes, ordersRes, accountsRes] = await Promise.all([
           fetch("/api/shops"),
           fetch("/api/companies"),
+          fetch("/api/farmers"),
           fetch("/api/products"),
           fetch("/api/orders?forSale=1"),
           fetch("/api/accounts"),
         ]);
-        const [shopsData, companiesData, productsData, ordersData, accountsData] = await Promise.all([
+        const [shopsData, companiesData, farmersData, productsData, ordersData, accountsData] = await Promise.all([
           shopsRes.json(),
           companiesRes.json(),
+          farmersRes.json(),
           productsRes.json(),
           ordersRes.json(),
           accountsRes.json(),
         ]);
         if (shopsRes.ok) setShops(shopsData.shops || []);
         if (companiesRes.ok) setCompanies(companiesData.companies || []);
+        if (farmersRes.ok) setFarmers(farmersData.farmers || []);
         if (productsRes.ok) setProducts(productsData.products || []);
         if (ordersRes.ok) setAcceptedOrders(ordersData.orders || []);
         if (accountsRes.ok) setAccounts((accountsData.accounts || []).filter((a) => a.isActive));
@@ -206,7 +213,17 @@ function NewSalePageInner() {
     setForm((f) => applyDefaultCashAccount(f, defaultCashAccountId));
   }, [defaultCashAccountId]);
 
-  const customerOptions = customerType === "shop" ? shops : companies;
+  const customerOptions = useMemo(() => {
+    if (customerType === "farmer") return farmers;
+    if (customerType === "shop") return shops;
+    if (customerType === "company") return companies;
+    return [];
+  }, [customerType, farmers, shops, companies]);
+
+  const switchCustomerType = (type) => {
+    setCustomerType(type);
+    setForm((f) => ({ ...f, customerId: "", walkInName: "" }));
+  };
 
   const updateItem = (index, field, value) => {
     setItems((prev) => {
@@ -240,6 +257,17 @@ function NewSalePageInner() {
   const totalAmount = subtotal + surcharges - parseNumber(form.discountAmount);
   const paidAmount = parseNumber(form.cashAmount) + parseNumber(form.bankAmount);
   const balanceDue = Math.max(totalAmount - paidAmount, 0);
+  const isWalkIn = customerType === "walkin";
+  const walkInNeedsPayment = isWalkIn && balanceDue > 0.009;
+
+  useEffect(() => {
+    if (!isWalkIn || totalAmount <= 0) return;
+    setForm((f) => {
+      const paid = parseNumber(f.cashAmount) + parseNumber(f.bankAmount);
+      if (paid + 0.009 >= totalAmount) return f;
+      return { ...f, cashAmount: String(totalAmount), bankAmount: "" };
+    });
+  }, [isWalkIn, totalAmount]);
 
   const cashAccounts = useMemo(() => accounts.filter((a) => a.category === "cash"), [accounts]);
   const bankAccounts = useMemo(() => accounts.filter((a) => a.category === "bank"), [accounts]);
@@ -247,7 +275,7 @@ function NewSalePageInner() {
   const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
   const handleSubmit = async (status) => {
-    if (!form.customerId) {
+    if (customerType !== "walkin" && !form.customerId) {
       showToast(`Please select a ${customerType}`, "warning");
       return;
     }
@@ -258,12 +286,43 @@ function NewSalePageInner() {
       return;
     }
 
+    const cashAmt = parseNumber(form.cashAmount);
+    const bankAmt = parseNumber(form.bankAmount);
+    const paid = cashAmt + bankAmt;
+
+    if (customerType === "walkin" && status === "confirmed") {
+      if (paid + 0.009 < totalAmount) {
+        showToast("Walk-in sales must be paid in full before confirming", "warning");
+        return;
+      }
+      if (cashAmt > 0 && !form.cashAccountId) {
+        showToast("Select a cash account for this payment", "warning");
+        return;
+      }
+      if (bankAmt > 0 && !form.bankAccountId) {
+        showToast("Select a bank account for this payment", "warning");
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       const customer = customerOptions.find((c) => String(c.id) === String(form.customerId));
+      const walkInLabel = form.walkInName?.trim() || "—";
+
+      let cashAmt = parseNumber(form.cashAmount);
+      let bankAmt = parseNumber(form.bankAmount);
+      if (customerType === "walkin" && status === "confirmed" && cashAmt + bankAmt + 0.009 < totalAmount) {
+        cashAmt = Math.max(totalAmount - bankAmt, 0);
+      }
+
       const payload = {
         customerType,
-        customerName: customer?.name || "",
+        customerName:
+          customerType === "walkin"
+            ? walkInLabel
+            : customer?.name || "",
+        farmerId: customerType === "farmer" ? parseInt(form.customerId, 10) : null,
         shopId: customerType === "shop" ? parseInt(form.customerId, 10) : null,
         companyId: customerType === "company" ? parseInt(form.customerId, 10) : null,
         customerOrderId: customerOrderId ? parseInt(customerOrderId, 10) : null,
@@ -283,8 +342,8 @@ function NewSalePageInner() {
         loadingCost: parseNumber(form.loadingCost),
         taxAmount: parseNumber(form.taxAmount),
         discountAmount: parseNumber(form.discountAmount),
-        cashAmount: parseNumber(form.cashAmount),
-        bankAmount: parseNumber(form.bankAmount),
+        cashAmount: cashAmt,
+        bankAmount: bankAmt,
         cashAccountId: form.cashAccountId ? parseInt(form.cashAccountId, 10) : null,
         bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : null,
         notes: form.notes || null,
@@ -388,19 +447,30 @@ function NewSalePageInner() {
         <DocSection title="Customer" className="overflow-visible">
           <div className="erp-doc-body space-y-4 overflow-visible">
             <div
-              className="erp-vendor-switch grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60"
+              className="erp-vendor-switch grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60"
               role="tablist"
               aria-label="Customer type"
             >
               <button
                 type="button"
                 role="tab"
+                aria-selected={customerType === "farmer"}
+                onClick={() => switchCustomerType("farmer")}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
+                  customerType === "farmer"
+                    ? "bg-gradient-to-b from-lime-500 to-lime-600 text-white shadow-md shadow-lime-600/25 ring-1 ring-lime-400/50"
+                    : "text-slate-600 hover:bg-white/95 hover:text-lime-700 hover:ring-1 hover:ring-lime-200/80"
+                }`}
+              >
+                <Wheat className="w-4 h-4 shrink-0" strokeWidth={2.25} />
+                Farmer
+              </button>
+              <button
+                type="button"
+                role="tab"
                 aria-selected={customerType === "shop"}
-                onClick={() => {
-                  setCustomerType("shop");
-                  setForm({ ...form, customerId: "" });
-                }}
-                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
+                onClick={() => switchCustomerType("shop")}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   customerType === "shop"
                     ? "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-1 ring-emerald-400/50"
                     : "text-slate-600 hover:bg-white/95 hover:text-emerald-700 hover:ring-1 hover:ring-emerald-200/80"
@@ -413,11 +483,8 @@ function NewSalePageInner() {
                 type="button"
                 role="tab"
                 aria-selected={customerType === "company"}
-                onClick={() => {
-                  setCustomerType("company");
-                  setForm({ ...form, customerId: "" });
-                }}
-                className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
+                onClick={() => switchCustomerType("company")}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   customerType === "company"
                     ? "bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 shadow-md shadow-amber-500/30 ring-1 ring-amber-300/70"
                     : "text-slate-600 hover:bg-white/95 hover:text-amber-800 hover:ring-1 hover:ring-amber-200/90"
@@ -426,28 +493,77 @@ function NewSalePageInner() {
                 <Building2 className="w-4 h-4 shrink-0" strokeWidth={2.25} />
                 Company
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={customerType === "walkin"}
+                onClick={() => switchCustomerType("walkin")}
+                className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
+                  customerType === "walkin"
+                    ? "bg-gradient-to-b from-slate-600 to-slate-700 text-white shadow-md shadow-slate-600/25 ring-1 ring-slate-400/50"
+                    : "text-slate-600 hover:bg-white/95 hover:text-slate-800 hover:ring-1 hover:ring-slate-200/90"
+                }`}
+              >
+                <UserRound className="w-4 h-4 shrink-0" strokeWidth={2.25} />
+                Walk-in
+              </button>
             </div>
-            <SearchPicker
-              label={customerType === "shop" ? "Shop *" : "Company *"}
-              placeholder={`Search ${customerType === "shop" ? "shops" : "companies"}…`}
-              options={customerOptions}
-              value={form.customerId}
-              onChange={(id) => setForm({ ...form, customerId: id })}
-              getOptionLabel={(c) => c.name}
-              labelClassName={customerType === "shop" ? "text-emerald-800/80" : "text-amber-900/70"}
-              fieldClassName={
-                customerType === "shop"
-                  ? "!focus-within:border-emerald-500 !focus-within:shadow-[0_0_0_2px_rgba(16,185,129,0.2)]"
-                  : "!focus-within:border-amber-500 !focus-within:shadow-[0_0_0_2px_rgba(245,158,11,0.25)]"
-              }
-              renderOption={(c) => (
-                <span>
-                  {c.name}
-                  {c.phone ? <span className="text-slate-400 text-xs ml-2">{c.phone}</span> : null}
-                  {c.city ? <span className="text-slate-400 text-xs ml-1">· {c.city}</span> : null}
-                </span>
-              )}
-            />
+
+            {customerType === "walkin" ? (
+              <div className="space-y-2">
+                <FieldLabel>
+                  Customer name{" "}
+                  <span className="normal-case font-normal text-slate-400">(optional)</span>
+                </FieldLabel>
+                <input
+                  type="text"
+                  value={form.walkInName}
+                  onChange={handleChange("walkInName")}
+                  className="input-field w-full min-h-[42px] text-sm"
+                  placeholder="Cash sale — leave blank and receipt shows —"
+                />
+                <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200/80 rounded-lg px-2.5 py-2">
+                  No ledger account. Full cash/bank payment is required to confirm a walk-in sale.
+                </p>
+              </div>
+            ) : (
+              <SearchPicker
+                label={
+                  customerType === "farmer"
+                    ? "Farmer *"
+                    : customerType === "shop"
+                      ? "Shop *"
+                      : "Company *"
+                }
+                placeholder={`Search ${customerType === "farmer" ? "farmers" : customerType === "shop" ? "shops" : "companies"}…`}
+                options={customerOptions}
+                value={form.customerId}
+                onChange={(id) => setForm({ ...form, customerId: id })}
+                getOptionLabel={(c) => c.name}
+                labelClassName={
+                  customerType === "farmer"
+                    ? "text-lime-800/80"
+                    : customerType === "shop"
+                      ? "text-emerald-800/80"
+                      : "text-amber-900/70"
+                }
+                fieldClassName={
+                  customerType === "farmer"
+                    ? "!focus-within:border-lime-500 !focus-within:shadow-[0_0_0_2px_rgba(132,204,22,0.2)]"
+                    : customerType === "shop"
+                      ? "!focus-within:border-emerald-500 !focus-within:shadow-[0_0_0_2px_rgba(16,185,129,0.2)]"
+                      : "!focus-within:border-amber-500 !focus-within:shadow-[0_0_0_2px_rgba(245,158,11,0.25)]"
+                }
+                renderOption={(c) => (
+                  <span>
+                    {c.name}
+                    {c.phone ? <span className="text-slate-400 text-xs ml-2">{c.phone}</span> : null}
+                    {c.city ? <span className="text-slate-400 text-xs ml-1">· {c.city}</span> : null}
+                    {c.village ? <span className="text-slate-400 text-xs ml-1">· {c.village}</span> : null}
+                  </span>
+                )}
+              />
+            )}
           </div>
         </DocSection>
 
@@ -721,9 +837,16 @@ function NewSalePageInner() {
                     <Money
                       value={balanceDue}
                       strong
-                      className={balanceDue > 0 ? "text-amber-700" : "text-emerald-700"}
+                      className={
+                        walkInNeedsPayment ? "text-red-700" : balanceDue > 0 ? "text-amber-700" : "text-emerald-700"
+                      }
                     />
                   </SummaryRow>
+                  {isWalkIn && walkInNeedsPayment && (
+                    <p className="text-[11px] font-semibold text-red-700 mt-1">
+                      Walk-in: pay the full invoice amount to confirm.
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -741,10 +864,11 @@ function NewSalePageInner() {
           </Button>
           <Button
             type="button"
-            disabled={submitting}
+            disabled={submitting || (isWalkIn && walkInNeedsPayment)}
             variant="brand"
             onClick={() => handleSubmit("confirmed")}
             className="min-h-[42px] sm:min-w-[200px] rounded-lg shadow-md transition-all duration-200 active:scale-[0.99]"
+            title={isWalkIn && walkInNeedsPayment ? "Walk-in sales require full payment" : undefined}
           >
             {submitting ? (
               <Loader2 className="w-4 h-4 animate-spin" />

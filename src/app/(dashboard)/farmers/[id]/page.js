@@ -248,7 +248,7 @@ export default function FarmerDetailPage() {
                 <input type="text" value={form.name} onChange={handleChange("name")} required className="input-field" />
               </div>
               {[
-                ["fatherName", "Father's Name"], ["cnic", "CNIC"], ["phone", "Phone"],
+                ["fatherName", "Father's Name"], ["cnic", "CNIC (optional)"], ["phone", "Phone *"],
                 ["whatsappNumber", "WhatsApp"], ["city", "City"], ["village", "Village"],
                 ["bankName", "Bank Name"], ["bankAccountNo", "Account No."],
               ].map(([key, label]) => (

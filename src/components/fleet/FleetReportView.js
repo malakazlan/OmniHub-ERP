@@ -40,23 +40,24 @@ export default function FleetReportView({
   const grandMonth = reportRows.reduce((s, r) => s + r.month, 0);
 
   return (
-    <div className="space-y-5 page-enter">
+    <div className="erp-fleet-surface page-enter pb-8">
+      <div className="erp-fleet-page space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="flex items-start gap-3">
-          <button type="button" onClick={onBack} className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer">
-            <ChevronLeft className="w-5 h-5 text-slate-600" />
+          <button type="button" onClick={onBack} className="erp-fleet-back-btn bg-white border border-slate-200 text-slate-600">
+            <ChevronLeft className="w-5 h-5" />
           </button>
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#2563EB]">Office · Fleet</p>
-            <h1 className="text-2xl font-black text-slate-900">
-              {focusVehicle ? `Vehicle report — ${focusVehicle.registrationNumber}` : "Fleet cost report"}
+            <p className="erp-fleet-page-badge inline-flex mb-2">Fleet report</p>
+            <h1 className="erp-fleet-page-title text-xl">
+              {focusVehicle ? `${focusVehicle.registrationNumber} costs` : "Fleet cost report"}
             </h1>
-            <p className="text-sm text-slate-500 mt-0.5">
-              {focusVehicle ? vehicleLabel(focusVehicle) : "Combined operating costs across all registered vehicles"}
+            <p className="erp-fleet-page-desc">
+              {focusVehicle ? vehicleLabel(focusVehicle) : "Operating costs across all registered vehicles"}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-900 text-white shadow-md">
           <FileText className="w-4 h-4 opacity-70" />
           <div className="text-right">
             <p className="text-[10px] uppercase tracking-wide opacity-70">All-time total</p>
@@ -65,29 +66,30 @@ export default function FleetReportView({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-[11px] font-bold uppercase text-slate-400">Vehicles in report</p>
-          <p className="text-2xl font-black text-slate-900 mt-1">{reportRows.length}</p>
+      <div className="erp-fleet-stats">
+        <div className="erp-fleet-stat">
+          <p className="erp-fleet-stat-label">Vehicles</p>
+          <p className="erp-fleet-stat-value">{reportRows.length}</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-[11px] font-bold uppercase text-slate-400">This month</p>
-          <p className="text-2xl font-black text-amber-600 tabular-nums mt-1">{formatCurrency(grandMonth)}</p>
+        <div className="erp-fleet-stat">
+          <p className="erp-fleet-stat-label">This month</p>
+          <p className="erp-fleet-stat-value text-amber-700">{formatCurrency(grandMonth)}</p>
         </div>
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-          <p className="text-[11px] font-bold uppercase text-slate-400">All-time cost</p>
-          <p className="text-2xl font-black text-rose-600 tabular-nums mt-1">{formatCurrency(grandTotal)}</p>
+        <div className="erp-fleet-stat">
+          <p className="erp-fleet-stat-label">All-time</p>
+          <p className="erp-fleet-stat-value text-red-600">{formatCurrency(grandTotal)}</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="erp-fleet-register">
         {loading ? (
           <div className="h-48 flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-[#2563EB] animate-spin" />
+            <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+          <div className="erp-accounts-grid-wrap">
+            <div className="erp-accounts-grid-scroll">
+            <table className="erp-ledger-grid erp-fleet-grid min-w-[900px]">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/80">
                   <th className="px-4 py-3 text-[10px] font-bold uppercase text-slate-400 text-left">Plate</th>
@@ -135,8 +137,10 @@ export default function FleetReportView({
                 </tr>
               </tfoot>
             </table>
+            </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

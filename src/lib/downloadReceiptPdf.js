@@ -1,5 +1,6 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { DOCUMENT_CAPTURE_CSS } from "@/lib/invoiceCaptureStyles";
 
 const LAYOUT_PROPS = [
   "display",
@@ -36,7 +37,6 @@ const LAYOUT_PROPS = [
 const COLOR_PROPS = [
   "color",
   "background-color",
-  "background",
   "border-color",
   "border-top-color",
   "border-bottom-color",
@@ -140,13 +140,10 @@ function applySafeComputedStyles(source, clone, colorDoc) {
     if (!value) continue;
     const fb = prop.includes("background") ? "#ffffff" : "#0f172a";
     const safe = resolveColorToHex(colorDoc, value, fb);
-    if (prop === "background") {
-      clone.style.setProperty("background-color", safe);
-      clone.style.removeProperty("background");
-    } else {
-      clone.style.setProperty(prop, safe);
-    }
+    clone.style.setProperty(prop, safe);
   }
+
+  clone.style.setProperty("background-image", "none");
 
   const borderWidth = computed.getPropertyValue("border-width");
   const borderStyle = computed.getPropertyValue("border-style");
@@ -169,12 +166,50 @@ function sanitizeCloneColors(root, colorDoc) {
         root.style.setProperty(prop, resolveColorToHex(colorDoc, val, fb));
       }
     }
-    if (root.style.background && UNSUPPORTED_COLOR.test(root.style.background)) {
-      root.style.setProperty("background-color", "#ffffff");
-      root.style.removeProperty("background");
-    }
   }
   for (const child of root.children) sanitizeCloneColors(child, colorDoc);
+}
+
+function isInvoiceCaptureTarget(element) {
+  return (
+    element.classList?.contains("erp-sale-invoice") ||
+    element.classList?.contains("erp-purchase-invoice") ||
+    Boolean(element.querySelector?.(".erp-sale-invoice")) ||
+    Boolean(element.querySelector?.(".erp-purchase-invoice"))
+  );
+}
+
+function injectCaptureStyles(frameDoc, css) {
+  const style = frameDoc.createElement("style");
+  style.textContent = css;
+  frameDoc.head.appendChild(style);
+}
+
+/** Deep clone preserving class names — used with injected capture CSS. */
+function cloneWithClasses(source, targetDoc) {
+  if (source.nodeType === Node.TEXT_NODE) {
+    return targetDoc.createTextNode(source.textContent);
+  }
+  if (!(source instanceof Element)) {
+    return targetDoc.createDocumentFragment();
+  }
+
+  const clone = targetDoc.createElement(source.tagName.toLowerCase());
+  if (source.id) clone.id = source.id;
+  if (source.className) clone.className = source.className;
+
+  for (const attr of source.attributes) {
+    if (attr.name === "class" || attr.name === "id") continue;
+    if (attr.name.startsWith("on")) continue;
+    clone.setAttribute(attr.name, attr.value);
+  }
+
+  for (const child of source.childNodes) {
+    const clonedChild = cloneWithClasses(child, targetDoc);
+    if (clonedChild) clone.appendChild(clonedChild);
+  }
+
+  return clone;
 }
 
 function buildSafeCloneTree(source, targetDoc, colorDoc) {
@@ -198,13 +233,24 @@ function buildSafeCloneTree(source, targetDoc, colorDoc) {
 
 function resolveCaptureTarget(element) {
   if (!element) return null;
-  return element.classList?.contains("erp-document-bill")
-    ? element
-    : element.querySelector(".erp-document-bill") || element;
+  if (
+    element.classList?.contains("erp-document-bill") ||
+    element.classList?.contains("erp-sale-invoice") ||
+    element.classList?.contains("erp-purchase-invoice")
+  ) {
+    return element;
+  }
+  return (
+    element.querySelector(".erp-sale-invoice") ||
+    element.querySelector(".erp-purchase-invoice") ||
+    element.querySelector(".erp-document-bill") ||
+    element
+  );
 }
 
 async function renderInvoiceCanvas(target, scale) {
   const doc = target.ownerDocument;
+  const useInvoiceStyles = isInvoiceCaptureTarget(target);
 
   const iframe = doc.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
@@ -224,13 +270,20 @@ async function renderInvoiceCanvas(target, scale) {
   );
   frameDoc.close();
 
+  if (useInvoiceStyles) {
+    injectCaptureStyles(frameDoc, DOCUMENT_CAPTURE_CSS);
+  }
+
   const w = target.scrollWidth || target.offsetWidth;
   const h = target.scrollHeight || target.offsetHeight;
 
-  const safeRoot = buildSafeCloneTree(target, frameDoc, doc);
+  const safeRoot = useInvoiceStyles
+    ? cloneWithClasses(target, frameDoc)
+    : buildSafeCloneTree(target, frameDoc, doc);
+
   safeRoot.style.width = `${w}px`;
   safeRoot.style.maxWidth = `${w}px`;
-  sanitizeCloneColors(safeRoot, doc);
+  if (!useInvoiceStyles) sanitizeCloneColors(safeRoot, doc);
   frameDoc.body.appendChild(safeRoot);
 
   try {
@@ -249,7 +302,7 @@ async function renderInvoiceCanvas(target, scale) {
       foreignObjectRendering: false,
       window: frameDoc.defaultView,
       onclone: (clonedDoc) => {
-        sanitizeCloneColors(clonedDoc.body, doc);
+        if (!useInvoiceStyles) sanitizeCloneColors(clonedDoc.body, doc);
       },
     });
   } finally {
@@ -315,6 +368,35 @@ export async function downloadReceiptPdf(element, filename = "receipt.pdf", opti
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   addCanvasToA4Pdf(pdf, canvas, contentWidthMm);
   pdf.save(filename);
+}
+
+/** Capture invoice DOM as PNG blob (for WhatsApp clipboard). */
+export async function captureInvoiceImage(element) {
+  const target = resolveCaptureTarget(element);
+  if (!target) throw new Error("Invoice element not found");
+
+  if (target.offsetHeight < 8 || target.offsetWidth < 8) {
+    throw new Error("Invoice is still loading — try again in a moment");
+  }
+
+  let canvas;
+  try {
+    canvas = await renderInvoiceCanvas(target, 2);
+  } catch {
+    canvas = await renderInvoiceCanvas(target, 1);
+  }
+
+  if (!canvas?.width || !canvas?.height) {
+    throw new Error("Could not capture invoice image");
+  }
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Could not create image"))),
+      "image/png",
+      1
+    );
+  });
 }
 
 /** Wait until invoice bill node has layout (modal open animation). */

@@ -43,6 +43,7 @@ export async function GET(req) {
                 type: true,
                 category: true,
                 phone: true,
+                whatsappNumber: true,
               },
             },
           },
@@ -61,6 +62,7 @@ export async function GET(req) {
             type: true,
             category: true,
             phone: true,
+            whatsappNumber: true,
           },
         })
       : null;

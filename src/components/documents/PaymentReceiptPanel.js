@@ -3,23 +3,26 @@
 import React from "react";
 import { DocumentReceiptPanel } from "@/components/documents/DocumentReceiptPanel";
 import PaymentReceipt from "@/components/documents/PaymentReceipt";
+import { getPaymentReceiptWhatsAppPhone } from "@/lib/invoicePartyContact";
 
-export function PaymentReceiptPanel({ receipt, company, open, onClose, title }) {
+export function PaymentReceiptPanel({ receipt, company, open, onClose, title, whatsappPhone = null }) {
   const voucherTitle =
     title ||
     (receipt?.mode === "pay" ? "Payment voucher" : "Receipt voucher");
   const filename = receipt?.paymentNumber
     ? `${receipt.paymentNumber.replace(/\s+/g, "-")}.pdf`
     : "payment-voucher.pdf";
+  const waPhone = whatsappPhone || getPaymentReceiptWhatsAppPhone(receipt);
 
   return (
     <DocumentReceiptPanel
       open={open}
       onClose={onClose}
       title={voucherTitle}
-      hint="Print or save this payment / receipt voucher for your records."
+      hint="Print, PDF, or WhatsApp this voucher (image copied to clipboard)."
       pdfFilename={filename}
       paymentReceiptPdf={{ receipt, company }}
+      whatsappPhone={waPhone}
     >
       <PaymentReceipt receipt={receipt} company={company} />
     </DocumentReceiptPanel>

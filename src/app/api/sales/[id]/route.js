@@ -9,12 +9,13 @@ import {
   resolveCustomerAccountId,
   applySaleStockAndLedger,
 } from "@/lib/order-processing";
+import { validateWalkInFullPayment } from "@/lib/saleCustomer";
 
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
-  company: { select: { id: true, name: true, phone: true, accountId: true } },
-  shop: { select: { id: true, name: true, phone: true, accountId: true } },
-  gatePass: true,
+  company: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
+  shop: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
+  farmer: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
 };
 
 function canManageSales(user) {
@@ -112,6 +113,44 @@ export async function PUT(req, { params }) {
 
     const computed = existing.status === "draft" ? buildSaleUpdate(body) : {};
 
+    if (applyingEffects) {
+      const companyId = body.companyId !== undefined
+        ? (body.companyId ? parseInt(body.companyId, 10) : null)
+        : existing.companyId;
+      const shopId = body.shopId !== undefined
+        ? (body.shopId ? parseInt(body.shopId, 10) : null)
+        : existing.shopId;
+      const farmerId = body.farmerId !== undefined
+        ? (body.farmerId ? parseInt(body.farmerId, 10) : null)
+        : existing.farmerId;
+      const totalAmount = computed.totalAmount ?? existing.totalAmount;
+      const paidAmount = computed.paidAmount ?? existing.paidAmount;
+      const cashAmount = computed.cashAmount ?? existing.cashAmount;
+      const bankAmount = computed.bankAmount ?? existing.bankAmount;
+      const cashAccountId = body.cashAccountId !== undefined
+        ? (body.cashAccountId ? parseInt(body.cashAccountId, 10) : null)
+        : existing.cashAccountId;
+      const bankAccountId = body.bankAccountId !== undefined
+        ? (body.bankAccountId ? parseInt(body.bankAccountId, 10) : null)
+        : existing.bankAccountId;
+
+      const walkInPaymentError = validateWalkInFullPayment({
+        shopId,
+        companyId,
+        farmerId,
+        status: newStatus,
+        paidAmount,
+        totalAmount,
+        cashAmount,
+        bankAmount,
+        cashAccountId,
+        bankAccountId,
+      });
+      if (walkInPaymentError) {
+        return Response.json({ error: walkInPaymentError }, { status: 400 });
+      }
+    }
+
     const sale = await prisma.$transaction(async (tx) => {
       let updateData = {};
 
@@ -119,6 +158,7 @@ export async function PUT(req, { params }) {
         if (body.saleDate) updateData.saleDate = new Date(body.saleDate);
         if (body.companyId !== undefined) updateData.companyId = body.companyId ? parseInt(body.companyId, 10) : null;
         if (body.shopId !== undefined) updateData.shopId = body.shopId ? parseInt(body.shopId, 10) : null;
+        if (body.farmerId !== undefined) updateData.farmerId = body.farmerId ? parseInt(body.farmerId, 10) : null;
         if (body.customerName !== undefined) updateData.customerName = body.customerName;
         if (body.notes !== undefined) updateData.notes = body.notes || null;
         if (body.vehicleNumber !== undefined) updateData.vehicleNumber = body.vehicleNumber || null;
@@ -138,7 +178,8 @@ export async function PUT(req, { params }) {
 
         const companyId = updateData.companyId !== undefined ? updateData.companyId : existing.companyId;
         const shopId = updateData.shopId !== undefined ? updateData.shopId : existing.shopId;
-        updateData.customerAccountId = await resolveCustomerAccountId(tx, { companyId, shopId });
+        const farmerId = updateData.farmerId !== undefined ? updateData.farmerId : existing.farmerId;
+        updateData.customerAccountId = await resolveCustomerAccountId(tx, { companyId, shopId, farmerId });
 
         if (computed.items) {
           await tx.saleItem.deleteMany({ where: { saleOrderId: saleId } });

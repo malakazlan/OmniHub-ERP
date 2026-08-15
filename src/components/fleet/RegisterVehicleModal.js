@@ -81,7 +81,7 @@ export default function RegisterVehicleModal({ isOpen, onClose, onSuccess, vehic
     >
       <form id="fleet-register-form" onSubmit={handleSubmit} className="space-y-4">
         <p className="text-xs text-slate-500 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
-          Fleet vehicles are for dispatch and gate pass. No ledger account is created.
+          Fleet vehicles are for dispatch and transport trips. No ledger account is created.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="sm:col-span-2 space-y-1">

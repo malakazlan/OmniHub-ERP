@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
@@ -52,7 +52,7 @@ export async function PUT(req, { params }) {
     const shop = await prisma.shop.findUnique({ where: { id: shopId } });
     if (!shop) return Response.json({ error: "Shop not found" }, { status: 404 });
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await runTransaction(async (tx) => {
       const s = await tx.shop.update({
         where: { id: shopId },
         data: {

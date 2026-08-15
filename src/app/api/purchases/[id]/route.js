@@ -14,8 +14,8 @@ import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
 
 const purchaseInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
-  farmer: { select: { id: true, name: true, phone: true, accountId: true } },
-  company: { select: { id: true, name: true, phone: true, accountId: true } },
+  farmer: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
+  company: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
 };
 
 function canManagePurchases(user) {

@@ -9,15 +9,23 @@ import {
 import { StatCard } from "@/components/layout/PageHeader";
 import { formatCurrency } from "@/lib/formatters";
 import DashboardShortcuts from "@/components/dashboard/DashboardShortcuts";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from "recharts";
+import TradingActivityPanel from "@/components/dashboard/TradingActivityPanel";
+import CashBankFlowPanel from "@/components/dashboard/CashBankFlowPanel";
+import ReceivablesPayablesPanel from "@/components/dashboard/ReceivablesPayablesPanel";
+import LiquidBalancesPanel from "@/components/dashboard/LiquidBalancesPanel";
+import ExpensesWeekPanel from "@/components/dashboard/ExpensesWeekPanel";
 
 export default function ExecutiveDashboard() {
   const [stats, setStats] = useState({
     sales: 0, purchases: 0, outstandingReceivables: 0, outstandingPayables: 0, lowStockCount: 0,
   });
   const [chartData, setChartData] = useState([]);
+  const [analytics, setAnalytics] = useState({
+    cashFlow: { trend: [], balances: { cash: 0, bank: 0, total: 0 }, summary: {} },
+    receivables: { total: 0, breakdown: [] },
+    payables: { total: 0, breakdown: [] },
+    expenses: { trend: [], categories: [], total: 0 },
+  });
   const [loading, setLoading] = useState(true);
 
   const todayLabel = useMemo(
@@ -28,11 +36,23 @@ export default function ExecutiveDashboard() {
   useEffect(() => {
     async function fetchStats() {
       try {
-        const res = await fetch("/api/reports/sales");
-        if (res.ok) {
-          const data = await res.json();
+        const [salesRes, analyticsRes] = await Promise.all([
+          fetch("/api/reports/sales"),
+          fetch("/api/dashboard/analytics"),
+        ]);
+        if (salesRes.ok) {
+          const data = await salesRes.json();
           if (data.summary) setStats(data.summary);
           if (data.trend) setChartData(data.trend);
+        }
+        if (analyticsRes.ok) {
+          const data = await analyticsRes.json();
+          setAnalytics({
+            cashFlow: data.cashFlow || { trend: [], balances: { cash: 0, bank: 0, total: 0 }, summary: {} },
+            receivables: data.receivables || { total: 0, breakdown: [] },
+            payables: data.payables || { total: 0, breakdown: [] },
+            expenses: data.expenses || { trend: [], categories: [], total: 0 },
+          });
         }
       } catch {
         /* keep zeros */
@@ -152,56 +172,20 @@ export default function ExecutiveDashboard() {
         </div>
       </div>
 
-      {/* Trading Activity — full width below shortcuts */}
-      <section className="erp-dash-panel min-w-0">
-        <div className="erp-dash-panel-head">
-          <div>
-            <h2 className="erp-dash-panel-title">Trading Activity</h2>
-            <p className="erp-dash-panel-sub">Sales vs purchases · current week</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-            <span className="flex items-center gap-1.5 text-green-600">
-              <span className="w-2 h-2 rounded-full bg-green-500 ring-2 ring-green-100" /> Sales
-            </span>
-            <span className="flex items-center gap-1.5 text-blue-600">
-              <span className="w-2 h-2 rounded-full bg-blue-500 ring-2 ring-blue-100" /> Purchases
-            </span>
-          </div>
+      {/* Trading activity + finance charts */}
+      <div className="space-y-4 min-w-0">
+        <TradingActivityPanel chartData={chartData} />
+        <CashBankFlowPanel cashFlow={analytics.cashFlow} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 min-w-0">
+          <ReceivablesPayablesPanel
+            receivables={analytics.receivables}
+            payables={analytics.payables}
+          />
+          <LiquidBalancesPanel balances={analytics.cashFlow.balances} />
+          <ExpensesWeekPanel expenses={analytics.expenses} />
         </div>
-        <div className="erp-dash-panel-body pt-2">
-          <div className="h-52 sm:h-64 lg:h-80 w-full min-w-0">
-            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -16, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="dashColorSales" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#16a34a" stopOpacity={0.22} />
-                    <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="dashColorPurchases" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.18} />
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e8edf3" />
-                <XAxis dataKey="day" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#fff",
-                    border: "1.5px solid #e2e8f0",
-                    borderRadius: "12px",
-                    color: "#0f172a",
-                    boxShadow: "0 12px 32px rgba(15,23,42,0.08)",
-                    fontSize: "12px",
-                  }}
-                />
-                <Area type="monotone" dataKey="Sales" stroke="#16a34a" fill="url(#dashColorSales)" strokeWidth={2.5} />
-                <Area type="monotone" dataKey="Purchases" stroke="#2563eb" fill="url(#dashColorPurchases)" strokeWidth={2.5} />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
   );
 }

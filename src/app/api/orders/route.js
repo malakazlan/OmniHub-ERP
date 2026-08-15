@@ -32,6 +32,8 @@ export async function GET(req) {
       where = { status };
     } else if (view === "history") {
       where = { status: { in: ["rejected", "converted"] } };
+    } else if (view === "all") {
+      where = {};
     } else {
       where = { status: { in: ["pending", "accepted"] } };
     }
@@ -47,7 +49,7 @@ export async function GET(req) {
     const orders = await prisma.customerOrder.findMany({
       where,
       include: customerOrderInclude,
-      orderBy: { orderDate: "desc" },
+      orderBy: { orderDate: "desc", id: "desc" },
     });
 
     const safe = sanitizeCustomerOrders(orders, user);

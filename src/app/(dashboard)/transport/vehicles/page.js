@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { Loader2 } from "lucide-react";
 import FleetListView from "@/components/fleet/FleetListView";
@@ -12,6 +13,7 @@ import RecordExpenseModal from "@/components/fleet/RecordExpenseModal";
 
 function FleetHubContent() {
   const { showToast } = useToast();
+  const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -30,17 +32,17 @@ function FleetHubContent() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const [editVehicle, setEditVehicle] = useState(null);
   const [expenseOpen, setExpenseOpen] = useState(false);
+  const [expenseVehicle, setExpenseVehicle] = useState(null);
+
+  const canDeleteExpense = user?.role === "admin";
 
   const syncUrl = useCallback((nextView, vehicleId) => {
     const params = new URLSearchParams();
-    if (nextView === "detail" && vehicleId) {
-      params.set("id", String(vehicleId));
-    } else if (nextView === "report") {
+    if (nextView === "detail" && vehicleId) params.set("id", String(vehicleId));
+    else if (nextView === "report") {
       params.set("report", "1");
       if (vehicleId) params.set("id", String(vehicleId));
-    } else if (nextView === "register") {
-      params.set("register", "1");
-    }
+    } else if (nextView === "register") params.set("register", "1");
     const qs = params.toString();
     router.replace(qs ? `/transport/vehicles?${qs}` : "/transport/vehicles", { scroll: false });
   }, [router]);
@@ -156,6 +158,12 @@ function FleetHubContent() {
     setSelectedVehicle(null);
     setReportFocusVehicle(null);
     syncUrl("list");
+    fetchFleet();
+  };
+
+  const openPayExpense = (v = null) => {
+    setExpenseVehicle(v || null);
+    setExpenseOpen(true);
   };
 
   const handleRegisterSuccess = async () => {
@@ -164,14 +172,14 @@ function FleetHubContent() {
   };
 
   const handleExpenseSuccess = async () => {
-    showToast("Expense recorded", "success");
+    showToast("Fleet expense paid and posted to ledger", "success");
     setExpensesLoading(true);
     await fetchFleet();
     if (selectedVehicle) await fetchVehicleExpenses(selectedVehicle.id);
   };
 
   const handleDeleteExpense = async (expense) => {
-    if (!window.confirm(`Delete this ${expense.expenseType} expense?`)) return;
+    if (!window.confirm(`Delete this ${expense.expenseType} payment? Ledger will be reversed.`)) return;
     try {
       const res = await fetch(`/api/transport/vehicle-expenses/${expense.id}`, { method: "DELETE" });
       const data = await res.json();
@@ -186,23 +194,29 @@ function FleetHubContent() {
   };
 
   const vehicleExpenses = selectedVehicle
-    ? expenses.filter((e) => e.vehicleId === selectedVehicle.id).sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate))
+    ? expenses
+        .filter((e) => e.vehicleId === selectedVehicle.id)
+        .sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate))
     : [];
+
+  const sortedAllExpenses = [...expenses].sort((a, b) => new Date(b.expenseDate) - new Date(a.expenseDate));
 
   return (
     <div className="pb-8">
       {view === "list" && (
         <FleetListView
           vehicles={vehicles}
+          expenses={sortedAllExpenses}
           summary={summary}
           loading={loading}
-          viewMode={view}
-          onViewModeChange={() => setView("list")}
+          expensesLoading={expensesLoading}
           onRegister={() => { setEditVehicle(null); setRegisterOpen(true); syncUrl("register"); }}
+          onPayExpense={(v) => openPayExpense(v)}
           onOpenReport={() => openReport()}
           onOpenVehicle={openVehicle}
           onEditVehicle={(v) => { setEditVehicle(v); setRegisterOpen(true); }}
-          onOpenVehicleReport={(v) => openReport(v)}
+          onDeleteExpense={handleDeleteExpense}
+          canDeleteExpense={canDeleteExpense}
         />
       )}
 
@@ -213,9 +227,10 @@ function FleetHubContent() {
           loading={expensesLoading}
           onBack={backToList}
           onEdit={() => { setEditVehicle(selectedVehicle); setRegisterOpen(true); }}
-          onAddExpense={() => setExpenseOpen(true)}
+          onAddExpense={() => openPayExpense(selectedVehicle)}
           onViewReport={() => openReport(selectedVehicle)}
           onDeleteExpense={handleDeleteExpense}
+          canDeleteExpense={canDeleteExpense}
         />
       )}
 
@@ -245,8 +260,9 @@ function FleetHubContent() {
 
       <RecordExpenseModal
         isOpen={expenseOpen}
-        onClose={() => setExpenseOpen(false)}
-        vehicle={selectedVehicle}
+        onClose={() => { setExpenseOpen(false); setExpenseVehicle(null); }}
+        vehicle={expenseVehicle}
+        vehicles={vehicles}
         cashAccounts={cashAccounts}
         bankAccounts={bankAccounts}
         onSuccess={handleExpenseSuccess}
@@ -257,7 +273,11 @@ function FleetHubContent() {
 
 export default function FleetHubPage() {
   return (
-    <Suspense fallback={<div className="min-h-[400px] flex items-center justify-center"><Loader2 className="w-8 h-8 text-[#2563EB] animate-spin" /></div>}>
+    <Suspense fallback={
+      <div className="erp-fleet-surface min-h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-cyan-600 animate-spin" />
+      </div>
+    }>
       <FleetHubContent />
     </Suspense>
   );

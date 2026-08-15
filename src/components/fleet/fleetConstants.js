@@ -27,6 +27,7 @@ export const emptyVehicleForm = {
 };
 
 export const emptyExpenseForm = {
+  vehicleId: "",
   expenseDate: new Date().toISOString().slice(0, 10),
   expenseType: "fuel",
   amount: "",

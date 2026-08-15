@@ -19,8 +19,8 @@ import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/use
 
 const purchaseInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true } } } },
-  farmer: { select: { id: true, name: true, phone: true } },
-  company: { select: { id: true, name: true, phone: true } },
+  farmer: { select: { id: true, name: true, phone: true, whatsappNumber: true } },
+  company: { select: { id: true, name: true, phone: true, whatsappNumber: true } },
 };
 
 function canManagePurchases(user) {
@@ -117,7 +117,7 @@ export async function GET(req) {
       include: purchaseInclude,
       orderBy: outstanding
         ? [{ purchaseDate: "asc" }, { id: "asc" }]
-        : { purchaseDate: "desc" },
+        : [{ purchaseDate: "desc" }, { id: "desc" }],
     });
 
     return Response.json({ success: true, purchases });

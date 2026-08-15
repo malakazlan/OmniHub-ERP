@@ -4,23 +4,26 @@ import React from "react";
 import { Button } from "@/components/Button";
 import SaleInvoice from "@/components/documents/SaleInvoice";
 import { DocumentReceiptPanel } from "@/components/documents/DocumentReceiptPanel";
+import { getSaleWhatsAppPhone } from "@/lib/invoicePartyContact";
 import { FileText } from "lucide-react";
 
-export function SaleInvoicePanel({ sale, company, open, onClose, title = "Sales invoice", autoAction = null, onAutoActionDone }) {
+export function SaleInvoicePanel({ sale, company, open, onClose, title = "Sales invoice", autoAction = null, onAutoActionDone, whatsappPhone = null }) {
   if (!sale) return null;
 
   const pdfFilename = `${sale.invoiceNumber || "invoice"}-bill.pdf`.replace(/\s+/g, "-");
+  const waPhone = whatsappPhone || getSaleWhatsAppPhone(sale);
 
   return (
     <DocumentReceiptPanel
       open={open}
       onClose={onClose}
       title={title}
-      hint="Customer invoice — print or save as PDF."
+      hint="Customer invoice — print, PDF, or send via WhatsApp (image copied to clipboard)."
       pdfFilename={pdfFilename}
       autoAction={autoAction}
       onAutoActionDone={onAutoActionDone}
       saleInvoicePdf={{ sale, company }}
+      whatsappPhone={waPhone}
     >
       <SaleInvoice sale={sale} company={company} />
     </DocumentReceiptPanel>
