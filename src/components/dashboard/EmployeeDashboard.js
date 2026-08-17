@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import useAuth from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/Badge";
 import { employeeRoleLabel } from "@/lib/employeeDashboard";
 import { MODULE_ACCENTS } from "@/lib/constants";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import SalarySlipPreview from "@/components/hr/SalarySlipPreview";
 import {
   LayoutDashboard,
   Loader2,
@@ -21,6 +22,21 @@ import {
   Briefcase,
   UserCircle,
 } from "lucide-react";
+
+const MONTH_OPTIONS = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
 
 const ATTENDANCE_VARIANT = {
   present: "success",
@@ -56,6 +72,11 @@ export default function EmployeeDashboard() {
   const [tab, setTab] = useState("home");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const now = useMemo(() => new Date(), []);
+  const [payMonth, setPayMonth] = useState(now.getMonth() + 1);
+  const [payYear, setPayYear] = useState(now.getFullYear());
+  const [paySnapshot, setPaySnapshot] = useState(null);
+  const [payLoading, setPayLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard/employee")
@@ -66,9 +87,34 @@ export default function EmployeeDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const loadPaySnapshot = useCallback(async (month, year) => {
+    setPayLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/employee/salary?month=${month}&year=${year}`);
+      const json = await res.json();
+      if (json.success && json.linked) {
+        setPaySnapshot(json.snapshot);
+      } else {
+        setPaySnapshot(null);
+      }
+    } finally {
+      setPayLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!data?.employee || tab !== "pay") return;
+    loadPaySnapshot(payMonth, payYear);
+  }, [data?.employee, tab, payMonth, payYear, loadPaySnapshot]);
+
   const shortcuts = useMemo(() => {
     return SHORTCUT_DEFS.filter((s) => hasModuleAccess(s.module));
   }, [hasModuleAccess]);
+
+  const yearOptions = useMemo(() => {
+    const y = now.getFullYear();
+    return [y, y - 1, y - 2];
+  }, [now]);
 
   const displayName = data?.employee?.name || user?.name || "Team member";
   const jobRole = data?.employee?.role || user?.role;
@@ -85,6 +131,7 @@ export default function EmployeeDashboard() {
   const period = data?.period;
   const summary = data?.attendanceSummary || {};
   const latest = data?.latestSalary;
+  const currentPreview = data?.payrollSnapshot?.preview;
 
   return (
     <div className="page-enter max-w-lg mx-auto lg:max-w-3xl pb-10">
@@ -233,16 +280,34 @@ export default function EmployeeDashboard() {
             </div>
           )}
 
-          {data?.employee && latest && (
+          {data?.employee && (currentPreview || latest) && (
             <div className="emp-panel">
-              <p className="emp-panel-title">Latest salary</p>
-              <p className="text-2xl font-bold text-slate-900 mt-2 tabular-nums">{formatCurrency(latest.netSalary)}</p>
+              <p className="emp-panel-title">
+                {period?.monthName} salary
+                {data?.payrollSnapshot?.isPosted ? (
+                  <Badge variant="success" className="ml-2 text-[10px] capitalize">Posted</Badge>
+                ) : (
+                  <Badge variant="warning" className="ml-2 text-[10px]">Projected</Badge>
+                )}
+              </p>
+              <p className="text-2xl font-bold text-slate-900 mt-2 tabular-nums">
+                {formatCurrency(currentPreview?.totals?.netPayable ?? latest?.netSalary ?? 0)}
+              </p>
               <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
-                {period?.monthName} · Paid {formatCurrency(latest.paidAmount)} ·{" "}
-                <span className="capitalize font-semibold text-slate-700">{latest.status}</span>
+                Contract {formatCurrency(currentPreview?.employee?.contractSalary ?? data.employee.salary ?? 0)}
+                {currentPreview?.earnings?.absenceDeduction > 0 && (
+                  <> · Attendance −{formatCurrency(currentPreview.earnings.absenceDeduction)}</>
+                )}
+                {latest && (
+                  <>
+                    {" "}
+                    · Paid {formatCurrency(latest.paidAmount)} ·{" "}
+                    <span className="capitalize font-semibold text-slate-700">{latest.status}</span>
+                  </>
+                )}
               </p>
               <button type="button" onClick={() => setTab("pay")} className="emp-link-row mt-3">
-                View pay history <ChevronRight className="w-4 h-4" />
+                View salary details <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -293,44 +358,120 @@ export default function EmployeeDashboard() {
       )}
 
       {tab === "pay" && (
-        <div className="mt-4 emp-panel">
-          <p className="emp-panel-title">Salary history</p>
+        <div className="mt-4 space-y-4">
           {!data?.employee ? (
-            <p className="text-sm text-slate-500 py-8 text-center">No employee record linked.</p>
+            <div className="emp-panel">
+              <p className="text-sm text-slate-500 py-8 text-center">No employee record linked.</p>
+            </div>
           ) : (
-            <ul className="mt-3 space-y-2">
-              {(data.salaryRecords || []).length === 0 ? (
-                <li className="text-sm text-slate-500 py-10 text-center">No salary records yet.</li>
-              ) : (
-                data.salaryRecords.map((row) => {
-                  const monthLabel = [
-                    "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-                  ][row.month];
-                  return (
-                    <li key={row.id} className="emp-pay-row">
-                      <div>
-                        <p className="font-semibold text-slate-900">
-                          {monthLabel} {row.year}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Net {formatCurrency(row.netSalary)} · Paid {formatCurrency(row.paidAmount)}
-                        </p>
-                      </div>
-                      <Badge variant={SALARY_VARIANT[row.status] || "neutral"} className="capitalize shrink-0">
-                        {row.status}
-                      </Badge>
-                    </li>
-                  );
-                })
-              )}
-            </ul>
-          )}
-          {data?.employee?.salary != null && (
-            <p className="text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100">
-              Contract monthly salary:{" "}
-              <span className="font-semibold text-slate-800">{formatCurrency(data.employee.salary)}</span>
-            </p>
+            <>
+              <div className="emp-panel">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <p className="emp-panel-title mb-0">Salary details</p>
+                  <div className="flex flex-wrap gap-2">
+                    <select
+                      className="emp-select"
+                      value={payMonth}
+                      onChange={(e) => setPayMonth(parseInt(e.target.value, 10))}
+                      aria-label="Salary month"
+                    >
+                      {MONTH_OPTIONS.map((m) => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="emp-select"
+                      value={payYear}
+                      onChange={(e) => setPayYear(parseInt(e.target.value, 10))}
+                      aria-label="Salary year"
+                    >
+                      {yearOptions.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {payLoading ? (
+                  <div className="flex justify-center py-12">
+                    <Loader2 className="w-7 h-7 text-indigo-500 animate-spin" />
+                  </div>
+                ) : paySnapshot?.preview ? (
+                  <div className="mt-4">
+                    <div className="flex flex-wrap items-center gap-2 mb-3">
+                      {paySnapshot.isPosted ? (
+                        <Badge variant="success" className="capitalize">
+                          {paySnapshot.salaryRecord?.status || "posted"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="warning">Projected from attendance</Badge>
+                      )}
+                      {paySnapshot.isPosted && paySnapshot.salaryRecord && (
+                        <span className="text-xs text-slate-500">
+                          Paid {formatCurrency(paySnapshot.salaryRecord.paidAmount)} of{" "}
+                          {formatCurrency(paySnapshot.salaryRecord.netSalary)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="emp-slip-wrap">
+                      <SalarySlipPreview preview={paySnapshot.preview} />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500 py-10 text-center mt-3">
+                    No salary data for this month yet.
+                  </p>
+                )}
+              </div>
+
+              <div className="emp-panel">
+                <p className="emp-panel-title">Salary history</p>
+                <ul className="mt-3 space-y-2">
+                  {(data.salaryRecords || []).length === 0 ? (
+                    <li className="text-sm text-slate-500 py-6 text-center">No salary records yet.</li>
+                  ) : (
+                    data.salaryRecords.map((row) => {
+                      const monthLabel = [
+                        "", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+                      ][row.month];
+                      const isSelected = row.month === payMonth && row.year === payYear;
+                      return (
+                        <li key={row.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPayMonth(row.month);
+                              setPayYear(row.year);
+                            }}
+                            className={`emp-pay-row w-full text-left${isSelected ? " emp-pay-row-active" : ""}`}
+                          >
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {monthLabel} {row.year}
+                              </p>
+                              <p className="text-xs text-slate-500 mt-0.5">
+                                Net {formatCurrency(row.netSalary)} · Paid {formatCurrency(row.paidAmount)}
+                                {row.deductions > 0 && <> · Deductions {formatCurrency(row.deductions)}</>}
+                              </p>
+                            </div>
+                            <Badge variant={SALARY_VARIANT[row.status] || "neutral"} className="capitalize shrink-0">
+                              {row.status}
+                            </Badge>
+                          </button>
+                        </li>
+                      );
+                    })
+                  )}
+                </ul>
+                {data?.employee?.salary != null && (
+                  <p className="text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100">
+                    Contract monthly salary:{" "}
+                    <span className="font-semibold text-slate-800">{formatCurrency(data.employee.salary)}</span>
+                  </p>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}

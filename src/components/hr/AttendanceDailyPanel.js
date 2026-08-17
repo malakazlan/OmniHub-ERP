@@ -2,13 +2,14 @@
 
 import React from "react";
 import { Loader2, CalendarCheck } from "lucide-react";
-import { ATTENDANCE_STATUSES } from "@/lib/attendance";
 import AttendanceStatusPill from "@/components/hr/AttendanceStatusPill";
+import AttendanceStatusSelect from "@/components/hr/AttendanceStatusSelect";
 
 export default function AttendanceDailyPanel({
   employees = [],
   records = {},
   loading = false,
+  submitting = false,
   onStatusChange,
 }) {
   if (loading) {
@@ -34,23 +35,23 @@ export default function AttendanceDailyPanel({
         <table className="erp-ledger-grid erp-hr-grid erp-att-daily-grid">
           <colgroup>
             <col style={{ width: "3%" }} />
-            <col style={{ width: "22%" }} />
-            <col style={{ width: "14%" }} />
+            <col style={{ width: "24%" }} />
+            <col style={{ width: "16%" }} />
             <col style={{ width: "12%" }} />
-            <col style={{ width: "49%" }} />
+            <col style={{ width: "20%" }} />
           </colgroup>
           <thead>
             <tr>
               <th className="erp-lg-th erp-hr-th erp-lg-th-num">#</th>
               <th className="erp-lg-th erp-hr-th">Employee</th>
               <th className="erp-lg-th erp-hr-th">Department</th>
-              <th className="erp-lg-th erp-hr-th erp-hr-th-center">Current</th>
-              <th className="erp-lg-th erp-hr-th">Mark status</th>
+              <th className="erp-lg-th erp-hr-th erp-hr-th-center">Status</th>
+              <th className="erp-lg-th erp-hr-th">Mark attendance</th>
             </tr>
           </thead>
           <tbody>
             {employees.map((emp, idx) => {
-              const current = records[emp.id] || "present";
+              const current = records[emp.id] || "";
               return (
                 <tr key={emp.id} className="erp-lg-row erp-hr-row">
                   <td className="erp-lg-td erp-lg-td-num text-slate-400">{idx + 1}</td>
@@ -62,22 +63,19 @@ export default function AttendanceDailyPanel({
                   </td>
                   <td className="erp-lg-td text-xs text-slate-600">{emp.department || "—"}</td>
                   <td className="erp-lg-td erp-hr-td-center">
-                    <AttendanceStatusPill status={current} compact />
+                    {current ? (
+                      <AttendanceStatusPill status={current} compact />
+                    ) : (
+                      <span className="text-[10px] font-semibold text-slate-400">Not marked</span>
+                    )}
                   </td>
                   <td className="erp-lg-td">
-                    <div className="erp-att-status-btns">
-                      {ATTENDANCE_STATUSES.map((s) => (
-                        <button
-                          key={s.value}
-                          type="button"
-                          onClick={() => onStatusChange?.(emp.id, s.value)}
-                          className={`erp-att-status-btn is-${s.tone}${current === s.value ? " is-active" : ""}`}
-                          title={s.label}
-                        >
-                          {s.abbrev}
-                        </button>
-                      ))}
-                    </div>
+                    <AttendanceStatusSelect
+                      allowEmpty
+                      value={current}
+                      disabled={submitting}
+                      onChange={(status) => onStatusChange?.(emp.id, status)}
+                    />
                   </td>
                 </tr>
               );

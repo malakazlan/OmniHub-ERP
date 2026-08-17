@@ -718,6 +718,9 @@ model Employee {
   designation     String?
   department      String?
   salary          Float                @default(0)
+  commissionRate  Float                @default(0)
+  allowedAbsences Int                  @default(0)   // free absences per month before deduction
+  absenceDeductionPerDay Float          @default(0)   // deduct per absent day beyond allowed; half day = half this
   joiningDate     DateTime?
   address         String?              @db.Text
   bankName        String?
@@ -732,6 +735,8 @@ model Employee {
 
   attendance      EmployeeAttendance[]
   salaryRecords   SalaryRecord[]
+  advances        SalaryAdvance[]
+  commissions     EmployeeCommission[]
 
   @@map("employees")
 }
@@ -750,6 +755,7 @@ model EmployeeAttendance {
   employee    Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, date])
+  @@index([date])
   @@map("employee_attendance")
 }
 
@@ -760,7 +766,9 @@ model SalaryRecord {
   year            Int
   baseSalary      Float     @default(0)
   deductions      Float     @default(0)
+  advanceDeduction Float    @default(0)
   bonus           Float     @default(0)
+  commissionBonus Float     @default(0)
   netSalary       Float     @default(0)
   paidAmount      Float     @default(0)
   cashAmount      Float     @default(0)
@@ -779,6 +787,49 @@ model SalaryRecord {
   @@unique([employeeId, month, year])
   @@index([employeeId])
   @@map("salary_records")
+}
+
+model SalaryAdvance {
+  id            Int       @id @default(autoincrement())
+  employeeId    Int
+  advanceDate   DateTime
+  amount        Float
+  settledAmount Float     @default(0)
+  cashAmount    Float     @default(0)
+  bankAmount    Float     @default(0)
+  cashAccountId Int?
+  bankAccountId Int?
+  status        String    @default("pending") // pending, partial, settled
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  employee      Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@map("salary_advances")
+}
+
+model EmployeeCommission {
+  id               Int       @id @default(autoincrement())
+  employeeId       Int
+  saleOrderId      Int?
+  commissionDate   DateTime
+  saleAmount       Float     @default(0)
+  commissionRate   Float     @default(0)
+  commissionAmount Float
+  month            Int
+  year             Int
+  status           String    @default("pending") // pending, included, paid
+  salaryRecordId   Int?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  employee         Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId, month, year])
+  @@map("employee_commissions")
 }
 
 model OwnerWithdrawal {

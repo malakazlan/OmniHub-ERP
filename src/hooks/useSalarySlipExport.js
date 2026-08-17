@@ -12,7 +12,7 @@ const PRINT_STYLE = `
   }
 `;
 
-export function useSalarySlipExport({ printRef, company = {} }) {
+export function useSalarySlipExport({ printRef, company = {}, onPrepareSlip }) {
   const { showToast } = useToast();
   const [pdfLoadingId, setPdfLoadingId] = useState(null);
   const [activeRecord, setActiveRecord] = useState(null);
@@ -26,9 +26,10 @@ export function useSalarySlipExport({ printRef, company = {} }) {
   const onPrintSlip = useCallback(
     (record) => {
       setActiveRecord(record);
+      onPrepareSlip?.(record);
       setTimeout(() => handlePrint(), 50);
     },
-    [handlePrint]
+    [handlePrint, onPrepareSlip]
   );
 
   const onPdfSlip = useCallback(
@@ -44,7 +45,7 @@ export function useSalarySlipExport({ printRef, company = {} }) {
         showToast("Salary slip PDF downloaded", "success");
       } catch (err) {
         console.error(err);
-        showToast("Failed to generate PDF", "error");
+        showToast(err.message || "Failed to generate PDF", "error");
       } finally {
         setPdfLoadingId(null);
       }

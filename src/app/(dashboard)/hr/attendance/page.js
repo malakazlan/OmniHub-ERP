@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Button } from "@/components/Button";
 import AttendanceDailyPanel from "@/components/hr/AttendanceDailyPanel";
 import AttendanceMonthlyRegister from "@/components/hr/AttendanceMonthlyRegister";
+import AttendanceHazriChart from "@/components/hr/AttendanceHazriChart";
 import RegisterExportToolbar from "@/components/reports/RegisterExportToolbar";
 import RegisterPrintView from "@/components/reports/RegisterPrintView";
 import { useRegisterExport } from "@/hooks/useRegisterExport";
@@ -13,7 +15,15 @@ import {
   CalendarCheck, Loader2, ArrowLeft, Save, Users, UserCheck, UserX, Search,
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
-import { ATTENDANCE_STATUSES, buildMonthlySummary, countStatuses } from "@/lib/attendance";
+import {
+  ATTENDANCE_STATUSES,
+  buildMonthlySummary,
+  countStatuses,
+  mergeAttendanceRows,
+  recordsMapForDate,
+  toDateKey,
+  todayDateKey,
+} from "@/lib/attendance";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -31,59 +41,61 @@ const MONTHLY_PRINT_COLS = [
   { key: "rate", label: "Rate %", align: "right", get: (r) => `${r.rate}%`, pdfWidth: 14, bold: true },
 ];
 
+function viewMonthYear(month, year) {
+  return { month: parseInt(month, 10), year: parseInt(year, 10) };
+}
+
 export default function AttendancePage() {
   const { showToast } = useToast();
   const printRef = useRef(null);
+  const employeesLoaded = useRef(false);
+  const searchParams = useSearchParams();
+  const initialTabParam = searchParams.get("tab");
+  const initialTab =
+    initialTabParam === "hazri" ? "hazri" : initialTabParam === "monthly" ? "monthly" : "daily";
 
-  const [tab, setTab] = useState("daily");
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [tab, setTab] = useState(initialTab);
+  const [date, setDate] = useState(todayDateKey);
   const [month, setMonth] = useState(String(new Date().getMonth() + 1));
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [employees, setEmployees] = useState([]);
-  const [attendance, setAttendance] = useState([]);
-  const [records, setRecords] = useState({});
+  const [savedAttendance, setSavedAttendance] = useState([]);
+  const [pendingEdits, setPendingEdits] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [companySettings, setCompanySettings] = useState(null);
 
-  const fetchDaily = async (selectedDate) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/hr/attendance?date=${selectedDate}`);
-      const data = await res.json();
-      if (res.ok) {
-        setEmployees(data.employees || []);
-        const map = {};
-        for (const rec of data.attendance || []) map[rec.employeeId] = rec.status;
-        for (const emp of data.employees || []) {
-          if (!map[emp.id]) map[emp.id] = "present";
-        }
-        setRecords(map);
-        setAttendance(data.attendance || []);
-      } else showToast(data.error || "Failed to load attendance", "error");
-    } catch {
-      showToast("Error connecting to server", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadMonth = parseInt(month, 10);
+  const loadYear = parseInt(year, 10);
+  const { month: viewMonth, year: viewYear } = viewMonthYear(month, year);
 
-  const fetchMonthly = async () => {
-    setLoading(true);
+  const fetchAttendance = useCallback(async ({ background = false } = {}) => {
+    if (background) setRefreshing(true);
+    else setLoading(true);
+
     try {
-      const res = await fetch(`/api/hr/attendance?month=${month}&year=${year}`);
+      const skipEmployees = employeesLoaded.current ? "1" : "0";
+      const res = await fetch(
+        `/api/hr/attendance?month=${loadMonth}&year=${loadYear}&skipEmployees=${skipEmployees}`
+      );
       const data = await res.json();
       if (res.ok) {
-        setEmployees(data.employees || []);
-        setAttendance(data.attendance || []);
+        if (data.employees?.length) {
+          setEmployees(data.employees);
+          employeesLoaded.current = true;
+        }
+        setSavedAttendance(data.attendance || []);
+        setPendingEdits([]);
       } else showToast(data.error || "Failed to load attendance", "error");
     } catch {
       showToast("Error connecting to server", "error");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [loadMonth, loadYear, showToast]);
 
   useEffect(() => {
     fetch("/api/settings").then((r) => r.json()).then((d) => {
@@ -92,10 +104,46 @@ export default function AttendancePage() {
   }, []);
 
   useEffect(() => {
-    if (tab === "daily") fetchDaily(date);
-    else fetchMonthly();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, date, month, year]);
+    fetchAttendance({ background: employeesLoaded.current });
+  }, [fetchAttendance]);
+
+  const handleDateChange = (nextDate) => {
+    setDate(nextDate);
+    const dm = parseInt(nextDate.slice(5, 7), 10);
+    const dy = nextDate.slice(0, 4);
+    if (String(dm) !== month || dy !== year) {
+      setMonth(String(dm));
+      setYear(dy);
+    }
+  };
+
+  const handleMonthChange = (nextMonth) => {
+    setMonth(nextMonth);
+    const prefix = `${year}-${String(nextMonth).padStart(2, "0")}`;
+    if (!date.startsWith(prefix)) {
+      setDate(`${prefix}-01`);
+    }
+  };
+
+  const handleYearChange = (nextYear) => {
+    setYear(nextYear);
+    const prefix = `${nextYear}-${String(month).padStart(2, "0")}`;
+    if (!date.startsWith(prefix)) {
+      setDate(`${prefix}-01`);
+    }
+  };
+
+  const attendance = useMemo(
+    () => mergeAttendanceRows(savedAttendance, pendingEdits),
+    [savedAttendance, pendingEdits]
+  );
+
+  const records = useMemo(
+    () => recordsMapForDate(attendance, date),
+    [attendance, date]
+  );
+
+  const unsavedCount = pendingEdits.length;
 
   const filteredEmployees = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -109,11 +157,14 @@ export default function AttendancePage() {
   }, [employees, searchQuery]);
 
   const dailyCounts = useMemo(() => countStatuses(
-    filteredEmployees.map((e) => ({ status: records[e.id] || "present" }))
+    filteredEmployees
+      .map((e) => records[e.id])
+      .filter(Boolean)
+      .map((status) => ({ status }))
   ), [filteredEmployees, records]);
 
   const monthlyRows = useMemo(() => {
-    const summary = buildMonthlySummary(employees, attendance, parseInt(year, 10), parseInt(month, 10));
+    const summary = buildMonthlySummary(employees, attendance, viewYear, viewMonth);
     const q = searchQuery.toLowerCase().trim();
     if (!q) return summary;
     return summary.filter(
@@ -121,12 +172,12 @@ export default function AttendancePage() {
         r.employee.name?.toLowerCase().includes(q) ||
         r.employee.department?.toLowerCase().includes(q)
     );
-  }, [employees, attendance, year, month, searchQuery]);
+  }, [employees, attendance, viewYear, viewMonth, searchQuery]);
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
     title: "Attendance Summary",
-    subtitle: `${MONTHS[parseInt(month, 10) - 1]} ${year} · ${monthlyRows.length} employees`,
+    subtitle: `${MONTHS[viewMonth - 1]} ${viewYear} · ${monthlyRows.length} employees`,
     company: companySettings,
     columns: MONTHLY_PRINT_COLS,
     rows: monthlyRows,
@@ -136,43 +187,111 @@ export default function AttendancePage() {
       valueColumn: "rate",
       labelColumn: "hd",
     }],
-    filename: `attendance-${year}-${month}.pdf`,
+    filename: `attendance-${viewYear}-${viewMonth}.pdf`,
   });
 
-  const setStatus = (employeeId, status) => {
-    setRecords((prev) => ({ ...prev, [employeeId]: status }));
+  const clearAttendance = async (employeeId, dateStr) => {
+    const res = await fetch("/api/hr/attendance", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ employeeId, date: dateStr }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to clear");
+  };
+
+  const applyLocalEdit = (employeeId, dateStr, status) => {
+    const dateKey = toDateKey(dateStr);
+    if (!status) {
+      setPendingEdits((prev) => {
+        const rest = prev.filter(
+          (r) => !(r.employeeId === employeeId && toDateKey(r.date) === dateKey)
+        );
+        return [...rest, { employeeId, date: dateKey, _deleted: true }];
+      });
+    } else {
+      setPendingEdits((prev) => {
+        const rest = prev.filter(
+          (r) => !(r.employeeId === employeeId && toDateKey(r.date) === dateKey)
+        );
+        return [...rest, { employeeId, date: dateKey, status }];
+      });
+    }
+  };
+
+  const handleStatusChange = (employeeId, status) => {
+    applyLocalEdit(employeeId, date, status);
   };
 
   const markAll = (status) => {
-    const next = {};
-    for (const emp of filteredEmployees) next[emp.id] = status;
-    setRecords((prev) => ({ ...prev, ...next }));
+    const edits = employees.map((emp) => ({
+      employeeId: emp.id,
+      date,
+      status,
+    }));
+    setPendingEdits((prev) => mergeAttendanceRows(prev, edits));
   };
 
-  const handleSave = async () => {
+  const handleSaveAttendance = async () => {
+    if (pendingEdits.length === 0) {
+      showToast("No changes to save", "warning");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const payload = {
-        records: filteredEmployees.map((emp) => ({
-          employeeId: emp.id,
-          date,
-          status: records[emp.id] || "present",
-        })),
-      };
-      const res = await fetch("/api/hr/attendance", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (res.ok) showToast(`Attendance saved for ${formatDate(date)}`, "success");
-      else showToast(data.error || "Failed to save attendance", "error");
-    } catch {
-      showToast("Error processing request", "error");
+      const toClear = pendingEdits.filter((e) => e._deleted);
+      const toSave = pendingEdits.filter((e) => !e._deleted && e.status);
+
+      if (toClear.length > 0) {
+        await Promise.all(
+          toClear.map((e) => clearAttendance(e.employeeId, toDateKey(e.date)))
+        );
+      }
+
+      if (toSave.length > 0) {
+        const res = await fetch("/api/hr/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            records: toSave.map((e) => ({
+              employeeId: e.employeeId,
+              date: toDateKey(e.date),
+              status: e.status,
+            })),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to save");
+      }
+
+      setPendingEdits([]);
+      showToast(`Attendance saved (${toSave.length + toClear.length} changes)`, "success");
+      await fetchAttendance({ background: true });
+    } catch (err) {
+      showToast(err.message || "Error saving attendance", "error");
     } finally {
       setSubmitting(false);
     }
   };
+
+  const handleHazriCellChange = (employeeId, day, status) => {
+    const dateStr = `${viewYear}-${String(viewMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    applyLocalEdit(employeeId, dateStr, status);
+  };
+
+  const switchTab = (nextTab) => {
+    if (nextTab === "daily") {
+      const prefix = `${year}-${String(month).padStart(2, "0")}`;
+      if (!date.startsWith(prefix)) {
+        setDate(`${prefix}-01`);
+      }
+    }
+    setTab(nextTab);
+  };
+
+  const markedToday = filteredEmployees.filter((e) => records[e.id]).length;
+  const panelLoading = loading && employees.length === 0;
 
   return (
     <div className="erp-hr-surface page-enter pb-8">
@@ -182,10 +301,11 @@ export default function AttendancePage() {
             <div className="erp-hr-page-badge">
               <CalendarCheck className="w-3.5 h-3.5" />
               Attendance
+              {refreshing && <Loader2 className="w-3 h-3 animate-spin ml-1.5 inline" />}
             </div>
             <h1 className="erp-hr-page-title">Employee attendance</h1>
             <p className="erp-hr-page-desc">
-              Mark daily attendance or review monthly summaries. Export register for payroll reconciliation.
+              Daily marking, monthly register, and chart stay in sync. Salary uses the same attendance data.
             </p>
           </div>
           <div className="erp-hr-header-actions">
@@ -194,10 +314,10 @@ export default function AttendancePage() {
                 <ArrowLeft className="w-4 h-4" /> HR
               </Button>
             </Link>
-            {tab === "daily" && (
+            {(tab === "daily" || tab === "hazri") && (
               <Button
-                onClick={handleSave}
-                disabled={submitting || loading}
+                onClick={handleSaveAttendance}
+                disabled={submitting || panelLoading || unsavedCount === 0}
                 className="bg-acc-hr border-0"
               >
                 {submitting ? (
@@ -207,6 +327,7 @@ export default function AttendancePage() {
                 ) : (
                   <>
                     <Save className="w-4 h-4" /> Save attendance
+                    {unsavedCount > 0 ? ` (${unsavedCount})` : ""}
                   </>
                 )}
               </Button>
@@ -215,19 +336,14 @@ export default function AttendancePage() {
         </header>
 
         <div className="erp-hr-form-tabs">
-          <button
-            type="button"
-            className={`erp-hr-form-tab${tab === "daily" ? " is-active" : ""}`}
-            onClick={() => setTab("daily")}
-          >
+          <button type="button" className={`erp-hr-form-tab${tab === "daily" ? " is-active" : ""}`} onClick={() => switchTab("daily")}>
             Daily marking
           </button>
-          <button
-            type="button"
-            className={`erp-hr-form-tab${tab === "monthly" ? " is-active" : ""}`}
-            onClick={() => setTab("monthly")}
-          >
+          <button type="button" className={`erp-hr-form-tab${tab === "monthly" ? " is-active" : ""}`} onClick={() => switchTab("monthly")}>
             Monthly register
+          </button>
+          <button type="button" className={`erp-hr-form-tab${tab === "hazri" ? " is-active" : ""}`} onClick={() => switchTab("hazri")}>
+            Attendance chart
           </button>
         </div>
 
@@ -235,7 +351,7 @@ export default function AttendancePage() {
           <div className="erp-hr-filter-bar">
             <div className="erp-hr-filter-field">
               <label>Attendance date</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="erp-finance-input" />
+              <input type="date" value={date} onChange={(e) => handleDateChange(e.target.value)} className="erp-finance-input" />
             </div>
             <div className="erp-att-quick-actions">
               <span className="text-[10px] font-bold uppercase text-slate-500">Mark all:</span>
@@ -244,6 +360,7 @@ export default function AttendancePage() {
                   key={s.value}
                   type="button"
                   onClick={() => markAll(s.value)}
+                  disabled={submitting || panelLoading}
                   className={`erp-att-quick-btn is-${s.tone}`}
                 >
                   {s.label}
@@ -255,7 +372,7 @@ export default function AttendancePage() {
           <div className="erp-hr-filter-bar">
             <div className="erp-hr-filter-field">
               <label>Month</label>
-              <select value={month} onChange={(e) => setMonth(e.target.value)} className="erp-finance-input">
+              <select value={month} onChange={(e) => handleMonthChange(e.target.value)} className="erp-finance-input">
                 {MONTHS.map((m, i) => (
                   <option key={m} value={String(i + 1)}>{m}</option>
                 ))}
@@ -263,7 +380,7 @@ export default function AttendancePage() {
             </div>
             <div className="erp-hr-filter-field">
               <label>Year</label>
-              <input type="number" value={year} onChange={(e) => setYear(e.target.value)} className="erp-finance-input w-28 font-mono" />
+              <input type="number" value={year} onChange={(e) => handleYearChange(e.target.value)} className="erp-finance-input w-28 font-mono" />
             </div>
           </div>
         )}
@@ -318,12 +435,18 @@ export default function AttendancePage() {
           <div className="erp-hr-register-head">
             <div>
               <p className="erp-hr-register-title">
-                {tab === "daily" ? `Daily attendance · ${formatDate(date)}` : `${MONTHS[parseInt(month, 10) - 1]} ${year} summary`}
+                {tab === "daily"
+                  ? `Daily attendance · ${formatDate(date)}`
+                  : tab === "hazri"
+                    ? `Attendance chart · ${MONTHS[viewMonth - 1]} ${viewYear}`
+                    : `${MONTHS[viewMonth - 1]} ${viewYear} summary`}
               </p>
               <p className="erp-hr-register-meta">
                 {tab === "daily"
-                  ? `${filteredEmployees.length} employees · P Present · A Absent · H Half · L Leave · HD Holiday`
-                  : `${monthlyRows.length} employees · attendance rate excludes holidays`}
+                  ? `${markedToday} of ${filteredEmployees.length} marked${unsavedCount ? ` · ${unsavedCount} unsaved — click Save attendance` : " · click Save attendance when done"}`
+                  : tab === "hazri"
+                    ? `Click cell to mark P, A, H, L, HD${unsavedCount ? ` · ${unsavedCount} unsaved — click Save attendance` : " · click Save attendance when done"}`
+                    : `${monthlyRows.length} employees · attendance rate excludes holidays`}
               </p>
             </div>
             {tab === "monthly" && (
@@ -342,11 +465,26 @@ export default function AttendancePage() {
             <AttendanceDailyPanel
               employees={filteredEmployees}
               records={records}
-              loading={loading}
-              onStatusChange={setStatus}
+              loading={panelLoading}
+              submitting={submitting}
+              onStatusChange={handleStatusChange}
             />
+          ) : tab === "hazri" ? (
+            panelLoading ? (
+              <div className="h-52 flex items-center justify-center">
+                <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+              </div>
+            ) : (
+              <AttendanceHazriChart
+                employees={filteredEmployees}
+                attendance={attendance}
+                year={viewYear}
+                month={viewMonth}
+                onCellChange={handleHazriCellChange}
+              />
+            )
           ) : (
-            <AttendanceMonthlyRegister rows={monthlyRows} loading={loading} />
+            <AttendanceMonthlyRegister rows={monthlyRows} loading={panelLoading} />
           )}
         </div>
       </div>
@@ -355,7 +493,7 @@ export default function AttendancePage() {
         <RegisterPrintView
           ref={printRef}
           title="Attendance Summary"
-          subtitle={`${MONTHS[parseInt(month, 10) - 1]} ${year}`}
+          subtitle={`${MONTHS[viewMonth - 1]} ${viewYear}`}
           company={companySettings}
           columns={MONTHLY_PRINT_COLS}
           rows={monthlyRows}

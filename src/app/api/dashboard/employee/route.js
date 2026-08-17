@@ -1,6 +1,11 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { usesEmployeeDashboard } from "@/lib/employeeDashboard";
+import {
+  findEmployeeByUserId,
+  getEmployeePayrollSnapshot,
+} from "@/lib/employeePortalPayroll";
+import { monthDateRange } from "@/lib/attendance";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -43,38 +48,21 @@ export async function GET(req) {
       return Response.json({ error: "Use operations dashboard" }, { status: 403 });
     }
 
-    const employee = await prisma.employee.findFirst({
-      where: { userId: user.id },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        designation: true,
-        department: true,
-        salary: true,
-        joiningDate: true,
-        phone: true,
-        isActive: true,
-      },
-    });
-
+    const employee = await findEmployeeByUserId(prisma, user.id);
     const now = new Date();
     const month = now.getMonth() + 1;
     const year = now.getFullYear();
-    const monthStart = new Date(year, month - 1, 1);
-    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    const { start, end } = monthDateRange(year, month);
 
     let attendance = [];
     let attendanceSummary = { present: 0, absent: 0, half_day: 0, leave: 0, holiday: 0, other: 0 };
     let salaryRecords = [];
+    let payrollSnapshot = null;
     let orderSummary = null;
 
     if (employee) {
       attendance = await prisma.employeeAttendance.findMany({
-        where: {
-          employeeId: employee.id,
-          date: { gte: monthStart, lte: monthEnd },
-        },
+        where: { employeeId: employee.id, date: { gte: start, lte: end } },
         orderBy: { date: "desc" },
       });
 
@@ -87,22 +75,20 @@ export async function GET(req) {
       salaryRecords = await prisma.salaryRecord.findMany({
         where: { employeeId: employee.id },
         orderBy: [{ year: "desc" }, { month: "desc" }],
-        take: 8,
+        take: 12,
       });
+
+      payrollSnapshot = await getEmployeePayrollSnapshot(prisma, employee.id, month, year);
 
       if (sessionUser.allowedModules.includes("orders") || sessionUser.role === "salesperson") {
         const [pending, accepted, converted] = await Promise.all([
-          prisma.customerOrder.count({
-            where: { createdById: user.id, status: "pending" },
-          }),
-          prisma.customerOrder.count({
-            where: { createdById: user.id, status: "accepted" },
-          }),
+          prisma.customerOrder.count({ where: { createdById: user.id, status: "pending" } }),
+          prisma.customerOrder.count({ where: { createdById: user.id, status: "accepted" } }),
           prisma.customerOrder.count({
             where: {
               createdById: user.id,
               status: "converted",
-              orderDate: { gte: monthStart, lte: monthEnd },
+              orderDate: { gte: start, lte: end },
             },
           }),
         ]);
@@ -116,15 +102,13 @@ export async function GET(req) {
       success: true,
       user: sessionUser,
       employee,
-      period: {
-        month,
-        year,
-        monthName: MONTH_NAMES[month - 1],
-      },
+      linked: !!employee,
+      period: { month, year, monthName: MONTH_NAMES[month - 1] },
       attendance,
       attendanceSummary,
       salaryRecords,
       latestSalary,
+      payrollSnapshot,
       orderSummary,
     });
   } catch (error) {

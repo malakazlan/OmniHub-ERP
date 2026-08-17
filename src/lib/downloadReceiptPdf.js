@@ -1,6 +1,7 @@
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { DOCUMENT_CAPTURE_CSS } from "@/lib/invoiceCaptureStyles";
+import { SALARY_SLIP_CAPTURE_CSS } from "@/lib/salarySlipCaptureStyles";
 
 const LAYOUT_PROPS = [
   "display",
@@ -170,6 +171,14 @@ function sanitizeCloneColors(root, colorDoc) {
   for (const child of root.children) sanitizeCloneColors(child, colorDoc);
 }
 
+function isSalarySlipCaptureTarget(element) {
+  return (
+    element.classList?.contains("erp-salary-slip-print") ||
+    element.classList?.contains("erp-sal-xls") ||
+    Boolean(element.querySelector?.(".erp-sal-xls"))
+  );
+}
+
 function isInvoiceCaptureTarget(element) {
   return (
     element.classList?.contains("erp-sale-invoice") ||
@@ -177,6 +186,10 @@ function isInvoiceCaptureTarget(element) {
     Boolean(element.querySelector?.(".erp-sale-invoice")) ||
     Boolean(element.querySelector?.(".erp-purchase-invoice"))
   );
+}
+
+function isStyledCaptureTarget(element) {
+  return isInvoiceCaptureTarget(element) || isSalarySlipCaptureTarget(element);
 }
 
 function injectCaptureStyles(frameDoc, css) {
@@ -236,11 +249,14 @@ function resolveCaptureTarget(element) {
   if (
     element.classList?.contains("erp-document-bill") ||
     element.classList?.contains("erp-sale-invoice") ||
-    element.classList?.contains("erp-purchase-invoice")
+    element.classList?.contains("erp-purchase-invoice") ||
+    element.classList?.contains("erp-salary-slip-print") ||
+    element.classList?.contains("erp-sal-xls")
   ) {
     return element;
   }
   return (
+    element.querySelector(".erp-sal-xls") ||
     element.querySelector(".erp-sale-invoice") ||
     element.querySelector(".erp-purchase-invoice") ||
     element.querySelector(".erp-document-bill") ||
@@ -251,6 +267,8 @@ function resolveCaptureTarget(element) {
 async function renderInvoiceCanvas(target, scale) {
   const doc = target.ownerDocument;
   const useInvoiceStyles = isInvoiceCaptureTarget(target);
+  const useSalaryStyles = isSalarySlipCaptureTarget(target);
+  const useInjectedStyles = useInvoiceStyles || useSalaryStyles;
 
   const iframe = doc.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
@@ -272,18 +290,20 @@ async function renderInvoiceCanvas(target, scale) {
 
   if (useInvoiceStyles) {
     injectCaptureStyles(frameDoc, DOCUMENT_CAPTURE_CSS);
+  } else if (useSalaryStyles) {
+    injectCaptureStyles(frameDoc, SALARY_SLIP_CAPTURE_CSS);
   }
 
   const w = target.scrollWidth || target.offsetWidth;
   const h = target.scrollHeight || target.offsetHeight;
 
-  const safeRoot = useInvoiceStyles
+  const safeRoot = useInjectedStyles
     ? cloneWithClasses(target, frameDoc)
     : buildSafeCloneTree(target, frameDoc, doc);
 
   safeRoot.style.width = `${w}px`;
   safeRoot.style.maxWidth = `${w}px`;
-  if (!useInvoiceStyles) sanitizeCloneColors(safeRoot, doc);
+  if (!useInjectedStyles) sanitizeCloneColors(safeRoot, doc);
   frameDoc.body.appendChild(safeRoot);
 
   try {
@@ -302,7 +322,7 @@ async function renderInvoiceCanvas(target, scale) {
       foreignObjectRendering: false,
       window: frameDoc.defaultView,
       onclone: (clonedDoc) => {
-        if (!useInvoiceStyles) sanitizeCloneColors(clonedDoc.body, doc);
+        if (!useInjectedStyles) sanitizeCloneColors(clonedDoc.body, doc);
       },
     });
   } finally {
@@ -310,14 +330,22 @@ async function renderInvoiceCanvas(target, scale) {
   }
 }
 
-function addCanvasToA4Pdf(pdf, canvas, contentWidthMm) {
+function addCanvasToA4Pdf(pdf, canvas, contentWidthMm, { singlePage = false } = {}) {
   const margin = 10;
   const pageHeight = 297;
   const pageInnerHeight = pageHeight - margin * 2;
 
   const imgWidth = contentWidthMm;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  let imgHeight = (canvas.height * imgWidth) / canvas.width;
   const imgData = canvas.toDataURL("image/png");
+
+  if (singlePage && imgHeight > pageInnerHeight) {
+    const scale = pageInnerHeight / imgHeight;
+    imgHeight = pageInnerHeight;
+    const scaledWidth = imgWidth * scale;
+    pdf.addImage(imgData, "PNG", margin + (imgWidth - scaledWidth) / 2, margin, scaledWidth, imgHeight);
+    return;
+  }
 
   let offsetY = 0;
   let pageIndex = 0;
@@ -366,7 +394,7 @@ export async function downloadReceiptPdf(element, filename = "receipt.pdf", opti
   }
 
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-  addCanvasToA4Pdf(pdf, canvas, contentWidthMm);
+  addCanvasToA4Pdf(pdf, canvas, contentWidthMm, { singlePage: options.singlePage });
   pdf.save(filename);
 }
 

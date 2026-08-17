@@ -7,15 +7,10 @@ import useAuth from "@/hooks/useAuth";
 import { NAV_SECTIONS, NAV_THEME, isNavItemActive } from "@/lib/navigation";
 import { ordersHomePath, mustScopeOrdersToSelf } from "@/lib/ordersNav";
 import {
-  X, ChevronLeft, ChevronRight, ChevronDown, Wheat, Circle,
+  X, ChevronLeft, ChevronRight, Wheat,
 } from "lucide-react";
 
 const SIDEBAR_STORAGE_KEY = "warraichtraders-sidebar-collapsed";
-
-/** Sections that start expanded when they contain the active route */
-function sectionHasActive(pathname, items) {
-  return items.some((item) => isNavItemActive(pathname, item.href));
-}
 
 function NavItem({ item, isActive, collapsed, onClick }) {
   const theme = NAV_THEME[item.slug] || NAV_THEME.settings;
@@ -70,14 +65,7 @@ function NavItem({ item, isActive, collapsed, onClick }) {
   );
 }
 
-function NavSectionBlock({ section, collapsed, pathname, onClose, defaultOpen }) {
-  const [open, setOpen] = useState(defaultOpen);
-  const hasActive = sectionHasActive(pathname, section.items);
-
-  useEffect(() => {
-    if (hasActive) setOpen(true);
-  }, [hasActive]);
-
+function NavSectionBlock({ section, collapsed, pathname, onClose }) {
   if (collapsed) {
     return (
       <div className="px-1.5 mb-2.5 space-y-1">
@@ -95,67 +83,23 @@ function NavSectionBlock({ section, collapsed, pathname, onClose, defaultOpen })
     );
   }
 
-  const singleItem = section.items.length === 1 && section.title === "Overview";
-
-  if (singleItem) {
-    const item = section.items[0];
-    return (
-      <div className="erp-nav-group mb-2.5">
-        <div className="px-2 pt-1 pb-1 flex items-center justify-between">
-          <p className="text-[12px] font-bold uppercase tracking-wider text-slate-300 px-1">
-            {section.title}
-          </p>
-        </div>
-        <NavItem
-          item={item}
-          isActive={isNavItemActive(pathname, item.href)}
-          collapsed={false}
-          onClick={onClose}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="erp-nav-group mb-2.5">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className={`erp-nav-tab-header cursor-pointer ${open ? "erp-nav-tab-header-open" : ""}`}
-        aria-expanded={open}
-      >
-        <span className="flex items-center gap-2 text-[12px] font-bold tracking-wider">
+      <div className="px-2 pt-1 pb-1.5">
+        <p className="text-[12px] font-bold uppercase tracking-wider text-slate-300 px-1">
           {section.title}
-        </span>
-        <div className="flex items-center gap-1.5">
-          {hasActive && !open && (
-            <span className="w-2 h-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
-          )}
-          <ChevronDown
-            className={`w-4 h-4 erp-nav-chevron ${
-              open ? "erp-nav-chevron-open text-blue-200" : "text-slate-400"
-            }`}
+        </p>
+      </div>
+      <div className="erp-nav-sub-tree space-y-0.5 px-1">
+        {section.items.map((item) => (
+          <NavItem
+            key={item.href}
+            item={item}
+            isActive={isNavItemActive(pathname, item.href)}
+            collapsed={false}
+            onClick={onClose}
           />
-        </div>
-      </button>
-      <div
-        className={`grid transition-all duration-250 ease-out ${
-          open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-        }`}
-      >
-        <div className="overflow-hidden min-h-0 erp-nav-tab-body">
-          <div className="erp-nav-sub-tree space-y-0.5">
-            {section.items.map((item) => (
-              <NavItem
-                key={item.href}
-                item={item}
-                isActive={isNavItemActive(pathname, item.href)}
-                collapsed={false}
-                onClick={onClose}
-              />
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
@@ -262,9 +206,6 @@ export default function Sidebar({ isOpen, onClose }) {
     [hasModuleAccess, user]
   );
 
-  const defaultOpenFor = (section) =>
-    section.title === "Overview" || sectionHasActive(pathname, section.items);
-
   return (
     <>
       {isOpen && (
@@ -304,7 +245,6 @@ export default function Sidebar({ isOpen, onClose }) {
                 collapsed={collapsed}
                 pathname={pathname}
                 onClose={onClose}
-                defaultOpen={defaultOpenFor(section)}
               />
             ))}
           </nav>

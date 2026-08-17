@@ -18,6 +18,9 @@ export function emptyEmployeeForm() {
     designation: "",
     department: "",
     salary: "",
+    commissionRate: "",
+    allowedAbsences: "0",
+    absenceDeductionPerDay: "",
     joiningDate: new Date().toISOString().slice(0, 10),
     address: "",
     bankName: "",
@@ -127,8 +130,45 @@ export default function EmployeeForm({
                 <input type="number" step="any" value={form.salary} onChange={(e) => set("salary", e.target.value)} className="erp-finance-input font-mono" placeholder="0" />
               </div>
               <div className="erp-finance-field">
+                <label className="erp-finance-label">Commission rate (%)</label>
+                <input type="number" step="any" min="0" max="100" value={form.commissionRate} onChange={(e) => set("commissionRate", e.target.value)} className="erp-finance-input font-mono" placeholder="0" />
+              </div>
+              <div className="erp-finance-field">
                 <label className="erp-finance-label">Joining date</label>
                 <input type="date" value={form.joiningDate} onChange={(e) => set("joiningDate", e.target.value)} className="erp-finance-input" />
+              </div>
+            </div>
+          </div>
+
+          <div className="erp-finance-form-section">
+            <p className="erp-finance-section-label">Attendance & absence rules</p>
+            <p className="text-[11px] text-slate-500 mb-2">
+              Allowed absences are free each month. Extra absent days deduct per-day amount. Half day deducts half.
+            </p>
+            <div className="erp-finance-form-grid">
+              <div className="erp-finance-field">
+                <label className="erp-finance-label">Allowed absences / month</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.allowedAbsences}
+                  onChange={(e) => set("allowedAbsences", e.target.value)}
+                  className="erp-finance-input font-mono"
+                  placeholder="0"
+                />
+              </div>
+              <div className="erp-finance-field">
+                <label className="erp-finance-label">Deduction per absent day</label>
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  value={form.absenceDeductionPerDay}
+                  onChange={(e) => set("absenceDeductionPerDay", e.target.value)}
+                  className="erp-finance-input font-mono"
+                  placeholder="Auto: salary ÷ working days"
+                />
               </div>
             </div>
           </div>

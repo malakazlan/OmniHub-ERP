@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { createLedgerEntry } from "@/lib/ledger";
@@ -76,7 +76,7 @@ export async function POST(req) {
     const expenseNumber = await generateDocumentNumber("expense", date);
     const paymentMethod = cash > 0 && bank > 0 ? "split" : bank > 0 ? "bank" : "cash";
 
-    const expense = await prisma.$transaction(async (tx) => {
+    const expense = await runTransaction(async (tx) => {
       const created = await tx.expense.create({
         data: {
           expenseNumber,
@@ -135,6 +135,12 @@ export async function POST(req) {
     return Response.json({ success: true, expense }, { status: 201 });
   } catch (error) {
     console.error("Create expense error:", error);
+    if (error.code === "P2028") {
+      return Response.json(
+        { error: "Database busy — retry in a moment." },
+        { status: 503 }
+      );
+    }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

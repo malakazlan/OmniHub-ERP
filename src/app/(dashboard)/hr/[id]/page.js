@@ -61,6 +61,9 @@ export default function EmployeeDetailPage() {
       designation: employee.designation || "",
       department: employee.department || "",
       salary: employee.salary ?? "",
+      commissionRate: employee.commissionRate ?? "",
+      allowedAbsences: employee.allowedAbsences ?? 0,
+      absenceDeductionPerDay: employee.absenceDeductionPerDay ?? "",
       joiningDate: employee.joiningDate ? String(employee.joiningDate).slice(0, 10) : "",
       address: employee.address || "",
       bankName: employee.bankName || "",
@@ -256,6 +259,15 @@ export default function EmployeeDetailPage() {
                 <div><dt>CNIC</dt><dd className="font-mono">{employee.cnic || "—"}</dd></div>
                 <div><dt>Phone</dt><dd>{employee.phone || "—"}</dd></div>
                 <div><dt>Address</dt><dd>{employee.address || "—"}</dd></div>
+              </dl>
+            </div>
+
+            <div className="erp-hr-info-card">
+              <h2><CalendarCheck className="w-4 h-4 text-pink-600" /> Absence rules</h2>
+              <dl>
+                <div><dt>Allowed absences</dt><dd>{employee.allowedAbsences ?? 0} / month</dd></div>
+                <div><dt>Deduct per absent day</dt><dd>{employee.absenceDeductionPerDay > 0 ? formatCurrency(employee.absenceDeductionPerDay) : "Auto (salary ÷ days)"}</dd></div>
+                <div><dt>Half day deduct</dt><dd>Half of per-day amount</dd></div>
               </dl>
             </div>
 

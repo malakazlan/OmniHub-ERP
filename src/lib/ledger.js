@@ -16,33 +16,74 @@ export async function createLedgerEntry(tx, {
   debit = 0,
   credit = 0,
 }) {
-  const account = await tx.account.findUnique({ where: { id: accountId } });
-  if (!account) throw new Error(`Account ${accountId} not found`);
-
-  const entryDate = date ? new Date(date) : new Date();
-
-  const newBalance = account.balance + debit - credit;
-
-  const entry = await tx.ledgerEntry.create({
-    data: {
-      accountId,
-      date: entryDate,
-      description,
-      reference,
-      referenceType,
-      referenceId,
-      debit,
-      credit,
-      balance: newBalance,
-    },
-  });
-
-  await tx.account.update({
-    where: { id: accountId },
-    data: { balance: newBalance },
-  });
-
+  const [entry] = await createLedgerEntries(tx, [
+    { accountId, date, description, reference, referenceType, referenceId, debit, credit },
+  ]);
   return entry;
+}
+
+/**
+ * Post multiple ledger lines in one pass: one account load, createMany entries,
+ * parallel balance updates. Much faster than repeated createLedgerEntry calls.
+ */
+export async function createLedgerEntries(tx, entries = []) {
+  const normalized = entries
+    .map((e) => ({
+      accountId: parseInt(e.accountId, 10),
+      date: e.date ? new Date(e.date) : new Date(),
+      description: e.description,
+      reference: e.reference ?? null,
+      referenceType: e.referenceType ?? null,
+      referenceId: e.referenceId ?? null,
+      debit: parseFloat(e.debit) || 0,
+      credit: parseFloat(e.credit) || 0,
+    }))
+    .filter((e) => e.accountId && (Math.abs(e.debit) > 0.001 || Math.abs(e.credit) > 0.001));
+
+  if (!normalized.length) return [];
+
+  const accountIds = [...new Set(normalized.map((e) => e.accountId))];
+  const accounts = await tx.account.findMany({
+    where: { id: { in: accountIds } },
+    select: { id: true, balance: true },
+  });
+  const balanceById = Object.fromEntries(accounts.map((a) => [a.id, a.balance || 0]));
+
+  for (const id of accountIds) {
+    if (balanceById[id] === undefined) {
+      throw new Error(`Account ${id} not found`);
+    }
+  }
+
+  const rows = [];
+  for (const entry of normalized) {
+    const newBalance = balanceById[entry.accountId] + entry.debit - entry.credit;
+    balanceById[entry.accountId] = newBalance;
+    rows.push({
+      accountId: entry.accountId,
+      date: entry.date,
+      description: entry.description,
+      reference: entry.reference,
+      referenceType: entry.referenceType,
+      referenceId: entry.referenceId,
+      debit: entry.debit,
+      credit: entry.credit,
+      balance: newBalance,
+    });
+  }
+
+  await tx.ledgerEntry.createMany({ data: rows });
+
+  await Promise.all(
+    accountIds.map((id) =>
+      tx.account.update({
+        where: { id },
+        data: { balance: balanceById[id] },
+      })
+    )
+  );
+
+  return rows;
 }
 
 /**

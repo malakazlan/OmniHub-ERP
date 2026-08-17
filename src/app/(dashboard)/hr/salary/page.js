@@ -25,14 +25,42 @@ const MONTHS = [
 ];
 
 const SALARY_PRINT_COLS = [
-  { key: "emp", label: "Employee", get: (r) => r.employee?.name || "—", pdfWidth: 36 },
-  { key: "period", label: "Period", get: (r) => `${MONTHS[(r.month || 1) - 1]?.slice(0, 3)} ${r.year}`, pdfWidth: 20 },
-  { key: "base", label: "Base", align: "right", get: (r) => formatCurrency(r.baseSalary), pdfWidth: 22 },
-  { key: "bonus", label: "Bonus", align: "right", get: (r) => formatCurrency(r.bonus), pdfWidth: 20 },
-  { key: "ded", label: "Deduct.", align: "right", get: (r) => formatCurrency(r.deductions), pdfWidth: 20 },
-  { key: "net", label: "Net", align: "right", get: (r) => formatCurrency(r.netSalary), pdfWidth: 24, bold: true },
-  { key: "paid", label: "Paid", align: "right", get: (r) => formatCurrency(r.paidAmount), pdfWidth: 22 },
-  { key: "status", label: "Status", get: (r) => r.status, pdfWidth: 16 },
+  { key: "emp", label: "Employee", get: (r) => r.employee?.name || "—", pdfWidth: 28 },
+  { key: "period", label: "Period", get: (r) => `${MONTHS[(r.month || 1) - 1]?.slice(0, 3)} ${r.year}`, pdfWidth: 16 },
+  { key: "base", label: "Base", align: "right", get: (r) => formatCurrency(r.baseSalary), pdfWidth: 18 },
+  {
+    key: "prevAdv",
+    label: "Prev. adv.",
+    align: "right",
+    get: (r) => formatCurrency(r.advanceSummary?.previousBalance || 0),
+    pdfWidth: 18,
+  },
+  {
+    key: "monthAdv",
+    label: "Month adv.",
+    align: "right",
+    get: (r) => formatCurrency(r.advanceSummary?.monthAdvanceTotal || 0),
+    pdfWidth: 18,
+  },
+  {
+    key: "advDed",
+    label: "Adv. deduct",
+    align: "right",
+    get: (r) => formatCurrency(r.advanceDeduction || 0),
+    pdfWidth: 18,
+  },
+  { key: "bonus", label: "Bonus", align: "right", get: (r) => formatCurrency(r.bonus), pdfWidth: 16 },
+  { key: "ded", label: "Deduct.", align: "right", get: (r) => formatCurrency(r.deductions), pdfWidth: 16 },
+  { key: "net", label: "Net", align: "right", get: (r) => formatCurrency(r.netSalary), pdfWidth: 20, bold: true },
+  { key: "paid", label: "Paid", align: "right", get: (r) => formatCurrency(r.paidAmount), pdfWidth: 18 },
+  {
+    key: "pending",
+    label: "Pending",
+    align: "right",
+    get: (r) => formatCurrency(r.advanceSummary?.pendingBalance || 0),
+    pdfWidth: 18,
+  },
+  { key: "status", label: "Status", get: (r) => r.status, pdfWidth: 14 },
 ];
 
 export default function SalaryPage() {
@@ -115,7 +143,11 @@ export default function SalaryPage() {
     filename: `salary-${year}-${month}.pdf`,
   });
 
-  const { pdfLoadingId, onPdfSlip } = useSalarySlipExport({ printRef: slipPrintRef, company: companySettings });
+  const { pdfLoadingId, onPdfSlip } = useSalarySlipExport({
+    printRef: slipPrintRef,
+    company: companySettings,
+    onPrepareSlip: setSlipRecord,
+  });
 
   const printSlip = useReactToPrint({
     contentRef: slipPrintRef,
@@ -144,7 +176,11 @@ export default function SalaryPage() {
       const res = await fetch("/api/hr/salary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          cashAmount: form.salaryCashAmount ?? form.cashAmount,
+          bankAmount: form.salaryBankAmount ?? form.bankAmount,
+        }),
       });
       const data = await res.json();
       if (res.ok) {

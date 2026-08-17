@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useMemo } from "react";
-import { Loader2, Wallet } from "lucide-react";
+import React, { useMemo, useEffect, useState, useRef } from "react";
+import { Loader2, Wallet, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/Button";
 import PaymentSplitFields from "@/components/accounts/PaymentSplitFields";
 import { formatCurrency } from "@/lib/formatters";
+import { computeSalarySettlement } from "@/lib/hrPayroll";
+import { computeClearanceDisbursement } from "@/lib/hrClearancePayment";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -18,7 +20,9 @@ export function emptySalaryForm(defaultCashAccountId = "") {
     year: String(new Date().getFullYear()),
     baseSalary: "",
     deductions: "0",
+    advanceDeduction: "0",
     bonus: "0",
+    commissionBonus: "0",
     cashAmount: "0",
     bankAmount: "0",
     cashAccountId: defaultCashAccountId || "",
@@ -26,6 +30,29 @@ export function emptySalaryForm(defaultCashAccountId = "") {
     paymentDate: new Date().toISOString().slice(0, 10),
     status: "pending",
     notes: "",
+    newAdvanceAmount: "0",
+    salaryCashAmount: "0",
+    salaryBankAmount: "0",
+    newAdvanceCash: "0",
+    newAdvanceBank: "0",
+  };
+}
+
+function payrollPatchFromSync(sync) {
+  if (!sync) return null;
+  const payroll = sync.payroll || {};
+  const base = payroll.baseSalary ?? sync.employee?.salary ?? 0;
+  const settlement = computeSalarySettlement({
+    baseSalary: base,
+    commissionBonus: sync.pendingCommission ?? 0,
+    deductions: payroll.deductions ?? 0,
+    pendingAdvance: sync.pendingAdvance ?? 0,
+  });
+  return {
+    baseSalary: String(base),
+    deductions: String(payroll.deductions ?? 0),
+    advanceDeduction: String(settlement.advanceDeduction),
+    commissionBonus: String(sync.pendingCommission ?? 0),
   };
 }
 
@@ -43,20 +70,96 @@ export default function SalaryForm({
 }) {
   const set = (field, value) => onChange({ ...form, [field]: value });
 
-  const netSalary = useMemo(
-    () => (parseFloat(form.baseSalary) || 0) + (parseFloat(form.bonus) || 0) - (parseFloat(form.deductions) || 0),
-    [form.baseSalary, form.bonus, form.deductions]
+  const [attendanceSync, setAttendanceSync] = useState(null);
+  const [attendanceLoading, setAttendanceLoading] = useState(false);
+  const lastAutoAppliedKey = useRef("");
+
+  const syncKey = form.employeeId && form.month && form.year
+    ? `${form.employeeId}-${form.month}-${form.year}`
+    : "";
+
+  useEffect(() => {
+    lastAutoAppliedKey.current = "";
+  }, [form.employeeId]);
+
+  useEffect(() => {
+    if (!syncKey) {
+      setAttendanceSync(null);
+      return;
+    }
+    let cancelled = false;
+    setAttendanceLoading(true);
+    fetch(`/api/hr/attendance/summary?employeeId=${form.employeeId}&month=${form.month}&year=${form.year}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && data.success) setAttendanceSync(data);
+        else if (!cancelled) setAttendanceSync(null);
+      })
+      .catch(() => {
+        if (!cancelled) setAttendanceSync(null);
+      })
+      .finally(() => {
+        if (!cancelled) setAttendanceLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [syncKey, form.employeeId, form.month, form.year]);
+
+  useEffect(() => {
+    if (!syncKey || attendanceLoading || !attendanceSync) return;
+    if (lastAutoAppliedKey.current === syncKey) return;
+
+    const patch = payrollPatchFromSync(attendanceSync);
+    if (!patch) return;
+
+    lastAutoAppliedKey.current = syncKey;
+    onChange({ ...form, ...patch });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attendanceSync, attendanceLoading, syncKey]);
+
+  const applyPayrollSync = () => {
+    const patch = payrollPatchFromSync(attendanceSync);
+    if (!patch) return;
+    onChange({ ...form, ...patch });
+  };
+
+  const settlement = useMemo(
+    () =>
+      computeSalarySettlement({
+        baseSalary: form.baseSalary,
+        bonus: form.bonus,
+        commissionBonus: form.commissionBonus,
+        deductions: form.deductions,
+        pendingAdvance: attendanceSync?.pendingAdvance ?? form.advanceDeduction,
+        advanceDeduction: form.advanceDeduction,
+      }),
+    [form.baseSalary, form.bonus, form.commissionBonus, form.deductions, form.advanceDeduction, attendanceSync?.pendingAdvance]
   );
+
+  const netSalary = settlement.netSalary;
+  const pendingAfter = settlement.pendingAfter;
+  const newAdvance = parseFloat(form.newAdvanceAmount) || 0;
+  const totalDisbursement = computeClearanceDisbursement(netSalary, newAdvance, "cash").totalDisbursement;
+
+  const handleNewAdvanceChange = (val) => {
+    const d = computeClearanceDisbursement(netSalary, val, "cash");
+    onChange({
+      ...form,
+      newAdvanceAmount: val,
+      cashAmount: String(d.salaryCash + d.advanceCash),
+      bankAmount: String(d.salaryBank + d.advanceBank),
+      salaryCashAmount: String(d.salaryCash),
+      salaryBankAmount: String(d.salaryBank),
+      newAdvanceCash: String(d.advanceCash),
+      newAdvanceBank: String(d.advanceBank),
+    });
+  };
 
   const paidTotal = (parseFloat(form.cashAmount) || 0) + (parseFloat(form.bankAmount) || 0);
 
   const handleEmployeeChange = (e) => {
-    const empId = e.target.value;
-    const emp = employees.find((em) => String(em.id) === empId);
     onChange({
       ...form,
-      employeeId: empId,
-      baseSalary: emp ? String(emp.salary || "") : form.baseSalary,
+      employeeId: e.target.value,
     });
   };
 
@@ -91,6 +194,54 @@ export default function SalaryForm({
         </div>
       </div>
 
+      {form.employeeId && (
+        <div className="erp-finance-form-section">
+          <p className="erp-finance-section-label">Payroll sync</p>
+          <div className="erp-hr-att-sync-box">
+            {attendanceLoading ? (
+              <p className="text-xs text-slate-500 flex items-center gap-2">
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading attendance & advances...
+              </p>
+            ) : attendanceSync ? (
+              <>
+                {attendanceSync.summary ? (
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+                    <span><strong>{attendanceSync.summary.present}</strong> present</span>
+                    <span><strong>{attendanceSync.summary.absent}</strong> absent</span>
+                    <span><strong>{attendanceSync.summary.half_day}</strong> half day</span>
+                    <span><strong>{attendanceSync.summary.leave}</strong> leave</span>
+                    <span><strong>{attendanceSync.payroll?.allowedAbsences ?? 0}</strong> allowed free</span>
+                    {(attendanceSync.payroll?.chargeableAbsences ?? 0) > 0 && (
+                      <span className="text-red-700"><strong>{attendanceSync.payroll.chargeableAbsences}</strong> chargeable absent</span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">No attendance marked for this period.</p>
+                )}
+                <p className="text-xs text-slate-500 mt-1">
+                  Absence deduct {formatCurrency(attendanceSync.payroll?.deductions ?? 0)}
+                  · Pending advance {formatCurrency(attendanceSync.pendingAdvance ?? 0)}
+                  · Commission {formatCurrency(attendanceSync.pendingCommission ?? 0)}
+                </p>
+                <p className="text-xs text-emerald-700 mt-1 font-semibold">
+                  Auto-applied to salary fields below
+                </p>
+                <button
+                  type="button"
+                  onClick={applyPayrollSync}
+                  className="erp-hr-att-sync-btn mt-2"
+                >
+                  <CalendarCheck className="w-3.5 h-3.5" />
+                  Re-apply sync
+                </button>
+              </>
+            ) : (
+              <p className="text-xs text-slate-500">Could not load payroll data.</p>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="erp-finance-form-section">
         <p className="erp-finance-section-label">Salary breakdown</p>
         <div className="erp-finance-form-grid">
@@ -106,11 +257,46 @@ export default function SalaryForm({
             <label className="erp-finance-label">Deductions</label>
             <input type="number" step="any" value={form.deductions} onChange={(e) => set("deductions", e.target.value)} className="erp-finance-input font-mono" />
           </div>
+          <div className="erp-finance-field">
+            <label className="erp-finance-label">Advance deduction</label>
+            <input type="number" step="any" value={form.advanceDeduction} onChange={(e) => set("advanceDeduction", e.target.value)} className="erp-finance-input font-mono" />
+            {attendanceSync?.pendingAdvance > 0 && (
+              <p className="text-[10px] text-amber-700 mt-1">
+                Pending advance {formatCurrency(attendanceSync.pendingAdvance)} · Recovering {formatCurrency(settlement.advanceDeduction)}
+              </p>
+            )}
+          </div>
+          <div className="erp-finance-field">
+            <label className="erp-finance-label">Commission bonus</label>
+            <input type="number" step="any" value={form.commissionBonus} onChange={(e) => set("commissionBonus", e.target.value)} className="erp-finance-input font-mono" />
+          </div>
+          <div className="erp-finance-field">
+            <label className="erp-finance-label">New advance (optional)</label>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={form.newAdvanceAmount || "0"}
+              onChange={(e) => handleNewAdvanceChange(e.target.value)}
+              className="erp-finance-input font-mono"
+            />
+            <p className="erp-sc-field-hint">Paid with salary — recovered in a future month</p>
+          </div>
           <div className="erp-hr-net-box">
-            <p className="erp-hr-net-label">Net salary</p>
+            <p className="erp-hr-net-label">Net salary payable</p>
             <p className="erp-hr-net-value">{formatCurrency(netSalary)}</p>
+            {pendingAfter > 0 && (
+              <p className="erp-hr-net-sub text-amber-700 font-semibold">
+                Advance still pending: {formatCurrency(pendingAfter)}
+              </p>
+            )}
+            {newAdvance > 0 && (
+              <p className="erp-hr-net-sub text-sky-700 font-semibold">
+                New advance: +{formatCurrency(newAdvance)} · Total disbursement {formatCurrency(totalDisbursement)}
+              </p>
+            )}
             {paidTotal > 0 && (
-              <p className="erp-hr-net-sub">Paying {formatCurrency(paidTotal)} · Balance {formatCurrency(Math.max(0, netSalary - paidTotal))}</p>
+              <p className="erp-hr-net-sub">Paying {formatCurrency(paidTotal)}</p>
             )}
           </div>
         </div>

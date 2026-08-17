@@ -61,8 +61,8 @@ export async function withDbRetry(fn, maxAttempts = 3) {
 
 /** Interactive transaction defaults — stock/ledger flows can exceed Prisma's 5s default. */
 export const PRISMA_TX_OPTIONS = {
-  maxWait: 30_000,
-  timeout: 30_000,
+  maxWait: 60_000,
+  timeout: 120_000,
 };
 
 export async function runTransaction(callback) {

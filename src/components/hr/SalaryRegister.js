@@ -31,17 +31,20 @@ export default function SalaryRegister({
         ) : (
           <table className="erp-ledger-grid erp-hr-grid">
             <colgroup>
-              <col style={{ width: "2.5%" }} />
-              <col style={{ width: "16%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "2%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "11%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "8%" }} />
             </colgroup>
             <thead>
               <tr>
@@ -49,17 +52,23 @@ export default function SalaryRegister({
                 <th className="erp-lg-th erp-hr-th">Employee</th>
                 <th className="erp-lg-th erp-hr-th">Period</th>
                 <th className="erp-lg-th erp-hr-th erp-lg-th-money">Base</th>
+                <th className="erp-lg-th erp-hr-th erp-lg-th-money">Prev. adv.</th>
+                <th className="erp-lg-th erp-hr-th erp-lg-th-money">Month adv.</th>
+                <th className="erp-lg-th erp-hr-th erp-lg-th-money">Adv. deduct</th>
                 <th className="erp-lg-th erp-hr-th erp-lg-th-money">Bonus</th>
                 <th className="erp-lg-th erp-hr-th erp-lg-th-money">Deduct.</th>
                 <th className="erp-lg-th erp-hr-th erp-lg-th-money">Net</th>
                 <th className="erp-lg-th erp-hr-th erp-lg-th-money">Paid</th>
+                <th className="erp-lg-th erp-hr-th erp-lg-th-money">Pending</th>
                 <th className="erp-lg-th erp-hr-th erp-hr-th-center">Status</th>
-                <th className="erp-lg-th erp-hr-th">Paid on</th>
                 <th className="erp-lg-th erp-hr-th erp-hr-th-center">Slip</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, idx) => (
+              {rows.map((row, idx) => {
+                const adv = row.advanceSummary || {};
+                const pending = adv.pendingBalance ?? 0;
+                return (
                 <tr key={row.id} className="erp-lg-row erp-hr-row">
                   <td className="erp-lg-td erp-lg-td-num text-slate-400">{idx + 1}</td>
                   <td className="erp-lg-td">
@@ -67,21 +76,37 @@ export default function SalaryRegister({
                     {row.employee?.department && (
                       <span className="block text-[10px] text-slate-500">{row.employee.department}</span>
                     )}
+                    {row.paymentDate && (
+                      <span className="block text-[10px] text-slate-400 mt-0.5">Paid {formatDate(row.paymentDate)}</span>
+                    )}
                   </td>
                   <td className="erp-lg-td text-xs font-semibold text-slate-700">
                     {MONTHS[(row.month || 1) - 1]} {row.year}
                   </td>
                   <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.baseSalary)}</td>
+                  <td className="erp-lg-td erp-lg-td-money text-amber-700">
+                    {adv.previousBalance > 0 ? formatCurrency(adv.previousBalance) : "—"}
+                  </td>
+                  <td className="erp-lg-td erp-lg-td-money text-amber-700">
+                    {adv.monthAdvanceTotal > 0 ? formatCurrency(adv.monthAdvanceTotal) : "—"}
+                  </td>
+                  <td className="erp-lg-td erp-lg-td-money text-orange-700">
+                    {(row.advanceDeduction || adv.advanceDeduction) > 0
+                      ? formatCurrency(row.advanceDeduction || adv.advanceDeduction)
+                      : "—"}
+                  </td>
                   <td className="erp-lg-td erp-lg-td-money text-emerald-700">{formatCurrency(row.bonus)}</td>
                   <td className="erp-lg-td erp-lg-td-money text-red-600">{formatCurrency(row.deductions)}</td>
                   <td className="erp-lg-td erp-lg-td-money font-bold text-pink-700">{formatCurrency(row.netSalary)}</td>
                   <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.paidAmount)}</td>
+                  <td className={`erp-lg-td erp-lg-td-money font-semibold${pending > 0 ? " text-red-700" : " text-slate-400"}`}>
+                    {pending > 0 ? formatCurrency(pending) : "—"}
+                  </td>
                   <td className="erp-lg-td erp-hr-td-center">
                     <span className={`erp-hr-status-pill${row.status === "paid" ? " is-paid" : ""}`}>
                       {row.status}
                     </span>
                   </td>
-                  <td className="erp-lg-td erp-lg-td-date">{formatDate(row.paymentDate)}</td>
                   <td className="erp-lg-td erp-hr-td-center">
                     <div className="erp-hr-slip-actions" onClick={(e) => e.stopPropagation()}>
                       <button type="button" className="erp-hr-slip-btn" onClick={() => onPrintSlip?.(row)} title="Print slip">
@@ -103,7 +128,7 @@ export default function SalaryRegister({
                     </div>
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         )}

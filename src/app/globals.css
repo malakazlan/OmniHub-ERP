@@ -4274,6 +4274,31 @@ input[type="number"]::-webkit-inner-spin-button {
   border: 1px solid #f1f5f9;
 }
 
+.emp-pay-row-active {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.emp-select {
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+}
+
+.emp-slip-wrap {
+  overflow-x: auto;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.emp-slip-wrap .erp-salary-clearance-slip {
+  min-width: 320px;
+}
+
 /* ── General Ledger surface (finance ERP theme) ── */
 .erp-ledger-surface {
   --erp-ledger-accent: #0d9488;
@@ -7418,8 +7443,76 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 
 .erp-hr-page-title { font-size: 1.625rem; font-weight: 900; color: #0f172a; letter-spacing: -0.03em; }
-.erp-hr-page-desc { margin-top: 0.35rem; font-size: 0.8125rem; color: #64748b; max-width: 42rem; }
+.erp-hr-page-desc { margin-top: 0.35rem; font-size: 0.8125rem; color: #64748b; max-width: 42rem; line-height: 1.55; }
 .erp-hr-header-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* HR hub — workforce & payroll center */
+.erp-hr-hub-hero {
+  display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 1.25rem;
+  padding: 1.35rem 1.5rem; background: linear-gradient(135deg, #fff 0%, #fdf2f8 55%, #fff 100%);
+  border: 1px solid #fbcfe8; border-radius: 16px; border-top: 3px solid var(--erp-hr-accent);
+  box-shadow: var(--erp-hr-panel-shadow);
+}
+.erp-hr-hub-hero-main { flex: 1; min-width: 240px; max-width: 36rem; }
+.erp-hr-hub-stats {
+  display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: stretch;
+}
+.erp-hr-hub-stat {
+  min-width: 7rem; padding: 0.75rem 1rem; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 12px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.erp-hr-hub-stat-alert { border-color: #fecaca; background: linear-gradient(180deg, #fff 0%, #fef2f2 100%); }
+.erp-hr-hub-stat-label {
+  font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b;
+}
+.erp-hr-hub-stat-value {
+  margin-top: 0.2rem; font-size: 1.375rem; font-weight: 900; font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, monospace; color: #0f172a;
+}
+.erp-hr-hub-stat-alert .erp-hr-hub-stat-value { color: #b91c1c; }
+
+.erp-hr-hub-section { margin-top: 0.25rem; }
+.erp-hr-hub-section-head { margin-bottom: 0.85rem; padding-left: 0.1rem; }
+.erp-hr-hub-section-title { font-size: 1rem; font-weight: 800; color: #0f172a; letter-spacing: -0.02em; }
+.erp-hr-hub-section-sub { font-size: 0.75rem; color: #64748b; margin-top: 0.15rem; }
+
+.erp-hr-hub-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 0.75rem;
+}
+
+.erp-hr-hub-card {
+  display: flex; align-items: flex-start; gap: 0.85rem; padding: 1rem 1.1rem;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; text-decoration: none;
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+.erp-hr-hub-card:hover {
+  border-color: #cbd5e1; box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.14); transform: translateY(-2px);
+}
+.erp-hr-hub-card-icon-wrap { position: relative; flex-shrink: 0; }
+.erp-hr-hub-card-icon {
+  width: 2.75rem; height: 2.75rem; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+}
+.erp-hr-hub-badge {
+  position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; background: #ef4444; color: #fff; font-size: 10px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center; border: 2px solid #fff;
+}
+.erp-hr-hub-card-body { flex: 1; min-width: 0; }
+.erp-hr-hub-card-title { font-size: 0.9375rem; font-weight: 800; color: #0f172a; letter-spacing: -0.01em; }
+.erp-hr-hub-card-desc { font-size: 0.75rem; color: #64748b; margin-top: 0.35rem; line-height: 1.45; }
+.erp-hr-hub-card-chevron { color: #cbd5e1; margin-top: 0.15rem; transition: color 0.15s, transform 0.15s; }
+.erp-hr-hub-card:hover .erp-hr-hub-card-chevron { color: var(--erp-hr-accent-deep); transform: translateX(2px); }
+
+.erp-hr-hub-card.tone-rose .erp-hr-hub-card-icon { background: #fdf2f8; color: #be185d; border: 1px solid #fbcfe8; }
+.erp-hr-hub-card.tone-emerald .erp-hr-hub-card-icon { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+.erp-hr-hub-card.tone-teal .erp-hr-hub-card-icon { background: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
+.erp-hr-hub-card.tone-indigo .erp-hr-hub-card-icon { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; }
+.erp-hr-hub-card.tone-violet .erp-hr-hub-card-icon { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+.erp-hr-hub-card.tone-amber .erp-hr-hub-card-icon { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.erp-hr-hub-card.tone-purple .erp-hr-hub-card-icon { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+.erp-hr-hub-card.tone-sky .erp-hr-hub-card-icon { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+.erp-hr-hub-card.tone-cyan .erp-hr-hub-card-icon { background: #ecfeff; color: #0e7490; border: 1px solid #a5f3fc; }
 
 .erp-hr-stats {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem;
@@ -7525,6 +7618,238 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 .erp-hr-net-label { font-size: 0.625rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
 .erp-hr-net-value { font-size: 1.35rem; font-weight: 900; font-family: ui-monospace, monospace; color: #be185d; margin-top: 0.15rem; }
+.erp-hr-att-sync-box {
+  padding: 0.75rem 1rem; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc;
+}
+.erp-hr-att-sync-btn {
+  display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem;
+  font-size: 0.6875rem; font-weight: 700; border-radius: 8px; border: 1px solid #fbcfe8;
+  background: #fdf2f8; color: #be185d; cursor: pointer;
+}
+.erp-hr-att-sync-btn:hover { background: #fce7f3; }
+
+/* Salary clearance flow */
+.erp-salary-clearance-panel { display: flex; flex-direction: column; gap: 1rem; }
+.erp-sc-panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; }
+.erp-sc-panel-badge { font-size: 0.625rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #be185d; }
+.erp-sc-panel-title { font-size: 1.125rem; font-weight: 800; color: #0f172a; margin-top: 0.15rem; }
+.erp-sc-att-chips { display: flex; gap: 0.35rem; }
+.erp-sc-chip { font-size: 0.6875rem; font-weight: 800; padding: 0.25rem 0.5rem; border-radius: 6px; background: #f1f5f9; color: #475569; }
+.erp-sc-chip.is-present { background: #ecfdf5; color: #047857; }
+.erp-sc-chip.is-absent { background: #fef2f2; color: #b91c1c; }
+.erp-sc-view-tabs { display: flex; gap: 0.35rem; }
+.erp-sc-view-tab { padding: 0.35rem 0.75rem; font-size: 0.6875rem; font-weight: 700; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; cursor: pointer; }
+.erp-sc-view-tab.is-active { background: #fdf2f8; border-color: #fbcfe8; color: #be185d; }
+.erp-sc-layout { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+@media (min-width: 900px) { .erp-sc-layout { grid-template-columns: 1.1fr 0.9fr; } }
+.erp-sc-calc-table { width: 100%; font-size: 0.8125rem; border-collapse: collapse; }
+.erp-sc-calc-table td { padding: 0.55rem 0.65rem; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+.erp-sc-calc-table td:last-child { text-align: right; white-space: nowrap; }
+.erp-sc-calc-table tr.is-deduct { background: #fef2f2; }
+.erp-sc-calc-table tr.is-net { background: #ecfdf5; font-size: 0.9375rem; }
+.erp-sc-calc-table tr.is-disburse { background: #f0fdf4; }
+.erp-sc-sub { display: block; font-size: 0.625rem; color: #94a3b8; font-weight: 500; margin-top: 0.1rem; }
+.erp-sc-pay-form { display: flex; flex-direction: column; gap: 0.75rem; }
+.erp-sc-pay-mode-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
+.erp-sc-payable { font-size: 0.75rem; font-weight: 700; color: #047857; }
+.erp-sc-pay-mode-btns { display: flex; gap: 0.35rem; }
+.erp-sc-pay-mode-btn { flex: 1; padding: 0.45rem; font-size: 0.625rem; font-weight: 800; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; cursor: pointer; }
+.erp-sc-pay-mode-btn.is-active { background: #2563eb; border-color: #2563eb; color: #fff; }
+.erp-sc-form-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+
+.erp-sc-advance-box {
+  border: 1px dashed #fcd34d;
+  border-radius: 10px;
+  background: #fffbeb;
+  overflow: hidden;
+}
+
+.erp-sc-advance-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #92400e;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.erp-sc-advance-toggle:hover { background: #fef3c7; }
+
+.erp-sc-advance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0 0.85rem 0.85rem;
+  border-top: 1px solid #fde68a;
+}
+
+/* Salary clearance — reference layout */
+.erp-sc-ref-wrap { overflow: hidden; }
+.erp-sc-ref-wrap .erp-sc-ref-header { margin: -1rem -1rem 0; border-radius: 0; }
+@media (min-width: 768px) {
+  .erp-sc-ref-wrap .erp-sc-ref-header { margin: -1.25rem -1.25rem 0; }
+}
+
+.erp-sc-ref-panel { display: flex; flex-direction: column; gap: 0; }
+
+.erp-sc-ref-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: linear-gradient(135deg, #047857, #059669);
+  color: #fff;
+  border-radius: 10px 10px 0 0;
+  margin: -1rem -1rem 0;
+}
+
+.erp-sc-ref-header-left { display: flex; align-items: center; gap: 0.5rem; }
+
+.erp-sc-ref-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  cursor: pointer;
+}
+
+.erp-sc-ref-kicker {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.erp-sc-ref-title { font-size: 1rem; font-weight: 800; margin: 0.15rem 0 0; }
+
+.erp-sc-ref-body { padding-top: 1rem; }
+
+.erp-sc-ref-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 900px) {
+  .erp-sc-ref-columns { grid-template-columns: 1.05fr 0.95fr; }
+}
+
+.erp-sc-ref-section-title {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.65rem;
+}
+
+.erp-sc-ref-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.erp-sc-ref-table th {
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.erp-sc-ref-table th.is-right,
+.erp-sc-ref-table td.is-right { text-align: right; }
+
+.erp-sc-ref-table td {
+  padding: 0.5rem 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.erp-sc-ref-table tr.is-deduct td { background: #fef2f2; }
+.erp-sc-ref-table tr.is-gross td { background: #f8fafc; font-weight: 700; }
+.erp-sc-ref-table tr.is-net td { background: #ecfdf5; font-weight: 800; color: #047857; }
+.erp-sc-ref-table tr.is-advance td { background: #eff6ff; }
+.erp-sc-ref-table tr.is-disburse td {
+  background: #1e293b;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+.erp-sc-ref-pay {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.erp-sc-field-hint {
+  font-size: 0.625rem;
+  color: #94a3b8;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+.erp-sc-account-pill {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.erp-sc-submit-btn { background: #047857 !important; }
+.erp-sc-submit-btn:hover { background: #065f46 !important; }
+.erp-salary-clearance-slip { font-size: 0.8125rem; color: #334155; }
+.erp-sc-slip-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #0f172a; }
+.erp-sc-slip-month { font-size: 1.25rem; font-weight: 900; color: #0f172a; }
+.erp-sc-slip-ref { font-size: 0.6875rem; color: #94a3b8; }
+.erp-sc-slip-brand { font-size: 0.75rem; font-weight: 700; color: #64748b; }
+.erp-sc-slip-section { margin-bottom: 1rem; padding: 0.75rem; border: 1px solid #e2e8f0; border-radius: 10px; background: #fafafa; }
+.erp-sc-slip-section-title { font-size: 0.625rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 0.65rem; }
+.erp-sc-slip-grid-2 { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+@media (min-width: 640px) { .erp-sc-slip-grid-2 { grid-template-columns: 1fr 1fr; } }
+.erp-sc-slip-dl div { display: flex; justify-content: space-between; gap: 0.5rem; padding: 0.2rem 0; font-size: 0.75rem; }
+.erp-sc-slip-dl dt { color: #64748b; font-weight: 600; }
+.erp-sc-att-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem; }
+.erp-sc-att-stat { text-align: center; padding: 0.35rem 0.25rem; border-radius: 8px; background: #fff; border: 1px solid #e2e8f0; }
+.erp-sc-att-stat span { display: block; font-size: 0.9375rem; font-weight: 900; color: #0f172a; }
+.erp-sc-att-stat label { font-size: 0.5rem; font-weight: 800; color: #94a3b8; letter-spacing: 0.04em; }
+.erp-sc-att-stat.is-present span { color: #047857; }
+.erp-sc-att-stat.is-absent span { color: #b91c1c; }
+.erp-sc-att-stat.is-rate span { font-size: 0.75rem; }
+.erp-sc-slip-hint { margin-top: 0.5rem; font-size: 0.6875rem; color: #0369a1; background: #e0f2fe; padding: 0.4rem 0.55rem; border-radius: 6px; }
+.erp-sc-mini-label { font-size: 0.625rem; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 0.35rem; }
+.erp-sc-line { display: flex; justify-content: space-between; padding: 0.25rem 0; font-size: 0.75rem; }
+.erp-sc-line.is-strong { font-weight: 700; margin-top: 0.25rem; }
+.erp-sc-line.is-deduct { color: #b91c1c; }
+.erp-sc-line.is-bonus { color: #047857; }
+.erp-sc-net-banner { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1rem; margin: 1rem 0; border-radius: 10px; background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 1px solid #6ee7b7; font-weight: 800; }
+.erp-sc-net-banner strong { font-size: 1.25rem; font-family: ui-monospace, monospace; color: #047857; }
+.erp-sc-adv-table { width: 100%; font-size: 0.6875rem; border-collapse: collapse; }
+.erp-sc-adv-table th, .erp-sc-adv-table td { padding: 0.3rem 0.4rem; border-bottom: 1px solid #e2e8f0; text-align: left; }
 .erp-hr-net-sub { font-size: 0.6875rem; color: #64748b; margin-top: 0.25rem; }
 
 .erp-hr-detail-panel {
@@ -7565,59 +7890,1386 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 .erp-hr-slip-btn-primary { background: #fdf2f8; border-color: #fbcfe8; color: #be185d; }
 
-/* Salary slip print */
+/* Salary slip / receipt */
 .erp-salary-slip-print-host {
-  position: absolute; left: -9999px; top: 0; width: 210mm; pointer-events: none; background: #fff;
+  position: absolute; left: -9999px; top: 0; width: 680px; pointer-events: none; background: #fff;
 }
 
 .erp-salary-slip-print {
-  background: #fff; color: #0f172a; font-family: "Segoe UI", system-ui, sans-serif; font-size: 9pt; padding: 0;
+  background: #fff; color: #0f172a; font-family: "Segoe UI", system-ui, sans-serif; padding: 0;
 }
 
-.erp-salary-slip-banner {
-  display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px;
-  background: linear-gradient(135deg, #be185d 0%, #db2777 100%); color: #fff;
+.erp-salary-slip-print .erp-sal-doc,
+.erp-salary-slip-print .erp-sal-xls { border: none; box-shadow: none; max-width: none; }
+
+/* Excel-style one-page salary receipt */
+.erp-sal-xls {
+  --xls-border: #000;
+  --xls-head: #4472c4;
+  --xls-head-text: #fff;
+  --xls-band: #d9e1f2;
+  --xls-band-text: #1f3864;
+  width: 100%;
+  max-width: 210mm;
+  margin: 0 auto;
+  background: #fff;
+  color: #000;
+  font-family: Calibri, "Segoe UI", Arial, sans-serif;
+  font-size: 9pt;
+  line-height: 1.25;
 }
 
-.erp-salary-slip-brand { font-size: 14pt; font-weight: 800; margin: 0; }
-.erp-salary-slip-meta { font-size: 7.5pt; opacity: 0.9; margin: 2px 0 0; }
-.erp-salary-slip-banner-side { text-align: right; }
-.erp-salary-slip-type { font-size: 7pt; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; }
+.erp-sal-xls.is-print { max-width: 210mm; font-size: 8pt; }
 
-.erp-salary-slip-titlebar {
-  display: flex; justify-content: space-between; align-items: center; padding: 8px 12px;
-  background: #fdf2f8; border: 1px solid #fbcfe8; border-top: none;
+.erp-sal-xls-sheet {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border: 2px solid var(--xls-border);
 }
-.erp-salary-slip-titlebar h1 { font-size: 11pt; font-weight: 800; color: #be185d; margin: 0; }
 
-.erp-salary-slip-status {
-  font-size: 7pt; font-weight: 800; text-transform: uppercase; padding: 3px 8px; border-radius: 6px;
-  background: #fef3c7; color: #92400e;
+.erp-sal-xls-sheet > tbody > tr > td,
+.erp-sal-xls-sheet > tbody > tr > th {
+  border: 1px solid var(--xls-border);
+  padding: 3px 6px;
+  vertical-align: top;
 }
-.erp-salary-slip-status.is-paid { background: #d1fae5; color: #047857; }
 
-.erp-salary-slip-info {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 16px; padding: 10px 12px; font-size: 8pt;
+.erp-sal-xls-sheet > tbody > tr > th {
+  background: var(--xls-head);
+  color: var(--xls-head-text);
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: left;
+  padding: 4px 6px;
 }
-.erp-salary-slip-info .label { display: block; font-size: 6.5pt; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
 
-.erp-salary-slip-table {
-  width: calc(100% - 24px); margin: 0 12px 12px; border-collapse: collapse; font-size: 8pt; table-layout: fixed;
+.erp-sal-xls-band > th {
+  background: var(--xls-band) !important;
+  color: var(--xls-band-text) !important;
+  border-color: var(--xls-border) !important;
+  font-size: 7.5pt;
+  letter-spacing: 0.06em;
 }
-.erp-salary-slip-table th {
-  background: #db2777; color: #fff; padding: 5px 8px; text-align: left; font-size: 7pt; text-transform: uppercase;
-}
-.erp-salary-slip-table td { padding: 5px 8px; border: 1px solid #cbd5e1; }
-.erp-salary-slip-table td.num, .erp-salary-slip-table th.num { text-align: right; font-family: ui-monospace, monospace; }
-.erp-salary-slip-table tr.is-total td { background: #fdf2f8; font-weight: 800; }
 
-.erp-salary-slip-notes { margin: 0 12px 12px; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 8pt; }
-.erp-salary-slip-notes .label { font-size: 6.5pt; font-weight: 700; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; }
-
-.erp-salary-slip-footer {
-  display: flex; justify-content: space-between; margin: 8px 12px 0; padding-top: 6px;
-  border-top: 1px solid #e2e8f0; font-size: 6.5pt; color: #94a3b8;
+.erp-sal-xls-header > td {
+  padding: 8px 8px 6px;
+  vertical-align: middle;
+  border-bottom: 2px solid var(--xls-border);
 }
+
+.erp-sal-xls-header .is-brand strong {
+  display: block;
+  font-size: 11pt;
+  color: #1f3864;
+  text-transform: uppercase;
+}
+
+.erp-sal-xls-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 7.5pt;
+  color: #333;
+}
+
+.erp-sal-xls-header .is-title {
+  text-align: center;
+}
+
+.erp-sal-xls-kicker {
+  display: block;
+  font-size: 6.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.erp-sal-xls-header .is-title strong {
+  display: block;
+  font-size: 12pt;
+  color: #1f3864;
+  letter-spacing: 0.04em;
+  margin: 2px 0;
+}
+
+.erp-sal-xls-header .is-title span:last-child {
+  font-size: 9pt;
+  font-weight: 700;
+}
+
+.erp-sal-xls-header .is-meta {
+  font-size: 8pt;
+}
+
+.erp-sal-xls-header .is-meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.erp-sal-xls-header .is-meta span { color: #555; }
+
+.erp-sal-xls-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border: 1px solid #bf9000;
+  background: #fff2cc;
+  font-size: 7pt;
+  font-weight: 800;
+  color: #7f6000;
+}
+
+.erp-sal-xls-badge.is-paid {
+  border-color: #548235;
+  background: #e2efda;
+  color: #375623;
+}
+
+.erp-sal-xls-badge.is-preview {
+  border-color: #7030a0;
+  background: #e4dfec;
+  color: #7030a0;
+}
+
+.erp-sal-xls-inner {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: inherit;
+}
+
+.erp-sal-xls-inner td,
+.erp-sal-xls-inner th {
+  border: 1px solid #b4b4b4;
+  padding: 2px 5px;
+}
+
+.erp-sal-xls-inner th {
+  background: #4472c4;
+  color: #fff;
+  font-size: 7pt;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.erp-sal-xls-inner .is-label {
+  width: 42%;
+  background: #f2f2f2;
+  color: #333;
+  font-size: 8pt;
+}
+
+.erp-sal-xls-inner .is-val { font-size: 8.5pt; }
+
+.erp-sal-xls-sheet .is-pad-none { padding: 0 !important; }
+
+.erp-sal-xls-sheet .is-right,
+.erp-sal-xls-inner .is-right { text-align: right; }
+
+.erp-sal-xls-sheet .is-center { text-align: center; }
+
+.erp-sal-xls-sheet .is-mono,
+.erp-sal-xls-num {
+  font-family: Consolas, "Courier New", monospace;
+}
+
+.erp-sal-xls-inner tr.is-muted td { background: #fafafa; color: #444; font-size: 7.5pt; }
+.erp-sal-xls-inner tr.is-total td { background: #d9e1f2; font-weight: 700; color: #1f3864; }
+.erp-sal-xls-inner tr.is-clearance td { background: #ddebf7; color: #0563c1; font-weight: 700; }
+.erp-sal-xls-inner tr.is-deduct td { color: #c00000; }
+.erp-sal-xls-inner tr.is-advance td { color: #0563c1; font-weight: 600; }
+.erp-sal-xls-inner tr.is-pending td { background: #fce4d6; color: #c00000; font-weight: 700; }
+.erp-sal-xls-inner tr.is-grand td {
+  background: #e2efda;
+  border-top: 2px solid #548235 !important;
+  font-weight: 800;
+}
+
+.erp-sal-xls-num.is-paid { color: #548235; font-size: 11pt; font-weight: 800; }
+
+.erp-sal-xls-sheet .is-present { color: #548235; font-weight: 700; }
+.erp-sal-xls-sheet .is-absent { color: #c00000; font-weight: 700; }
+.erp-sal-xls-sheet .is-deduct { color: #c00000; }
+.erp-sal-xls-sheet .is-bonus { color: #7030a0; }
+.erp-sal-xls-sheet .is-strong { font-weight: 800; color: #1f3864; }
+.erp-sal-xls-sheet .is-note { font-size: 7pt; color: #555; font-style: italic; }
+.erp-sal-xls-sheet .is-empty { text-align: center; color: #888; font-style: italic; font-size: 7.5pt; }
+
+.erp-sal-xls-sheet .is-label-cell {
+  background: #f2f2f2;
+  color: #333333;
+  font-size: 8pt;
+  font-weight: 600;
+}
+
+.erp-sal-xls-lead {
+  margin: 0;
+  padding: 4px 6px;
+  font-size: 7pt;
+  color: #7f1d1d;
+  background: #fff2f2;
+  border-bottom: 1px solid #b4b4b4;
+  line-height: 1.3;
+}
+
+.erp-sal-xls-footer td {
+  background: #f2f2f2;
+  font-size: 6.5pt;
+  color: #666;
+  text-align: center;
+  padding: 4px 6px !important;
+}
+
+.emp-slip-wrap .erp-sal-xls {
+  border: none;
+  max-width: none;
+}
+
+@media print {
+  .erp-sal-xls {
+    max-width: 100%;
+    font-size: 7.5pt;
+    page-break-inside: avoid;
+  }
+
+  .erp-sal-xls-sheet {
+    border-width: 1px;
+  }
+
+  .erp-sal-xls-header > td,
+  .erp-sal-xls-band > th,
+  .erp-sal-xls-inner th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 8mm;
+}
+
+/* Legacy erp-sal-doc (unused) — kept for reference */
+.erp-sal-doc {
+  --sal-blue: #1e3a8a;
+  --sal-blue-soft: #eff6ff;
+  --sal-ink: #0f172a;
+  --sal-grid: #cbd5e1;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #94a3b8;
+  font-size: 0.8125rem;
+  color: var(--sal-ink);
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+.erp-sal-doc.is-print {
+  max-width: none;
+  border: none;
+  font-size: 9pt;
+}
+
+.erp-sal-doc-top {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 2px solid var(--sal-ink);
+}
+
+@media (min-width: 720px) {
+  .erp-sal-doc-top { grid-template-columns: 1.1fr 1.2fr 0.9fr; align-items: start; }
+}
+
+.erp-sal-doc-brand { min-width: 0; }
+
+.erp-sal-doc-logo {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--sal-grid);
+  border-radius: 4px;
+  background: #f8fafc;
+  margin-bottom: 0.35rem;
+}
+
+.erp-sal-doc-company {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--sal-blue);
+}
+
+.erp-sal-doc-company-sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.6875rem;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.erp-sal-doc-title-block { text-align: center; }
+
+.erp-sal-doc-kicker {
+  margin: 0;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.erp-sal-doc-title {
+  margin: 0.2rem 0 0;
+  font-size: 1.0625rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sal-blue);
+}
+
+.erp-sal-doc-period {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #334155;
+}
+
+.erp-sal-doc-meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+@media (min-width: 720px) {
+  .erp-sal-doc-meta-block { align-items: flex-end; text-align: right; }
+}
+
+.erp-sal-doc-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  padding: 0.15rem 0;
+}
+
+.erp-sal-doc-meta-label { color: #64748b; }
+.erp-sal-doc-meta-value { color: var(--sal-ink); text-align: right; }
+.erp-sal-doc-meta-value.is-mono { font-family: ui-monospace, monospace; }
+.erp-sal-doc-meta-value.is-bold { font-weight: 800; }
+
+.erp-sal-doc-meta-row.is-deduct { color: #b91c1c; }
+.erp-sal-doc-meta-row.is-advance { color: #b91c1c; }
+.erp-sal-doc-meta-row.is-strong { font-weight: 700; }
+
+.erp-sal-doc-status {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+@media (min-width: 720px) {
+  .erp-sal-doc-status { align-self: flex-end; }
+}
+
+.erp-sal-doc-status.is-paid { background: #d1fae5; color: #047857; }
+.erp-sal-doc-status.is-preview { background: #e0e7ff; color: #3730a3; }
+
+.erp-sal-doc-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-bottom: 1px solid var(--sal-grid);
+}
+
+@media (min-width: 680px) {
+  .erp-sal-doc-split { grid-template-columns: 1fr 1fr; }
+  .erp-sal-doc-split .erp-sal-doc-panel:first-child { border-right: 1px solid var(--sal-grid); }
+  .erp-sal-doc-split.is-tall { align-items: stretch; }
+}
+
+.erp-sal-doc-panel { padding: 0.75rem 0.85rem; }
+
+.erp-sal-doc-panel-title {
+  margin: 0 0 0.55rem;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sal-blue);
+}
+
+.erp-sal-doc-panel-hint {
+  margin: -0.35rem 0 0.5rem;
+  font-size: 0.625rem;
+  color: #64748b;
+  line-height: 1.35;
+}
+
+.erp-sal-doc-section {
+  border-bottom: 1px solid var(--sal-grid);
+}
+
+.erp-sal-doc-section.is-last { border-bottom: none; }
+
+.erp-sal-doc-section-title {
+  margin: 0;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sal-blue);
+  background: var(--sal-blue-soft);
+  border-bottom: 1px solid var(--sal-grid);
+}
+
+.erp-sal-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.erp-sal-doc-table th {
+  background: var(--sal-blue);
+  color: #fff;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid #1e40af;
+}
+
+.erp-sal-doc-table td {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--sal-grid);
+  vertical-align: top;
+}
+
+.erp-sal-doc-table .is-right { text-align: right; }
+.erp-sal-doc-table .is-mono { font-family: ui-monospace, monospace; }
+.erp-sal-doc-table .is-bold { font-weight: 800; }
+.erp-sal-doc-table .is-empty { text-align: center; color: #94a3b8; font-style: italic; }
+.erp-sal-doc-table tr.is-muted td { background: #f8fafc; color: #475569; }
+.erp-sal-doc-table tr.is-total td { background: #f1f5f9; font-weight: 800; color: var(--sal-blue); }
+.erp-sal-doc-table tr.is-clearance td { background: #f0f9ff; color: #0369a1; font-weight: 700; }
+.erp-sal-doc-table tr.is-deduct td { color: #b91c1c; }
+.erp-sal-doc-table tr.is-advance td { color: #0369a1; font-weight: 700; }
+.erp-sal-doc-table tr.is-pending td { background: #fef2f2; color: #b91c1c; font-weight: 800; }
+
+.erp-sal-doc-table.is-plain td { border-left: none; border-right: none; }
+.erp-sal-doc-table.is-compact td:first-child { color: #475569; width: 62%; }
+
+.erp-sal-doc-metrics {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.erp-sal-doc-metrics th {
+  background: var(--sal-blue);
+  color: #fff;
+  padding: 0.45rem 0.35rem;
+  text-align: center;
+  font-size: 0.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border: 1px solid #1e40af;
+  line-height: 1.25;
+}
+
+.erp-sal-doc-metrics td {
+  padding: 0.5rem 0.35rem;
+  text-align: center;
+  border: 1px solid var(--sal-grid);
+  font-weight: 700;
+}
+
+.erp-sal-doc-metrics .is-mono { font-family: ui-monospace, monospace; }
+.erp-sal-doc-metrics .is-present { color: #047857; }
+.erp-sal-doc-metrics .is-absent { color: #b91c1c; }
+.erp-sal-doc-metrics .is-holiday { color: #0369a1; }
+.erp-sal-doc-metrics .is-deduct { color: #b91c1c; }
+.erp-sal-doc-metrics .is-bonus { color: #7c3aed; }
+.erp-sal-doc-metrics .is-strong { font-weight: 900; color: var(--sal-blue); }
+
+.erp-sal-doc-formula {
+  margin: 0;
+  padding: 0.45rem 0.85rem 0.65rem;
+  font-size: 0.625rem;
+  color: #64748b;
+  background: #fafafa;
+  border-bottom: 1px solid var(--sal-grid);
+  line-height: 1.45;
+}
+
+.erp-sal-doc-advance-box {
+  padding: 0.75rem 0.85rem;
+  border: 2px solid #fca5a5;
+  background: #fff;
+  margin: 0.75rem;
+  border-radius: 4px;
+}
+
+@media (min-width: 680px) {
+  .erp-sal-doc-split.is-tall .erp-sal-doc-advance-box { margin: 0.75rem 0.5rem 0.75rem 0.75rem; }
+}
+
+.erp-sal-doc-advance-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.5625rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b91c1c;
+}
+
+.erp-sal-doc-advance-lead {
+  margin: 0 0 0.55rem;
+  font-size: 0.6875rem;
+  color: #7f1d1d;
+  line-height: 1.45;
+}
+
+.erp-sal-doc-totals {
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  border-left: 1px solid var(--sal-grid);
+}
+
+@media (max-width: 679px) {
+  .erp-sal-doc-totals { border-left: none; border-top: 1px solid var(--sal-grid); }
+}
+
+.erp-sal-doc-cash-paid {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 2px solid #047857;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.erp-sal-doc-cash-paid span {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #047857;
+}
+
+.erp-sal-doc-cash-paid strong {
+  font-size: 1.25rem;
+  font-family: ui-monospace, monospace;
+  color: #047857;
+}
+
+.erp-sal-doc-notes {
+  padding: 0.75rem 0.85rem;
+  border-top: 1px solid var(--sal-grid);
+  font-size: 0.75rem;
+  color: #475569;
+  background: #fafafa;
+}
+
+.erp-sal-doc-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.55rem 0.85rem;
+  border-top: 1px solid var(--sal-grid);
+  font-size: 0.5625rem;
+  color: #94a3b8;
+  background: #f8fafc;
+}
+
+.emp-slip-wrap .erp-sal-doc {
+  border: none;
+  box-shadow: none;
+  max-width: none;
+}
+
+.erp-salary-receipt {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  background: #fff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08);
+  font-size: 0.8125rem;
+}
+
+.erp-salary-receipt.is-print {
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  font-size: 9pt;
+}
+
+.erp-sal-rcpt-header {
+  background: linear-gradient(135deg, #be185d 0%, #db2777 55%, #ec4899 100%);
+  color: #fff;
+  text-align: center;
+  padding: 1.1rem 1rem 0.95rem;
+}
+
+.erp-sal-rcpt-company {
+  font-size: 1.125rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.erp-sal-rcpt-company-sub {
+  font-size: 0.6875rem;
+  opacity: 0.92;
+  margin: 0.2rem 0 0;
+  line-height: 1.4;
+}
+
+.erp-sal-rcpt-doc-title {
+  margin: 0.65rem 0 0;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0.95;
+}
+
+.erp-sal-rcpt-period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #fdf2f8;
+  border-bottom: 1px solid #fbcfe8;
+}
+
+.erp-sal-rcpt-period-label {
+  display: block;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9d174d;
+  margin-bottom: 0.15rem;
+}
+
+.erp-sal-rcpt-period-bar strong {
+  font-size: 1rem;
+  color: #831843;
+}
+
+.erp-sal-rcpt-period-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.erp-sal-rcpt-status {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.erp-sal-rcpt-status.is-paid { background: #d1fae5; color: #047857; }
+.erp-sal-rcpt-status.is-preview { background: #e0e7ff; color: #3730a3; }
+
+.erp-sal-rcpt-ref {
+  font-size: 0.6875rem;
+  font-family: ui-monospace, monospace;
+  color: #64748b;
+}
+
+.erp-sal-rcpt-section {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-sal-rcpt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (min-width: 560px) {
+  .erp-sal-rcpt-grid-2 { grid-template-columns: 1fr 1fr; }
+  .erp-sal-rcpt-grid-2 .erp-sal-rcpt-block:first-child { border-right: 1px solid #e2e8f0; }
+}
+
+.erp-sal-rcpt-block { padding: 0.85rem 1rem; }
+.erp-sal-rcpt-block-muted { background: #f8fafc; }
+
+.erp-sal-rcpt-block-title {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin: 0 0 0.55rem;
+}
+
+.erp-sal-rcpt-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.28rem 0;
+  font-size: 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.erp-sal-rcpt-meta-row:last-child { border-bottom: none; }
+
+.erp-sal-rcpt-meta-label { color: #64748b; flex-shrink: 0; }
+.erp-sal-rcpt-meta-value { color: #0f172a; text-align: right; }
+.erp-sal-rcpt-meta-value.is-mono { font-family: ui-monospace, monospace; }
+.erp-sal-rcpt-meta-value.is-bold { font-weight: 700; }
+
+.erp-sal-rcpt-att-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.35rem;
+}
+
+.erp-sal-rcpt-att-cell {
+  text-align: center;
+  padding: 0.45rem 0.25rem;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+
+.erp-sal-rcpt-att-cell span {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.erp-sal-rcpt-att-cell label {
+  display: block;
+  font-size: 0.5rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-top: 0.1rem;
+}
+
+.erp-sal-rcpt-att-cell.is-present span { color: #047857; }
+.erp-sal-rcpt-att-cell.is-absent span { color: #b91c1c; }
+.erp-sal-rcpt-att-cell.is-rate span { font-size: 0.75rem; }
+
+.erp-sal-rcpt-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.6875rem;
+  color: #0369a1;
+  background: #e0f2fe;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  line-height: 1.45;
+}
+
+.erp-sal-rcpt-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.32rem 0;
+  font-size: 0.75rem;
+  border-bottom: 1px solid #f8fafc;
+}
+
+.erp-sal-rcpt-line small {
+  display: block;
+  font-size: 0.625rem;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-top: 0.1rem;
+}
+
+.erp-sal-rcpt-line.is-deduct { color: #b91c1c; }
+.erp-sal-rcpt-line.is-bonus { color: #047857; }
+.erp-sal-rcpt-line.is-strong { font-weight: 800; color: #0f172a; }
+
+.erp-sal-rcpt-money {
+  font-family: ui-monospace, monospace;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.erp-sal-rcpt-net {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  padding: 1rem 1.1rem;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border-top: 1px solid #6ee7b7;
+  border-bottom: 1px solid #6ee7b7;
+}
+
+.erp-sal-rcpt-net span {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #047857;
+}
+
+.erp-sal-rcpt-net small {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #059669;
+  margin-top: 0.15rem;
+}
+
+.erp-sal-rcpt-net strong {
+  font-size: 1.375rem;
+  font-family: ui-monospace, monospace;
+  color: #047857;
+}
+
+.erp-sal-rcpt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.erp-sal-rcpt-table th {
+  background: #831843;
+  color: #fff;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.erp-sal-rcpt-table td {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #e2e8f0;
+}
+
+.erp-sal-rcpt-table .is-right { text-align: right; }
+.erp-sal-rcpt-table .is-mono { font-family: ui-monospace, monospace; }
+.erp-sal-rcpt-table tr.is-total td {
+  background: #fdf2f8;
+  font-weight: 800;
+  color: #be185d;
+}
+
+.erp-sal-rcpt-table-compact { margin-top: 0.65rem; }
+
+.erp-sal-rcpt-adv-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+@media (min-width: 480px) {
+  .erp-sal-rcpt-adv-summary { grid-template-columns: repeat(4, 1fr); }
+}
+
+.erp-sal-rcpt-adv-summary > div {
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.erp-sal-rcpt-adv-summary span {
+  display: block;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 0.2rem;
+}
+
+.erp-sal-rcpt-adv-summary strong {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: #0f172a;
+}
+
+.erp-sal-rcpt-adv-summary .is-pending {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.erp-sal-rcpt-adv-summary .is-pending strong { color: #b91c1c; }
+
+.erp-sal-rcpt-notes {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.75rem;
+  color: #475569;
+  background: #fafafa;
+}
+
+.erp-sal-rcpt-signatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  padding: 1.25rem 1rem 0.75rem;
+}
+
+.erp-sal-rcpt-sign-line {
+  display: block;
+  height: 1px;
+  background: #94a3b8;
+  margin-bottom: 0.35rem;
+}
+
+.erp-sal-rcpt-signatures label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.erp-sal-rcpt-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.65rem 1rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  font-size: 0.5625rem;
+  color: #94a3b8;
+}
+
+.emp-slip-wrap .erp-salary-receipt,
+.emp-slip-wrap .erp-salary-invoice,
+.emp-slip-wrap .erp-sal-xls {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* Professional salary invoice / pay slip */
+.erp-salary-invoice {
+  --inv-brand: #047857;
+  --inv-brand-dark: #065f46;
+  --inv-brand-soft: #ecfdf5;
+  --inv-amber: #b45309;
+  --inv-sky: #0369a1;
+  --inv-danger: #b91c1c;
+  width: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.1);
+  font-size: 0.8125rem;
+  color: #0f172a;
+}
+
+.erp-salary-invoice.is-print {
+  max-width: none;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
+.erp-inv-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  background: linear-gradient(135deg, #047857 0%, #059669 50%, #10b981 100%);
+  color: #fff;
+}
+
+.erp-inv-company {
+  font-size: 1.125rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.erp-inv-sub { font-size: 0.6875rem; opacity: 0.92; margin: 0.2rem 0 0; line-height: 1.45; }
+
+.erp-inv-header-right { text-align: right; }
+
+.erp-inv-doc-type {
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin: 0;
+  opacity: 0.95;
+}
+
+.erp-inv-ref { font-size: 0.75rem; font-family: ui-monospace, monospace; margin: 0.25rem 0; opacity: 0.9; }
+
+.erp-inv-status {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.erp-inv-status.is-paid { background: #d1fae5; color: #047857; }
+.erp-inv-status.is-preview { background: #e0e7ff; color: #3730a3; }
+
+.erp-inv-band {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 1.15rem;
+  background: var(--inv-brand-soft);
+  border-bottom: 2px solid #6ee7b7;
+}
+
+.erp-inv-band-label {
+  display: block;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--inv-brand-dark);
+}
+
+.erp-inv-band strong { font-size: 1rem; color: var(--inv-brand-dark); }
+
+.erp-inv-band-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.6875rem;
+  color: #047857;
+  text-align: right;
+}
+
+.erp-inv-two-col {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+@media (min-width: 640px) {
+  .erp-inv-two-col { grid-template-columns: 1fr 1fr; }
+  .erp-inv-two-col .erp-inv-info-card:first-child { border-right: 1px solid #e2e8f0; }
+}
+
+.erp-inv-info-card { padding: 0.85rem 1.15rem; }
+
+.erp-inv-info-title {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin: 0 0 0.55rem;
+}
+
+.erp-inv-kv { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.erp-inv-kv th {
+  width: 38%;
+  padding: 0.3rem 0.5rem 0.3rem 0;
+  text-align: left;
+  font-weight: 600;
+  color: #64748b;
+  vertical-align: top;
+}
+.erp-inv-kv td { padding: 0.3rem 0; color: #0f172a; }
+.erp-inv-kv .is-mono { font-family: ui-monospace, monospace; }
+.erp-inv-kv .is-strong { font-weight: 800; }
+
+.erp-inv-att-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+}
+
+@media (min-width: 520px) {
+  .erp-inv-att-strip { grid-template-columns: repeat(6, 1fr); }
+}
+
+.erp-inv-att-pill {
+  text-align: center;
+  padding: 0.4rem 0.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.erp-inv-att-pill span { display: block; font-size: 0.9375rem; font-weight: 900; }
+.erp-inv-att-pill label { display: block; font-size: 0.5rem; font-weight: 800; text-transform: uppercase; color: #94a3b8; margin-top: 0.1rem; }
+.erp-inv-att-pill.is-present span { color: #047857; }
+.erp-inv-att-pill.is-absent span { color: #b91c1c; }
+
+.erp-inv-hint {
+  margin: 0.55rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--inv-sky);
+  background: #e0f2fe;
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+}
+
+.erp-inv-grid-block {
+  margin: 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-inv-grid-block.is-calc .erp-inv-grid-title { background: #f0fdf4; color: var(--inv-brand-dark); }
+.erp-inv-grid-block.is-prev .erp-inv-grid-title { background: #fffbeb; color: var(--inv-amber); }
+.erp-inv-grid-block.is-month .erp-inv-grid-title { background: #eff6ff; color: var(--inv-sky); }
+.erp-inv-grid-block.is-pay .erp-inv-grid-title { background: #f8fafc; color: #334155; }
+
+.erp-inv-grid-title {
+  margin: 0;
+  padding: 0.45rem 1.15rem;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-inv-table-wrap { padding: 0 1.15rem 0.85rem; }
+
+.erp-inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+  border: 1px solid #cbd5e1;
+}
+
+.erp-inv-table th {
+  background: #1e293b;
+  color: #fff;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #334155;
+}
+
+.erp-inv-table td {
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.erp-inv-table tbody tr:nth-child(even) { background: #f8fafc; }
+.erp-inv-table .is-right { text-align: right; }
+.erp-inv-table .is-mono { font-family: ui-monospace, monospace; }
+.erp-inv-table .erp-inv-empty { text-align: center; color: #94a3b8; font-style: italic; }
+.erp-inv-table tfoot .is-foot td {
+  background: #ecfdf5;
+  font-weight: 800;
+  color: var(--inv-brand-dark);
+  border-top: 2px solid #6ee7b7;
+}
+
+.erp-inv-amt.is-deduct { color: var(--inv-danger); font-weight: 700; }
+.erp-inv-amt.is-bonus { color: #047857; font-weight: 700; }
+.erp-inv-amt.is-advance-out { color: var(--inv-sky); font-weight: 700; }
+
+.erp-inv-adv-section { border-bottom: 1px solid #e2e8f0; }
+
+.erp-inv-section-head {
+  margin: 0;
+  padding: 0.65rem 1.15rem;
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #fffbeb, #eff6ff);
+  color: #334155;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-inv-adv-summary {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  padding: 0.75rem 1.15rem;
+}
+
+@media (min-width: 720px) {
+  .erp-inv-adv-summary { grid-template-columns: repeat(5, 1fr); }
+}
+
+.erp-inv-stat {
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  text-align: center;
+}
+
+.erp-inv-stat label {
+  display: block;
+  font-size: 0.5rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.2rem;
+  line-height: 1.3;
+}
+
+.erp-inv-stat strong {
+  display: block;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: #0f172a;
+}
+
+.erp-inv-stat small { display: block; font-size: 0.5625rem; color: #94a3b8; margin-top: 0.15rem; }
+.erp-inv-stat.is-prev { border-color: #fde68a; background: #fffbeb; }
+.erp-inv-stat.is-month { border-color: #bfdbfe; background: #eff6ff; }
+.erp-inv-stat.is-deduct { border-color: #fecaca; background: #fef2f2; }
+.erp-inv-stat.is-deduct strong { color: var(--inv-danger); }
+.erp-inv-stat.is-new { border-color: #7dd3fc; background: #f0f9ff; }
+.erp-inv-stat.is-new strong { color: var(--inv-sky); }
+.erp-inv-stat.is-pending.has-balance { border-color: #fca5a5; background: #fef2f2; }
+.erp-inv-stat.is-pending.has-balance strong { color: var(--inv-danger); }
+
+.erp-inv-adv-grids {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (min-width: 768px) {
+  .erp-inv-adv-grids { grid-template-columns: 1fr 1fr; }
+  .erp-inv-adv-grids .erp-inv-grid-block:first-child { border-right: 1px solid #e2e8f0; }
+}
+
+.erp-inv-totals {
+  padding: 0.85rem 1.15rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-inv-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0;
+  font-size: 0.8125rem;
+}
+
+.erp-inv-total-row strong { font-family: ui-monospace, monospace; font-size: 0.9375rem; }
+.erp-inv-total-row.is-advance strong { color: var(--inv-sky); }
+.erp-inv-total-row.is-grand {
+  margin-top: 0.35rem;
+  padding-top: 0.55rem;
+  border-top: 2px solid var(--inv-brand);
+  font-weight: 800;
+  font-size: 0.9375rem;
+  color: var(--inv-brand-dark);
+}
+
+.erp-inv-total-row.is-grand strong { font-size: 1.125rem; color: var(--inv-brand-dark); }
+
+.erp-inv-notes {
+  padding: 0.85rem 1.15rem;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.75rem;
+  color: #475569;
+  background: #fafafa;
+}
+
+.erp-inv-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 1.25rem 1.15rem 0.75rem;
+}
+
+.erp-inv-signatures span {
+  display: block;
+  height: 1px;
+  background: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.erp-inv-signatures label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.erp-inv-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.35rem;
+  padding: 0.65rem 1.15rem;
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 0.5625rem;
+}
+
+.erp-salary-slip-print .erp-salary-invoice { border: none; box-shadow: none; }
+
+/* Legacy clearance slip aliases (panel embed) */
+.erp-salary-clearance-slip { font-size: inherit; color: inherit; }
 
 /* ── Reports hub & register surfaces ── */
 .erp-reports-surface {
@@ -7790,6 +9442,57 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-att-status-btn.is-half.is-active { background: #fffbeb; border-color: #fcd34d; color: #b45309; box-shadow: 0 0 0 2px #fde68a; }
 .erp-att-status-btn.is-leave.is-active { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; box-shadow: 0 0 0 2px #bfdbfe; }
 .erp-att-status-btn.is-holiday.is-active { background: #f8fafc; border-color: #cbd5e1; color: #475569; box-shadow: 0 0 0 2px #e2e8f0; }
+
+.erp-att-status-select {
+  width: 100%; max-width: 11rem; min-width: 7.5rem; padding: 0.4rem 1.75rem 0.4rem 0.55rem;
+  font-size: 0.75rem; font-weight: 700; border-radius: 8px; border: 1px solid #e2e8f0;
+  background-color: #fff; color: #0f172a; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.45rem center;
+  appearance: none; -webkit-appearance: none;
+}
+.erp-att-status-select.is-compact {
+  width: 2.35rem; min-width: 2.35rem; max-width: 2.35rem; padding: 0.2rem 0.1rem;
+  font-size: 0.625rem; text-align: center; text-align-last: center;
+  background-position: right 0.15rem center; background-size: 8px;
+}
+.erp-att-status-select:disabled { opacity: 0.6; cursor: not-allowed; }
+.erp-att-status-select.erp-att-select-present { background-color: #ecfdf5; border-color: #6ee7b7; color: #047857; }
+.erp-att-status-select.erp-att-select-absent { background-color: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.erp-att-status-select.erp-att-select-half { background-color: #fffbeb; border-color: #fcd34d; color: #b45309; }
+.erp-att-status-select.erp-att-select-leave { background-color: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+.erp-att-status-select.erp-att-select-holiday { background-color: #f5f3ff; border-color: #c4b5fd; color: #6d28d9; }
+.erp-att-status-select.erp-att-select-empty { background-color: #fff; border-color: #e2e8f0; color: #94a3b8; }
+.erp-hr-hazri-table .erp-att-status-select.is-compact option { font-size: 0.75rem; }
+
+.erp-att-hazri-cell { position: relative; display: inline-block; }
+.erp-att-hazri-btn {
+  width: 1.75rem; height: 1.5rem; padding: 0; border-radius: 6px; border: 1px solid #e2e8f0;
+  font-size: 0.625rem; font-weight: 800; cursor: pointer; background: #fff; color: #94a3b8;
+}
+.erp-att-hazri-btn.is-saving { opacity: 0.55; cursor: wait; }
+.erp-att-hazri-btn.erp-att-cell-present { background: #ecfdf5; border-color: #6ee7b7; color: #047857; }
+.erp-att-hazri-btn.erp-att-cell-absent { background: #fef2f2; border-color: #fca5a5; color: #b91c1c; }
+.erp-att-hazri-btn.erp-att-cell-half { background: #fffbeb; border-color: #fcd34d; color: #b45309; }
+.erp-att-hazri-btn.erp-att-cell-leave { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+.erp-att-hazri-btn.erp-att-cell-holiday { background: #f5f3ff; border-color: #c4b5fd; color: #6d28d9; }
+.erp-att-hazri-btn.erp-att-cell-empty { background: #fff; border-color: #e2e8f0; color: #cbd5e1; }
+.erp-att-hazri-menu {
+  position: absolute; z-index: 30; top: 100%; left: 50%; transform: translateX(-50%);
+  margin-top: 2px; display: flex; gap: 2px; padding: 3px; border-radius: 8px;
+  background: #fff; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+}
+.erp-att-hazri-opt {
+  width: 1.4rem; height: 1.35rem; border-radius: 5px; border: 1px solid transparent;
+  font-size: 0.625rem; font-weight: 800; cursor: pointer; background: #f8fafc; color: #64748b;
+}
+.erp-att-hazri-opt.is-active { box-shadow: 0 0 0 2px #fbcfe8; }
+.erp-att-hazri-opt.is-present { background: #ecfdf5; color: #047857; }
+.erp-att-hazri-opt.is-absent { background: #fef2f2; color: #b91c1c; }
+.erp-att-hazri-opt.is-half { background: #fffbeb; color: #b45309; }
+.erp-att-hazri-opt.is-leave { background: #eff6ff; color: #1d4ed8; }
+.erp-att-hazri-opt.is-holiday { background: #f5f3ff; color: #6d28d9; }
+.erp-att-hazri-opt.is-empty { background: #fff; color: #94a3b8; }
 
 .erp-att-quick-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-left: auto; }
 .erp-att-quick-btn {

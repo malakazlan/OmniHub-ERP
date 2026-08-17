@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
@@ -16,7 +16,7 @@ export async function DELETE(req, { params }) {
     const expense = await prisma.expense.findUnique({ where: { id: expenseId } });
     if (!expense) return Response.json({ error: "Expense not found" }, { status: 404 });
 
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       if (expense.cashAmount > 0 && expense.cashAccountId) {
         await createLedgerEntry(tx, {
           accountId: expense.cashAccountId,
@@ -47,6 +47,12 @@ export async function DELETE(req, { params }) {
     return Response.json({ success: true, message: "Expense deleted successfully" });
   } catch (error) {
     console.error("Delete expense error:", error);
+    if (error.code === "P2028") {
+      return Response.json(
+        { error: "Database busy — retry in a moment." },
+        { status: 503 }
+      );
+    }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
