@@ -1,7 +1,9 @@
+import { createLedgerEntry } from "./ledger";
+import { parseBalanceAmount, formAmountToLedgerBalance } from "./accountBalanceForm";
+
 /** Parse opening balance from form/API input. */
 export function parseOpeningBalance(val) {
-  const n = parseFloat(val);
-  return Number.isFinite(n) ? n : 0;
+  return parseBalanceAmount(val);
 }
 
 /**
@@ -32,4 +34,39 @@ export async function applyOpeningBalance(tx, accountId, accountType, openingBal
       balance,
     },
   });
+}
+
+/**
+ * Set account to a new balance from the edit form (posts a balance adjustment entry).
+ */
+export async function syncAccountBalanceFromForm(tx, accountId, currentBalanceRaw) {
+  if (currentBalanceRaw === undefined || currentBalanceRaw === null || currentBalanceRaw === "") return;
+
+  const account = await tx.account.findUnique({ where: { id: accountId } });
+  if (!account) return;
+
+  const target = formAmountToLedgerBalance(account.type, currentBalanceRaw);
+  const current = account.balance || 0;
+  const delta = target - current;
+  if (Math.abs(delta) < 0.005) return;
+
+  if (delta > 0) {
+    await createLedgerEntry(tx, {
+      accountId,
+      date: new Date(),
+      description: "Balance adjustment",
+      referenceType: "BalanceAdjustment",
+      debit: delta,
+      credit: 0,
+    });
+  } else {
+    await createLedgerEntry(tx, {
+      accountId,
+      date: new Date(),
+      description: "Balance adjustment",
+      referenceType: "BalanceAdjustment",
+      debit: 0,
+      credit: Math.abs(delta),
+    });
+  }
 }

@@ -4,6 +4,7 @@ import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePr
 import { MODULES } from "@/lib/constants";
 import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccounts";
 import { trimOrNull } from "@/lib/stringUtils";
+import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
 
 async function fetchLoginUser(userId) {
   if (!userId) return null;
@@ -198,6 +199,7 @@ export async function PUT(req, { params }) {
             isActive: body.isActive !== undefined ? Boolean(body.isActive) : existing.isActive,
           },
         });
+        await syncAccountBalanceFromForm(tx, existing.accountId, body.currentBalance);
       }
 
       return updated;

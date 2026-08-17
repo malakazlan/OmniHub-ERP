@@ -1,6 +1,5 @@
 import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest, hashPassword } from "@/lib/auth";
-import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
 import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccounts";
 import { attachCashAccountsToEmployees } from "@/lib/accountRelations";
 import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePresets";
@@ -42,10 +41,6 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const blocked = directoryCreateBlocked(body);
-    if (blocked) return blocked;
-    const adminOnly = requireProjectAccountsAdmin(user);
-    if (adminOnly) return adminOnly;
 
     const {
       name,

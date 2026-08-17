@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import { withDbRetry, isTransientDbError, dbUnavailableResponse } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { getReceivablesByCategory, getPayablesByCategory } from "@/lib/ledger";
 
@@ -13,8 +13,8 @@ function weekRange() {
   return { start, end };
 }
 
-async function buildCashFlow(start, end) {
-  const accounts = await prisma.account.findMany({
+async function buildCashFlow(db, start, end) {
+  const accounts = await db.account.findMany({
     where: { category: { in: ["cash", "bank"] }, isActive: true },
     select: { id: true, category: true, balance: true },
   });
@@ -28,7 +28,7 @@ async function buildCashFlow(start, end) {
     .reduce((s, a) => s + a.balance, 0);
 
   const entries = accountIds.length
-    ? await prisma.ledgerEntry.findMany({
+    ? await db.ledgerEntry.findMany({
         where: { date: { gte: start, lte: end }, accountId: { in: accountIds } },
         select: {
           date: true,
@@ -93,8 +93,8 @@ async function buildCashFlow(start, end) {
   };
 }
 
-async function buildExpenseSummary(start, end) {
-  const expenses = await prisma.expense.findMany({
+async function buildExpenseSummary(db, start, end) {
+  const expenses = await db.expense.findMany({
     where: {
       status: { not: "rejected" },
       expenseDate: { gte: start, lte: end },
@@ -138,51 +138,56 @@ export async function GET(req) {
 
     const { start, end } = weekRange();
 
-    const [
-      cashFlow,
-      expenses,
-      shopReceivables,
-      companyReceivables,
-      farmerPayables,
-      transportPayables,
-      generalPayables,
-    ] = await Promise.all([
-      buildCashFlow(start, end),
-      buildExpenseSummary(start, end),
-      getReceivablesByCategory("shop"),
-      getReceivablesByCategory("company"),
-      getPayablesByCategory("farmer"),
-      getPayablesByCategory("transport"),
-      getPayablesByCategory("general"),
-    ]);
+    const payload = await withDbRetry(async (db) => {
+      const [
+        cashFlow,
+        expenses,
+        shopReceivables,
+        companyReceivables,
+        farmerPayables,
+        transportPayables,
+        generalPayables,
+      ] = await Promise.all([
+        buildCashFlow(db, start, end),
+        buildExpenseSummary(db, start, end),
+        getReceivablesByCategory("shop"),
+        getReceivablesByCategory("company"),
+        getPayablesByCategory("farmer"),
+        getPayablesByCategory("transport"),
+        getPayablesByCategory("general"),
+      ]);
 
-    const receivables = {
-      total: shopReceivables + companyReceivables,
-      breakdown: [
-        { label: "Shops", amount: shopReceivables },
-        { label: "Companies", amount: companyReceivables },
-      ].filter((r) => r.amount > 0),
-    };
+      const receivables = {
+        total: shopReceivables + companyReceivables,
+        breakdown: [
+          { label: "Shops", amount: shopReceivables },
+          { label: "Companies", amount: companyReceivables },
+        ].filter((r) => r.amount > 0),
+      };
 
-    const payables = {
-      total: farmerPayables + transportPayables + generalPayables,
-      breakdown: [
-        { label: "Farmers", amount: farmerPayables },
-        { label: "Transport", amount: transportPayables },
-        { label: "General", amount: generalPayables },
-      ].filter((p) => p.amount > 0),
-    };
+      const payables = {
+        total: farmerPayables + transportPayables + generalPayables,
+        breakdown: [
+          { label: "Farmers", amount: farmerPayables },
+          { label: "Transport", amount: transportPayables },
+          { label: "General", amount: generalPayables },
+        ].filter((p) => p.amount > 0),
+      };
+
+      return { cashFlow, expenses, receivables, payables };
+    });
 
     return Response.json({
       success: true,
       period: { from: start.toISOString(), to: end.toISOString(), label: "Last 7 days" },
-      cashFlow,
-      receivables,
-      payables,
-      expenses,
+      cashFlow: payload.cashFlow,
+      receivables: payload.receivables,
+      payables: payload.payables,
+      expenses: payload.expenses,
     });
   } catch (error) {
     console.error("Dashboard analytics error:", error);
+    if (isTransientDbError(error)) return dbUnavailableResponse(error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -2,6 +2,7 @@ import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
+import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
 
 export async function GET(req, { params }) {
   try {
@@ -83,6 +84,7 @@ export async function PUT(req, { params }) {
             isActive: body.isActive !== undefined ? body.isActive : shop.isActive,
           },
         });
+        await syncAccountBalanceFromForm(tx, shop.accountId, body.currentBalance);
       }
 
       return s;

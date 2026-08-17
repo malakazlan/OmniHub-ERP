@@ -26,13 +26,23 @@ export default function SearchPicker({
   const inputRef = useRef(null);
   const listRef = useRef(null);
 
-  const selected = options.find((o) => getOptionValue(o) === String(value));
+  const valueId = value == null || value === "" ? "" : String(value);
+
+  const selectedLabel = useMemo(() => {
+    if (!valueId) return "";
+    const match = options.find((o) => getOptionValue(o) === valueId);
+    return match ? getOptionLabel(match) : "";
+  }, [valueId, options, getOptionValue, getOptionLabel]);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (selected) setQuery(getOptionLabel(selected));
-  }, [selected, getOptionLabel]);
+    if (!valueId) {
+      setQuery("");
+    } else if (selectedLabel) {
+      setQuery(selectedLabel);
+    }
+  }, [valueId, selectedLabel]);
 
   const updateMenuRect = useCallback(() => {
     const el = inputRef.current;

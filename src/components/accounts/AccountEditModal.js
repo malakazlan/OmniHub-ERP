@@ -79,6 +79,8 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
     }
 
     const entityId = detail?.entityId;
+    const balancePayload = { currentBalance: form.currentBalance };
+
     setSubmitting(true);
     try {
       let res;
@@ -99,6 +101,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               whatsappNumber: form.whatsappNumber || null,
               address: form.address || null,
               isActive: form.isActive,
+              ...balancePayload,
             }),
           });
           break;
@@ -119,6 +122,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               whatsappNumber: form.whatsappNumber || null,
               address: form.address || null,
               isActive: form.isActive,
+              ...balancePayload,
             }),
           });
           break;
@@ -136,6 +140,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               whatsappNumber: form.whatsappNumber || null,
               address: form.address || null,
               isActive: form.isActive,
+              ...balancePayload,
             }),
           });
           break;
@@ -153,6 +158,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               salary: form.salary,
               cnic: form.cnic?.trim() || null,
               isActive: form.isActive,
+              ...balancePayload,
             }),
           });
           break;
@@ -171,6 +177,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
                 branchCode: form.branchCode || null,
                 branchName: form.branchName || null,
               },
+              ...balancePayload,
             }),
           });
           break;
@@ -189,6 +196,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               phone: form.phone?.trim() || null,
               isActive: form.isActive,
               ownerUserId,
+              ...balancePayload,
             }),
           });
           break;
@@ -204,6 +212,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               whatsappNumber: form.whatsappNumber || null,
               address: form.address || null,
               isActive: form.isActive,
+              ...balancePayload,
             }),
           });
       }

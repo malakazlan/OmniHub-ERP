@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { balanceToFormAmount } from "@/lib/accountBalanceForm";
 
 export const CATEGORY_TITLES = {
   cash: "Cash Account",
@@ -52,16 +53,9 @@ export function Field({ label, required, children, hint }) {
   );
 }
 
-export function OpeningBalanceField({ value, onChange, hint, readOnly, readOnlyValue }) {
-  if (readOnly) {
-    return (
-      <Field label="Current balance" hint="Opening balance cannot be changed after registration.">
-        <input type="text" readOnly value={readOnlyValue ?? "0"} className="input-field w-full text-sm tabular-nums bg-slate-100 text-slate-600" />
-      </Field>
-    );
-  }
+export function OpeningBalanceField({ value, onChange, hint, label = "Opening balance" }) {
   return (
-    <Field label="Opening balance" hint={hint}>
+    <Field label={label} hint={hint}>
       <input
         type="number"
         step="0.01"
@@ -71,6 +65,22 @@ export function OpeningBalanceField({ value, onChange, hint, readOnly, readOnlyV
         placeholder="0"
       />
     </Field>
+  );
+}
+
+function BalanceField({ isEdit, form, set, openingHint }) {
+  const fieldKey = isEdit ? "currentBalance" : "openingBalance";
+  return (
+    <OpeningBalanceField
+      label={isEdit ? "Current balance" : "Opening balance"}
+      value={form[fieldKey] ?? ""}
+      onChange={(e) => set(fieldKey, e.target.value)}
+      hint={
+        isEdit
+          ? "Change the account balance. A balance adjustment will be posted to the ledger."
+          : openingHint
+      }
+    />
   );
 }
 
@@ -123,9 +133,6 @@ export function AccountCategoryFields({
     <input className="input-field w-full text-sm" value={props.value ?? ""} {...props} />
   );
   const openingHint = OPENING_HINT[category];
-  const balanceDisplay = accountMeta?.balance != null
-    ? Number(accountMeta.balance).toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-    : "0";
 
   if (category === "cash") {
     return (
@@ -140,11 +147,7 @@ export function AccountCategoryFields({
             <Field label="Phone" required>
               {input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "03xx-xxxxxxx" })}
             </Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Assignment" optional>
@@ -178,11 +181,7 @@ export function AccountCategoryFields({
             <Field label="Phone" required>
               {input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "Branch / contact number" })}
             </Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Bank details" optional>
@@ -206,11 +205,7 @@ export function AccountCategoryFields({
               <Field label="Farmer name" required>{input({ value: form.name, onChange: (e) => set("name", e.target.value) })}</Field>
             </div>
             <Field label="Phone" required>{input({ value: form.phone, onChange: (e) => set("phone", e.target.value) })}</Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Additional information" optional>
@@ -254,11 +249,7 @@ export function AccountCategoryFields({
                 <option value="both">Both supplier & buyer</option>
               </select>
             </Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Additional information" optional>
@@ -288,11 +279,7 @@ export function AccountCategoryFields({
               <Field label="Shop / customer name" required>{input({ value: form.name, onChange: (e) => set("name", e.target.value) })}</Field>
             </div>
             <Field label="Phone" required>{input({ value: form.phone, onChange: (e) => set("phone", e.target.value) })}</Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Additional information" optional>
@@ -327,11 +314,7 @@ export function AccountCategoryFields({
               <Field label="Employee name" required>{input({ value: form.name, onChange: (e) => set("name", e.target.value), placeholder: "Full name" })}</Field>
             </div>
             <Field label="Phone" required>{input({ value: form.phone, onChange: (e) => set("phone", e.target.value) })}</Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
             <Field label="Role">
               <select className="input-field w-full text-sm" value={form.role} onChange={(e) => set("role", e.target.value)}>
                 {EMP_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
@@ -360,11 +343,7 @@ export function AccountCategoryFields({
               <Field label="Driver name" required>{input({ value: form.name, onChange: (e) => set("name", e.target.value), placeholder: "Full name" })}</Field>
             </div>
             <Field label="Phone" required>{input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "03xx-xxxxxxx" })}</Field>
-            {isEdit ? (
-              <OpeningBalanceField readOnly readOnlyValue={balanceDisplay} />
-            ) : (
-              <OpeningBalanceField value={form.openingBalance} onChange={(e) => set("openingBalance", e.target.value)} hint={openingHint} />
-            )}
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Additional information" optional>
@@ -382,10 +361,15 @@ export function AccountCategoryFields({
 
 export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
   const base = { isActive: account?.isActive !== false };
+  const currentBalance =
+    account?.type != null
+      ? String(balanceToFormAmount(account.type, account?.balance ?? 0))
+      : "";
   switch (category) {
     case "cash":
       return {
         ...base,
+        currentBalance,
         name: account?.name || "",
         phone: account?.phone || "",
         assignToAdmin: false,
@@ -394,6 +378,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
     case "bank":
       return {
         ...base,
+        currentBalance,
         accountTitle: account?.name || bankMeta?.accountTitle || "",
         phone: account?.phone || "",
         bankName: bankMeta?.bankName || "",
@@ -405,6 +390,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
     case "farmer":
       return {
         ...base,
+        currentBalance,
         name: partyEntity?.name || account?.name?.replace(/\s*\(Farmer\)\s*$/i, "") || "",
         phone: partyEntity?.phone || account?.phone || "",
         city: partyEntity?.city || account?.city || "",
@@ -418,6 +404,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
     case "company":
       return {
         ...base,
+        currentBalance,
         name: partyEntity?.name || "",
         contactPerson: partyEntity?.contactPerson || "",
         phone: partyEntity?.phone || "",
@@ -433,6 +420,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
     case "shop":
       return {
         ...base,
+        currentBalance,
         name: partyEntity?.name || "",
         ownerName: partyEntity?.ownerName || "",
         phone: partyEntity?.phone || "",
@@ -446,6 +434,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
     case "transport":
       return {
         ...base,
+        currentBalance,
         name: partyEntity?.name || account?.name?.replace(/\s*\((Salary|Driver)\)\s*$/i, "") || "",
         phone: partyEntity?.phone || account?.phone || "",
         role: partyEntity?.role || "officer",
@@ -457,6 +446,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
     default:
       return {
         ...base,
+        currentBalance,
         name: account?.name || "",
         phone: account?.phone || "",
         city: account?.city || "",

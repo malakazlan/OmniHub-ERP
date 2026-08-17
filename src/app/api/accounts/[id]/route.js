@@ -4,6 +4,7 @@ import { userCanAccessAccount } from "@/lib/accountAccess";
 import { findPartyEntityByAccount } from "@/lib/accountRelations";
 import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 import { trimOrNull } from "@/lib/stringUtils";
+import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
 
 export async function GET(req, { params }) {
   try {
@@ -51,57 +52,63 @@ export async function PUT(req, { params }) {
     const accountId = parseInt(id);
     const body = await req.json();
 
-    const account = await prisma.account.update({
-      where: { id: accountId },
-      data: {
-        name: body.name?.trim() || undefined,
-        city: body.city !== undefined ? trimOrNull(body.city) : undefined,
-        phone: body.phone !== undefined ? trimOrNull(body.phone) : undefined,
-        whatsappNumber: body.whatsappNumber !== undefined ? trimOrNull(body.whatsappNumber) : undefined,
-        cnic: body.cnic !== undefined ? trimOrNull(body.cnic) : undefined,
-        address: body.address !== undefined ? trimOrNull(body.address) : undefined,
-        reference: body.reference !== undefined ? trimOrNull(body.reference) : undefined,
-        isActive: body.isActive !== undefined ? body.isActive : undefined,
-        ownerUserId:
+    const account = await runTransaction(async (tx) => {
+      const updated = await tx.account.update({
+        where: { id: accountId },
+        data: {
+          name: body.name?.trim() || undefined,
+          city: body.city !== undefined ? trimOrNull(body.city) : undefined,
+          phone: body.phone !== undefined ? trimOrNull(body.phone) : undefined,
+          whatsappNumber: body.whatsappNumber !== undefined ? trimOrNull(body.whatsappNumber) : undefined,
+          cnic: body.cnic !== undefined ? trimOrNull(body.cnic) : undefined,
+          address: body.address !== undefined ? trimOrNull(body.address) : undefined,
+          reference: body.reference !== undefined ? trimOrNull(body.reference) : undefined,
+          isActive: body.isActive !== undefined ? body.isActive : undefined,
+          ownerUserId:
+            body.ownerUserId === null || body.ownerUserId === ""
+              ? null
+              : body.ownerUserId !== undefined
+                ? parseInt(body.ownerUserId, 10)
+                : undefined,
+        },
+      });
+
+      await syncAccountBalanceFromForm(tx, accountId, body.currentBalance);
+
+      if (body.bankMeta && updated.category === "bank") {
+        const bm = body.bankMeta;
+        const existingBank = await tx.bankAccount.findFirst({
+          where: { ledgerAccountId: accountId },
+        });
+        if (existingBank) {
+          await tx.bankAccount.update({
+            where: { id: existingBank.id },
+            data: {
+              bankName: bm.bankName ?? existingBank.bankName,
+              accountTitle: bm.accountTitle ?? existingBank.accountTitle,
+              accountNumber: bm.accountNumber ?? existingBank.accountNumber,
+              branchCode: bm.branchCode ?? existingBank.branchCode,
+              branchName: bm.branchName ?? existingBank.branchName,
+            },
+          });
+        }
+      }
+
+      if (body.ownerUserId !== undefined && updated.category === "cash") {
+        const ownerId =
           body.ownerUserId === null || body.ownerUserId === ""
             ? null
-            : body.ownerUserId !== undefined
-              ? parseInt(body.ownerUserId, 10)
-              : undefined,
-      },
+            : parseInt(body.ownerUserId, 10);
+        if (ownerId) {
+          await tx.user.update({
+            where: { id: ownerId },
+            data: { cashAccountId: accountId },
+          });
+        }
+      }
+
+      return updated;
     });
-
-    if (body.bankMeta && account.category === "bank") {
-      const bm = body.bankMeta;
-      const existingBank = await prisma.bankAccount.findFirst({
-        where: { ledgerAccountId: accountId },
-      });
-      if (existingBank) {
-        await prisma.bankAccount.update({
-          where: { id: existingBank.id },
-          data: {
-            bankName: bm.bankName ?? existingBank.bankName,
-            accountTitle: bm.accountTitle ?? existingBank.accountTitle,
-            accountNumber: bm.accountNumber ?? existingBank.accountNumber,
-            branchCode: bm.branchCode ?? existingBank.branchCode,
-            branchName: bm.branchName ?? existingBank.branchName,
-          },
-        });
-      }
-    }
-
-    if (body.ownerUserId !== undefined && account.category === "cash") {
-      const ownerId =
-        body.ownerUserId === null || body.ownerUserId === ""
-          ? null
-          : parseInt(body.ownerUserId, 10);
-      if (ownerId) {
-        await prisma.user.update({
-          where: { id: ownerId },
-          data: { cashAccountId: accountId },
-        });
-      }
-    }
 
     return Response.json({ success: true, account });
   } catch (error) {
