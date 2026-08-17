@@ -1,7 +1,10 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
-import { findOutstandingPurchasesForLedgerAccount } from "@/lib/purchase-settlement";
-import { purchaseFreightDue, totalFreightOutstanding } from "@/lib/purchaseFreightSettlement";
+import {
+  findPurchasesWithFreightDueForLedgerAccount,
+  purchaseFreightDue,
+  totalFreightOutstanding,
+} from "@/lib/purchaseFreightSettlement";
 
 export async function GET(req) {
   try {
@@ -25,19 +28,18 @@ export async function GET(req) {
     }
     if (account.category !== "farmer" && account.category !== "company") {
       return Response.json(
-        { error: "Freight payments apply to farmer or company accounts only" },
+        { error: "Freight deductions apply to farmer or company accounts only" },
         { status: 400 }
       );
     }
 
-    const openPurchases = await findOutstandingPurchasesForLedgerAccount(prisma, ledgerAccountId);
-    const purchases = openPurchases
-      .filter((p) => (p.transportCost || 0) > 0 && purchaseFreightDue(p) > 0)
-      .map((p) => ({
+    const purchases = (await findPurchasesWithFreightDueForLedgerAccount(prisma, ledgerAccountId)).map(
+      (p) => ({
         ...p,
         freightDue: purchaseFreightDue(p),
         billBalance: Math.max((p.totalAmount || 0) - (p.paidAmount || 0), 0),
-      }));
+      })
+    );
 
     return Response.json({
       success: true,

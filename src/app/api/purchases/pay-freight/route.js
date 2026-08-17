@@ -1,13 +1,15 @@
 import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { parseNum } from "@/lib/order-processing";
-import { findOutstandingPurchasesForLedgerAccount } from "@/lib/purchase-settlement";
 import {
+  findPurchasesWithFreightDueForLedgerAccount,
   planFifoFreightSettlement,
   purchaseFreightDue,
-  totalFreightOutstanding,
 } from "@/lib/purchaseFreightSettlement";
-import { applyFreightPurchaseUpdate } from "@/lib/purchaseFreightPayment";
+import {
+  applyFreightPurchaseUpdate,
+  applyStandaloneFreightDeduction,
+} from "@/lib/purchaseFreightPayment";
 import { logActivity } from "@/lib/activityLog";
 
 function canManage(user) {
@@ -46,33 +48,9 @@ export async function POST(req) {
       );
     }
 
-    const openPurchases = await findOutstandingPurchasesForLedgerAccount(prisma, vendorAccountId);
-    const freightBills = openPurchases.filter(
-      (p) => (p.transportCost || 0) > 0 && purchaseFreightDue(p) > 0
-    );
-
-    if (freightBills.length === 0) {
-      return Response.json({ error: "No purchase bills with outstanding freight for this account" }, { status: 400 });
-    }
-
-    const totalDue = totalFreightOutstanding(freightBills);
-    if (amount > totalDue + 0.01) {
-      return Response.json(
-        { error: `Deduction exceeds total freight due (${totalDue.toFixed(2)})` },
-        { status: 400 }
-      );
-    }
-
+    const freightBills = await findPurchasesWithFreightDueForLedgerAccount(prisma, vendorAccountId);
     const { allocations, unapplied } = planFifoFreightSettlement(freightBills, amount);
-    if (allocations.length === 0) {
-      return Response.json({ error: "Nothing to settle with this amount" }, { status: 400 });
-    }
-    if (unapplied > 0.01) {
-      return Response.json(
-        { error: "Amount could not be fully allocated to freight — check the value" },
-        { status: 400 }
-      );
-    }
+    const standaloneAmount = unapplied > 0.01 ? unapplied : freightBills.length === 0 ? amount : 0;
 
     const paymentDate = body.paymentDate ? new Date(body.paymentDate) : new Date();
     const notes = body.notes?.trim() || "";
@@ -89,11 +67,26 @@ export async function POST(req) {
           throw new Error(`Freight due changed on ${existing.purchaseNumber} — refresh and try again`);
         }
 
-        const updated = await applyFreightPurchaseUpdate(tx, existing, alloc, paymentDate, notes);
+        const updated = await applyFreightPurchaseUpdate(
+          tx,
+          existing,
+          alloc,
+          paymentDate,
+          notes,
+          vendorAccountId
+        );
         updatedPurchases.push(updated);
       }
 
-      return updatedPurchases;
+      if (standaloneAmount > 0.01) {
+        await applyStandaloneFreightDeduction(tx, vendorAccountId, {
+          amount: standaloneAmount,
+          paymentDate,
+          notes,
+        });
+      }
+
+      return { updatedPurchases, standaloneAmount };
     });
 
     logActivity({
@@ -107,6 +100,7 @@ export async function POST(req) {
         vendorAccountId,
         amount,
         billsCleared: allocations.length,
+        standaloneAmount: result.standaloneAmount,
         purchaseIds: allocations.map((a) => a.purchaseId),
       },
       req,
@@ -115,7 +109,8 @@ export async function POST(req) {
     return Response.json({
       success: true,
       allocations,
-      purchases: result,
+      standaloneAmount: result.standaloneAmount,
+      purchases: result.updatedPurchases,
       vendorAccount,
     });
   } catch (error) {

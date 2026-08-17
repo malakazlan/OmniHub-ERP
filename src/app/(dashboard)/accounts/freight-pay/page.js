@@ -78,11 +78,16 @@ export default function FreightPayPage() {
   }, [fetchBills]);
 
   const totalFreightDue = useMemo(() => totalFreightOutstanding(bills), [bills]);
+  const deductAmount = parseNumber(amount);
+  const canSubmit = Boolean(vendorAccountId) && deductAmount > 0 && !submitting;
 
   const allocationPreview = useMemo(() => {
     const deduct = parseNumber(amount);
-    if (deduct <= 0 || !bills.length) return null;
-    return planFifoFreightSettlement(bills, deduct);
+    if (deduct <= 0) return null;
+    if (!bills.length) {
+      return { allocations: [], unapplied: deduct, standaloneOnly: true };
+    }
+    return { ...planFifoFreightSettlement(bills, deduct), standaloneOnly: false };
   }, [bills, amount]);
 
   const handleSubmit = async (e) => {
@@ -94,10 +99,6 @@ export default function FreightPayPage() {
     }
     if (deduct <= 0) {
       showToast("Enter an amount to deduct", "warning");
-      return;
-    }
-    if (deduct > totalFreightDue + 0.01) {
-      showToast(`Amount exceeds freight due (${formatCurrency(totalFreightDue)})`, "warning");
       return;
     }
 
@@ -115,10 +116,14 @@ export default function FreightPayPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(
-          `Freight deducted — ${data.allocations?.length || 0} bill(s) cleared`,
-          "success"
-        );
+        const billCount = data.allocations?.length || 0;
+        const standalone = data.standaloneAmount > 0.01;
+        const msg = billCount > 0 && standalone
+          ? `Freight deducted — ${billCount} bill(s) cleared, ${formatCurrency(data.standaloneAmount)} ledger entry`
+          : billCount > 0
+            ? `Freight deducted — ${billCount} bill(s) cleared`
+            : "Freight deducted — ledger entry posted";
+        showToast(msg, "success");
         setAmount("");
         setNotes("");
         fetchBills();
@@ -217,7 +222,7 @@ export default function FreightPayPage() {
               </p>
             ) : bills.length === 0 ? (
               <p className="text-sm text-slate-500 text-center py-6 border border-dashed border-slate-200 rounded-lg bg-white/60">
-                No purchase bills with outstanding freight for this account.
+                No purchase bills with outstanding freight — you can still post a standalone Transport ledger entry below.
               </p>
             ) : (
               <div className="space-y-2 max-h-72 overflow-y-auto">
@@ -320,25 +325,35 @@ export default function FreightPayPage() {
               />
             </div>
 
-            {allocationPreview && allocationPreview.allocations.length > 0 && (
+            {allocationPreview && (
               <div className="rounded-lg border border-teal-200 bg-teal-50/50 px-3 py-3 text-sm">
                 <p className="font-semibold text-teal-900 mb-2 flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4" /> Allocation preview (oldest first)
+                  <BookOpen className="w-4 h-4" /> Deduction preview
                 </p>
-                <ul className="space-y-1 text-teal-800">
-                  {allocationPreview.allocations.map((a) => (
-                    <li key={a.purchaseId} className="text-xs sm:text-sm">
-                      <span className="font-mono font-bold">{a.purchaseNumber}</span>
-                      {" — "}
-                      {formatCurrency(a.amount)}
-                      {a.clearsFreightFully ? " (freight cleared)" : " (partial)"}
-                    </li>
-                  ))}
-                </ul>
-                {allocationPreview.unapplied > 0.01 && (
-                  <p className="text-xs text-amber-700 mt-2">
-                    Unapplied: {formatCurrency(allocationPreview.unapplied)} — reduce the amount
+                {allocationPreview.standaloneOnly ? (
+                  <p className="text-xs sm:text-sm text-teal-800">
+                    Standalone ledger entry — {formatCurrency(deductAmount)} tagged Transport on this account.
                   </p>
+                ) : (
+                  <>
+                    {allocationPreview.allocations.length > 0 && (
+                      <ul className="space-y-1 text-teal-800">
+                        {allocationPreview.allocations.map((a) => (
+                          <li key={a.purchaseId} className="text-xs sm:text-sm">
+                            <span className="font-mono font-bold">{a.purchaseNumber}</span>
+                            {" — "}
+                            {formatCurrency(a.amount)}
+                            {a.clearsFreightFully ? " (freight cleared)" : " (partial)"}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {allocationPreview.unapplied > 0.01 && (
+                      <p className="text-xs text-teal-800 mt-2">
+                        Plus standalone ledger entry: {formatCurrency(allocationPreview.unapplied)}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -346,7 +361,7 @@ export default function FreightPayPage() {
             <div className="flex justify-end pt-2">
               <Button
                 type="submit"
-                disabled={submitting || !vendorAccountId || bills.length === 0}
+                disabled={!canSubmit}
                 className="bg-acc-accounts border-0 min-w-[160px]"
               >
                 {submitting ? (

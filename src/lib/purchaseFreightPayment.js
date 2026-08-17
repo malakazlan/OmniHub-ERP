@@ -6,12 +6,13 @@ import { purchaseFreightDue } from "@/lib/purchaseFreightSettlement";
 export async function applyFreightDeductionOnPurchase(
   tx,
   purchase,
-  { amount = 0, paymentDate, notes }
+  { amount = 0, paymentDate, notes, vendorAccountId }
 ) {
   const deduct = parseNum(amount);
   if (deduct <= 0) return;
 
-  if (!purchase.vendorAccountId) {
+  const accountId = purchase.vendorAccountId || vendorAccountId;
+  if (!accountId) {
     throw new Error(`Vendor ledger account is missing on bill ${purchase.purchaseNumber}`);
   }
 
@@ -27,7 +28,7 @@ export async function applyFreightDeductionOnPurchase(
     : `Freight deducted · ${ref}`;
 
   await createLedgerEntry(tx, {
-    accountId: purchase.vendorAccountId,
+    accountId,
     date,
     description: desc,
     reference: ref,
@@ -37,15 +38,51 @@ export async function applyFreightDeductionOnPurchase(
   });
 }
 
-export async function applyFreightPurchaseUpdate(tx, existing, alloc, paymentDate, notes) {
+/** Standalone freight deduction when no purchase bill applies. */
+export async function applyStandaloneFreightDeduction(
+  tx,
+  vendorAccountId,
+  { amount = 0, paymentDate, notes }
+) {
+  const deduct = parseNum(amount);
+  if (deduct <= 0) return;
+
+  const date = paymentDate || new Date();
+  const ref = notes?.trim() || "Freight";
+  const desc = notes?.trim()
+    ? `Freight deducted · ${notes.trim()}`
+    : "Freight deducted";
+
+  await createLedgerEntry(tx, {
+    accountId: vendorAccountId,
+    date,
+    description: desc,
+    reference: ref,
+    referenceType: "Transport",
+    referenceId: null,
+    debit: deduct,
+  });
+}
+
+export async function applyFreightPurchaseUpdate(
+  tx,
+  existing,
+  alloc,
+  paymentDate,
+  notes,
+  vendorAccountId
+) {
   const deduct = alloc.amount;
   await applyFreightDeductionOnPurchase(tx, existing, {
     amount: deduct,
     paymentDate,
     notes,
+    vendorAccountId,
   });
 
-  const newPaid = (existing.paidAmount || 0) + deduct;
+  const billRoom = Math.max((existing.totalAmount || 0) - (existing.paidAmount || 0), 0);
+  const paidDelta = Math.min(deduct, billRoom);
+  const newPaid = (existing.paidAmount || 0) + paidDelta;
   const newTransportPaid = Math.min(
     (existing.transportPaidAmount || 0) + deduct,
     existing.transportCost || 0
@@ -58,6 +95,7 @@ export async function applyFreightPurchaseUpdate(tx, existing, alloc, paymentDat
       paidAmount: newPaid,
       transportPaidAmount: newTransportPaid,
       paymentStatus,
+      vendorAccountId: existing.vendorAccountId || vendorAccountId,
     },
   });
 

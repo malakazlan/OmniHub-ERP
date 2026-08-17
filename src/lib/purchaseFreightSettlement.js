@@ -3,13 +3,15 @@ function parseNum(val, fallback = 0) {
   return Number.isFinite(n) ? n : fallback;
 }
 
+const PURCHASE_ACTIVE = { status: { in: ["confirmed", "received"] } };
+const PURCHASE_ORDER = [{ purchaseDate: "asc" }, { id: "asc" }];
+
+/** Freight still to deduct = transport cost minus already freight-deducted. */
 export function purchaseFreightDue(purchase) {
   const transportCost = purchase.transportCost || 0;
   if (transportCost <= 0) return 0;
   const transportPaid = purchase.transportPaidAmount || 0;
-  const freightRemaining = Math.max(transportCost - transportPaid, 0);
-  const billBalance = Math.max((purchase.totalAmount || 0) - (purchase.paidAmount || 0), 0);
-  return Math.min(freightRemaining, billBalance);
+  return Math.max(transportCost - transportPaid, 0);
 }
 
 export function sortPurchasesOldestFirst(purchases) {
@@ -19,6 +21,54 @@ export function sortPurchasesOldestFirst(purchases) {
     if (da !== db) return da - db;
     return a.id - b.id;
   });
+}
+
+async function findPurchasesForLedgerAccount(db, accountId) {
+  const byVendor = await db.purchaseOrder.findMany({
+    where: { ...PURCHASE_ACTIVE, vendorAccountId: accountId },
+    orderBy: PURCHASE_ORDER,
+  });
+  if (byVendor.length > 0) return byVendor;
+
+  const account = await db.account.findUnique({
+    where: { id: accountId },
+    select: { category: true },
+  });
+  if (!account) return [];
+
+  if (account.category === "farmer") {
+    const farmer = await db.farmer.findFirst({
+      where: { accountId },
+      select: { id: true },
+    });
+    if (farmer) {
+      return db.purchaseOrder.findMany({
+        where: { ...PURCHASE_ACTIVE, farmerId: farmer.id },
+        orderBy: PURCHASE_ORDER,
+      });
+    }
+  }
+
+  if (account.category === "company") {
+    const company = await db.company.findFirst({
+      where: { accountId },
+      select: { id: true },
+    });
+    if (company) {
+      return db.purchaseOrder.findMany({
+        where: { ...PURCHASE_ACTIVE, companyId: company.id },
+        orderBy: PURCHASE_ORDER,
+      });
+    }
+  }
+
+  return [];
+}
+
+/** Confirmed/received purchases for account that still have transport freight to deduct. */
+export async function findPurchasesWithFreightDueForLedgerAccount(db, accountId) {
+  const purchases = await findPurchasesForLedgerAccount(db, accountId);
+  return purchases.filter((p) => purchaseFreightDue(p) > 0);
 }
 
 /** Allocate freight deduction across bills oldest-first (FIFO). */
