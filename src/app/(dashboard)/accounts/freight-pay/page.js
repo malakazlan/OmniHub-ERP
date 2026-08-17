@@ -5,23 +5,19 @@ import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { Button } from "@/components/Button";
 import { Badge } from "@/components/ui/Badge";
-import PaymentSplitFields from "@/components/accounts/PaymentSplitFields";
-import { useDefaultCashAccountId } from "@/hooks/useDefaultCashAccount";
 import { formatCurrency, formatDate, parseNumber } from "@/lib/formatters";
 import {
   planFifoFreightSettlement,
   totalFreightOutstanding,
 } from "@/lib/purchaseFreightSettlement";
-import { Truck, Loader2, BookOpen, ArrowLeft, Sprout, Building2 } from "lucide-react";
+import { Truck, Loader2, BookOpen, ArrowLeft, Sprout, Building2, MinusCircle } from "lucide-react";
 
 const VENDOR_CATEGORIES = new Set(["farmer", "company"]);
 
 export default function FreightPayPage() {
   const { showToast } = useToast();
-  const defaultCashAccountId = useDefaultCashAccountId();
 
   const [accounts, setAccounts] = useState([]);
-  const [allAccounts, setAllAccounts] = useState([]);
   const [vendorAccountId, setVendorAccountId] = useState("");
   const [bills, setBills] = useState([]);
   const [accountMeta, setAccountMeta] = useState(null);
@@ -30,10 +26,7 @@ export default function FreightPayPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const [paymentDate, setPaymentDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [cashAmount, setCashAmount] = useState("");
-  const [bankAmount, setBankAmount] = useState("");
-  const [cashAccountId, setCashAccountId] = useState("");
-  const [bankAccountId, setBankAccountId] = useState("");
+  const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
@@ -41,7 +34,6 @@ export default function FreightPayPage() {
       .then((r) => r.json())
       .then((d) => {
         if (d.accounts) {
-          setAllAccounts(d.accounts.filter((a) => a.isActive !== false));
           setAccounts(
             d.accounts.filter((a) => a.isActive !== false && VENDOR_CATEGORIES.has(a.category))
           );
@@ -51,20 +43,6 @@ export default function FreightPayPage() {
       .finally(() => setLoadingAccounts(false));
   }, [showToast]);
 
-  useEffect(() => {
-    if (defaultCashAccountId && !cashAccountId) {
-      setCashAccountId(String(defaultCashAccountId));
-    }
-  }, [defaultCashAccountId, cashAccountId]);
-
-  const cashAccounts = useMemo(
-    () => allAccounts.filter((a) => a.category === "cash"),
-    [allAccounts]
-  );
-  const bankAccounts = useMemo(
-    () => allAccounts.filter((a) => a.category === "bank"),
-    [allAccounts]
-  );
   const vendorAccounts = useMemo(
     () => accounts.filter((a) => VENDOR_CATEGORIES.has(a.category)),
     [accounts]
@@ -102,37 +80,24 @@ export default function FreightPayPage() {
   const totalFreightDue = useMemo(() => totalFreightOutstanding(bills), [bills]);
 
   const allocationPreview = useMemo(() => {
-    const cash = parseNumber(cashAmount);
-    const bank = parseNumber(bankAmount);
-    if (cash + bank <= 0 || !bills.length) return null;
-    return planFifoFreightSettlement(bills, cash, bank);
-  }, [bills, cashAmount, bankAmount]);
-
-  const onPaymentChange = (field, value) => {
-    if (field === "cashAmount") setCashAmount(value);
-    if (field === "bankAmount") setBankAmount(value);
-    if (field === "cashAccountId") setCashAccountId(value);
-    if (field === "bankAccountId") setBankAccountId(value);
-  };
+    const deduct = parseNumber(amount);
+    if (deduct <= 0 || !bills.length) return null;
+    return planFifoFreightSettlement(bills, deduct);
+  }, [bills, amount]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const cash = parseNumber(cashAmount);
-    const bank = parseNumber(bankAmount);
+    const deduct = parseNumber(amount);
     if (!vendorAccountId) {
       showToast("Select a farmer or company account", "warning");
       return;
     }
-    if (cash + bank <= 0) {
-      showToast("Enter a payment amount", "warning");
+    if (deduct <= 0) {
+      showToast("Enter an amount to deduct", "warning");
       return;
     }
-    if (cash > 0 && !cashAccountId) {
-      showToast("Select a cash account", "warning");
-      return;
-    }
-    if (bank > 0 && !bankAccountId) {
-      showToast("Select a bank account", "warning");
+    if (deduct > totalFreightDue + 0.01) {
+      showToast(`Amount exceeds freight due (${formatCurrency(totalFreightDue)})`, "warning");
       return;
     }
 
@@ -144,28 +109,24 @@ export default function FreightPayPage() {
         body: JSON.stringify({
           vendorAccountId: parseInt(vendorAccountId, 10),
           paymentDate,
-          cashAmount: cash,
-          bankAmount: bank,
-          cashAccountId: cash > 0 ? cashAccountId : undefined,
-          bankAccountId: bank > 0 ? bankAccountId : undefined,
+          amount: deduct,
           notes,
         }),
       });
       const data = await res.json();
       if (res.ok) {
         showToast(
-          `Freight payment posted — ${data.allocations?.length || 0} bill(s) cleared`,
+          `Freight deducted — ${data.allocations?.length || 0} bill(s) cleared`,
           "success"
         );
-        setCashAmount("");
-        setBankAmount("");
+        setAmount("");
         setNotes("");
         fetchBills();
       } else {
-        showToast(data.error || "Payment failed", "error");
+        showToast(data.error || "Deduction failed", "error");
       }
     } catch {
-      showToast("Error posting freight payment", "error");
+      showToast("Error posting freight deduction", "error");
     } finally {
       setSubmitting(false);
     }
@@ -181,11 +142,11 @@ export default function FreightPayPage() {
             </Link>
             <div className="erp-ac-page-badge">
               <Truck className="w-3.5 h-3.5" />
-              Freight payment
+              Freight deduction
             </div>
-            <h1 className="erp-ac-page-title">Pay purchase freight</h1>
+            <h1 className="erp-ac-page-title">Deduct purchase freight</h1>
             <p className="erp-ac-page-desc">
-              Select a farmer or company account, review purchase bills with transport charges (oldest first), post freight payment, and ledger entries tagged as Transport.
+              Select a farmer or company account, review purchase bills with transport charges (oldest first), and deduct freight from the supplier account — no cash or bank payment.
             </p>
           </div>
         </header>
@@ -237,7 +198,7 @@ export default function FreightPayPage() {
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-sm font-bold text-slate-900">Purchase bills — freight due</h2>
-                <p className="text-xs text-slate-500 mt-0.5">Oldest first — payment clears freight FIFO</p>
+                <p className="text-xs text-slate-500 mt-0.5">Oldest first — deduction clears freight FIFO</p>
               </div>
               {bills.length > 0 && (
                 <span className="text-xs font-bold text-amber-800 bg-amber-100 px-2 py-1 rounded-full">
@@ -293,7 +254,7 @@ export default function FreightPayPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">
-                Payment date
+                Deduction date
               </label>
               <input
                 type="date"
@@ -303,17 +264,48 @@ export default function FreightPayPage() {
               />
             </div>
 
-            <PaymentSplitFields
-              cashAmount={cashAmount}
-              bankAmount={bankAmount}
-              cashAccountId={cashAccountId}
-              bankAccountId={bankAccountId}
-              onChange={onPaymentChange}
-              cashAccounts={cashAccounts}
-              bankAccounts={bankAccounts}
-              defaultCashAccountId={defaultCashAccountId ? String(defaultCashAccountId) : ""}
-              disabled={submitting}
-            />
+            <div className="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50/70 via-white to-white p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <MinusCircle className="w-4 h-4 text-violet-600" />
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">
+                    Deduct from account
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Freight is withheld from the supplier balance — not paid from cash or bank.
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">
+                  Amount to deduct
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="input-field w-full max-w-sm text-sm font-mono tabular-nums"
+                  placeholder="0.00"
+                  disabled={submitting}
+                />
+                {totalFreightDue > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setAmount(String(totalFreightDue))}
+                    className="mt-1.5 text-xs font-semibold text-violet-700 hover:text-violet-900"
+                  >
+                    Deduct full freight due ({formatCurrency(totalFreightDue)})
+                  </button>
+                )}
+              </div>
+              {parseNumber(amount) > 0 && (
+                <p className="text-sm font-semibold text-slate-700">
+                  Total deduction {formatCurrency(parseNumber(amount))}
+                </p>
+              )}
+            </div>
 
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">
@@ -345,7 +337,7 @@ export default function FreightPayPage() {
                 </ul>
                 {allocationPreview.unapplied > 0.01 && (
                   <p className="text-xs text-amber-700 mt-2">
-                    Unapplied: {formatCurrency(allocationPreview.unapplied)} — reduce payment amount
+                    Unapplied: {formatCurrency(allocationPreview.unapplied)} — reduce the amount
                   </p>
                 )}
               </div>
@@ -363,7 +355,7 @@ export default function FreightPayPage() {
                   </>
                 ) : (
                   <>
-                    <Truck className="w-4 h-4" /> Post freight payment
+                    <Truck className="w-4 h-4" /> Deduct freight
                   </>
                 )}
               </Button>

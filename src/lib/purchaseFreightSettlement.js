@@ -21,26 +21,16 @@ export function sortPurchasesOldestFirst(purchases) {
   });
 }
 
-/** Allocate freight payment across bills oldest-first (FIFO). */
-export function planFifoFreightSettlement(purchases, cashAmount, bankAmount) {
-  let remainingCash = parseNum(cashAmount);
-  let remainingBank = parseNum(bankAmount);
+/** Allocate freight deduction across bills oldest-first (FIFO). */
+export function planFifoFreightSettlement(purchases, amount) {
+  let remaining = parseNum(amount);
   const allocations = [];
 
   for (const purchase of sortPurchasesOldestFirst(purchases)) {
     const balance = purchaseFreightDue(purchase);
     if (balance <= 0) continue;
 
-    let need = balance;
-    const cashApply = Math.min(remainingCash, need);
-    need -= cashApply;
-    remainingCash -= cashApply;
-
-    const bankApply = Math.min(remainingBank, need);
-    need -= bankApply;
-    remainingBank -= bankApply;
-
-    const applied = cashApply + bankApply;
+    const applied = Math.min(remaining, balance);
     if (applied > 0) {
       allocations.push({
         purchaseId: purchase.id,
@@ -48,23 +38,22 @@ export function planFifoFreightSettlement(purchases, cashAmount, bankAmount) {
         purchaseDate: purchase.purchaseDate,
         transportCost: purchase.transportCost || 0,
         freightDue: balance,
-        cashAmount: cashApply,
-        bankAmount: bankApply,
         amount: applied,
         clearsFreightFully: applied >= balance - 0.001,
       });
+      remaining -= applied;
     }
 
-    if (remainingCash + remainingBank <= 0.001) break;
+    if (remaining <= 0.001) break;
   }
 
-  const totalPayment = parseNum(cashAmount) + parseNum(bankAmount);
+  const totalDeduction = parseNum(amount);
   const totalApplied = allocations.reduce((sum, a) => sum + a.amount, 0);
 
   return {
     allocations,
     totalApplied,
-    unapplied: Math.max(totalPayment - totalApplied, 0),
+    unapplied: Math.max(totalDeduction - totalApplied, 0),
   };
 }
 

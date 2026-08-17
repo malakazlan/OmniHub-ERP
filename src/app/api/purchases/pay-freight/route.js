@@ -9,7 +9,6 @@ import {
 } from "@/lib/purchaseFreightSettlement";
 import { applyFreightPurchaseUpdate } from "@/lib/purchaseFreightPayment";
 import { logActivity } from "@/lib/activityLog";
-import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
 function canManage(user) {
   return user && (user.role === "admin" || user.role === "manager" || user.role === "accountant");
@@ -24,27 +23,25 @@ export async function POST(req) {
 
     const body = await req.json();
     const vendorAccountId = parseInt(body.vendorAccountId, 10);
-    const cashAmount = parseNum(body.cashAmount);
-    const bankAmount = parseNum(body.bankAmount);
-    const totalPay = cashAmount + bankAmount;
+    const amount = parseNum(body.amount);
 
     if (!vendorAccountId) {
       return Response.json({ error: "Select a farmer or company account" }, { status: 400 });
     }
-    if (totalPay <= 0) {
-      return Response.json({ error: "Enter a cash or bank payment amount" }, { status: 400 });
+    if (amount <= 0) {
+      return Response.json({ error: "Enter an amount to deduct from the account" }, { status: 400 });
     }
 
     const vendorAccount = await prisma.account.findUnique({
       where: { id: vendorAccountId },
-      select: { id: true, name: true, category: true },
+      select: { id: true, name: true, category: true, balance: true },
     });
     if (!vendorAccount) {
       return Response.json({ error: "Account not found" }, { status: 404 });
     }
     if (vendorAccount.category !== "farmer" && vendorAccount.category !== "company") {
       return Response.json(
-        { error: "Freight payments apply to farmer or company accounts only" },
+        { error: "Freight deductions apply to farmer or company accounts only" },
         { status: 400 }
       );
     }
@@ -59,40 +56,26 @@ export async function POST(req) {
     }
 
     const totalDue = totalFreightOutstanding(freightBills);
-    if (totalPay > totalDue + 0.01) {
+    if (amount > totalDue + 0.01) {
       return Response.json(
-        { error: `Payment exceeds total freight due (${totalDue.toFixed(2)})` },
+        { error: `Deduction exceeds total freight due (${totalDue.toFixed(2)})` },
         { status: 400 }
       );
     }
 
-    const { allocations, unapplied } = planFifoFreightSettlement(freightBills, cashAmount, bankAmount);
+    const { allocations, unapplied } = planFifoFreightSettlement(freightBills, amount);
     if (allocations.length === 0) {
-      return Response.json({ error: "Nothing to settle with this payment" }, { status: 400 });
+      return Response.json({ error: "Nothing to settle with this amount" }, { status: 400 });
     }
     if (unapplied > 0.01) {
       return Response.json(
-        { error: "Payment could not be fully allocated to freight — check amounts" },
+        { error: "Amount could not be fully allocated to freight — check the value" },
         { status: 400 }
       );
     }
 
     const paymentDate = body.paymentDate ? new Date(body.paymentDate) : new Date();
-    let cashAccountId = body.cashAccountId ? parseInt(body.cashAccountId, 10) : null;
-    const bankAccountId = body.bankAccountId ? parseInt(body.bankAccountId, 10) : null;
     const notes = body.notes?.trim() || "";
-
-    if (cashAmount > 0) {
-      if (!cashAccountId) {
-        const userCash = await resolveUserCashAccountId(prisma, user.userId);
-        if (userCash) cashAccountId = userCash;
-      }
-      try {
-        await assertUserCanUseCashAccount(prisma, user, cashAccountId);
-      } catch (err) {
-        return Response.json({ error: err.message }, { status: 403 });
-      }
-    }
 
     const result = await runTransaction(async (tx) => {
       const updatedPurchases = [];
@@ -102,20 +85,11 @@ export async function POST(req) {
         if (!existing) continue;
 
         const freightDue = purchaseFreightDue(existing);
-        const payTotal = alloc.cashAmount + alloc.bankAmount;
-        if (payTotal > freightDue + 0.01) {
+        if (alloc.amount > freightDue + 0.01) {
           throw new Error(`Freight due changed on ${existing.purchaseNumber} — refresh and try again`);
         }
 
-        const updated = await applyFreightPurchaseUpdate(
-          tx,
-          existing,
-          alloc,
-          paymentDate,
-          notes,
-          cashAccountId,
-          bankAccountId
-        );
+        const updated = await applyFreightPurchaseUpdate(tx, existing, alloc, paymentDate, notes);
         updatedPurchases.push(updated);
       }
 
@@ -129,10 +103,9 @@ export async function POST(req) {
       entityType: "PurchaseOrder",
       entityId: vendorAccountId,
       details: {
-        action: "freight_payment",
+        action: "freight_deduction",
         vendorAccountId,
-        cashAmount,
-        bankAmount,
+        amount,
         billsCleared: allocations.length,
         purchaseIds: allocations.map((a) => a.purchaseId),
       },
@@ -146,7 +119,7 @@ export async function POST(req) {
       vendorAccount,
     });
   } catch (error) {
-    console.error("Freight payment error:", error);
+    console.error("Freight deduction error:", error);
     if (error.message?.includes("account") || error.message?.includes("Freight")) {
       return Response.json({ error: error.message }, { status: 400 });
     }
