@@ -125,6 +125,13 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
             }),
           });
           break;
+        case "vehicle":
+          res = await fetch("/api/accounts/directory/vehicle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...form, ...DIRECTORY_POST_FLAG }),
+          });
+          break;
         default:
           showToast("Unknown account type", "error");
           return;
@@ -163,10 +170,14 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
   ) : null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size={category === "salary" || category === "company" ? "lg" : "md"} footer={submitFooter}>
+      <Modal isOpen={isOpen} onClose={onClose} title={title} size={category === "salary" || category === "company" || category === "vehicle" ? "lg" : "md"} footer={submitFooter}>
       <form id={formId} onSubmit={handleSubmit} className="space-y-4">
         <p className="text-xs text-slate-600 bg-teal-50/80 border border-teal-100 rounded-lg px-3 py-2">
-          Only <strong>name</strong> and <strong>phone</strong> are required. A ledger account is created automatically.
+          {category === "vehicle" ? (
+            <>Only <strong>registration number</strong>, <strong>vehicle type</strong>, and <strong>driver phone</strong> are required. A ledger account is created automatically.</>
+          ) : (
+            <>Only <strong>name</strong> and <strong>phone</strong> are required. A ledger account is created automatically.</>
+          )}
         </p>
 
         <AccountCategoryFields
@@ -212,6 +223,20 @@ function getEmptyForm(category) {
     }
     case "transport":
       return { ...base, name: "", cnic: "", salary: "" };
+    case "vehicle":
+      return {
+        ...base,
+        registrationNumber: "",
+        vehicleType: "truck",
+        make: "",
+        model: "",
+        year: "",
+        capacity: "",
+        driverName: "",
+        driverPhone: "",
+        isOwned: true,
+        notes: "",
+      };
     default:
       return base;
   }

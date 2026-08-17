@@ -23,6 +23,7 @@ const CATEGORY_LABELS = {
   shop: "Shop",
   salary: "Employee",
   transport: "Driver",
+  vehicle: "Vehicle",
 };
 
 const TYPE_LABELS = {

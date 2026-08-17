@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import AccountsDirectoryRedirect from "../redirect";
 
 export default function VehiclesRedirect() {
-  redirect("/transport/vehicles");
+  return <AccountsDirectoryRedirect category="vehicle" />;
 }

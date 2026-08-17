@@ -162,6 +162,27 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
             }),
           });
           break;
+        case "vehicle":
+          if (!entityId) throw new Error("Vehicle record not found");
+          res = await fetch(`/api/transport/vehicles/${entityId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              registrationNumber: form.registrationNumber.trim(),
+              vehicleType: form.vehicleType,
+              make: form.make || null,
+              model: form.model || null,
+              year: form.year || null,
+              capacity: form.capacity,
+              driverName: form.driverName || null,
+              driverPhone: form.driverPhone.trim(),
+              isOwned: form.isOwned,
+              notes: form.notes || null,
+              isActive: form.isActive,
+              ...balancePayload,
+            }),
+          });
+          break;
         case "bank":
           res = await fetch(`/api/accounts/${account.id}`, {
             method: "PUT",
@@ -244,7 +265,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
   );
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size={category === "company" || category === "salary" ? "lg" : "md"} footer={footer}>
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size={category === "company" || category === "salary" || category === "vehicle" ? "lg" : "md"} footer={footer}>
       {loading ? (
         <div className="h-48 flex items-center justify-center">
           <Loader2 className="w-7 h-7 text-acc-accounts animate-spin" />

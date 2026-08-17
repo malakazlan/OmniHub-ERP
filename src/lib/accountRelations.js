@@ -52,7 +52,7 @@ export async function attachPartyMetaToAccounts(accounts) {
   if (!accounts?.length) return [];
 
   const ids = accounts.map((a) => a.id);
-  const [farmers, companies, shops, employees] = await Promise.all([
+  const [farmers, companies, shops, employees, vehicles] = await Promise.all([
     prisma.farmer.findMany({
       where: { accountId: { in: ids } },
       select: { accountId: true, name: true, phone: true, city: true, village: true },
@@ -75,6 +75,18 @@ export async function attachPartyMetaToAccounts(accounts) {
     prisma.employee.findMany({
       where: { accountId: { in: ids } },
       select: { accountId: true, name: true, phone: true, role: true, department: true },
+    }),
+    prisma.vehicle.findMany({
+      where: { accountId: { in: ids } },
+      select: {
+        accountId: true,
+        registrationNumber: true,
+        vehicleType: true,
+        make: true,
+        model: true,
+        driverName: true,
+        driverPhone: true,
+      },
     }),
   ]);
 
@@ -117,6 +129,14 @@ export async function attachPartyMetaToAccounts(accounts) {
       phone: e.phone,
     };
   }
+  for (const v of vehicles) {
+    metaByAccountId[v.accountId] = {
+      kind: "vehicle",
+      name: v.registrationNumber,
+      subtitle: [v.vehicleType, v.make, v.model].filter(Boolean).join(" · ") || null,
+      phone: v.driverPhone,
+    };
+  }
 
   return accounts.map((a) => ({ ...a, party: metaByAccountId[a.id] || null }));
 }
@@ -141,6 +161,10 @@ export async function findPartyEntityByAccount(account) {
   }
   if (category === "salary" || category === "transport") {
     const entity = await prisma.employee.findFirst({ where: { accountId } });
+    return { partyEntity: entity, bankMeta: null, entityId: entity?.id ?? null };
+  }
+  if (category === "vehicle") {
+    const entity = await prisma.vehicle.findFirst({ where: { accountId } });
     return { partyEntity: entity, bankMeta: null, entityId: entity?.id ?? null };
   }
   if (category === "bank") {

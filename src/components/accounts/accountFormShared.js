@@ -2,6 +2,7 @@
 
 import React from "react";
 import { balanceToFormAmount } from "@/lib/accountBalanceForm";
+import { VEHICLE_TYPES } from "@/components/fleet/fleetConstants";
 
 export const CATEGORY_TITLES = {
   cash: "Cash Account",
@@ -11,6 +12,7 @@ export const CATEGORY_TITLES = {
   shop: "Shop / Customer",
   salary: "Employee",
   transport: "Driver Account",
+  vehicle: "Vehicle Account",
 };
 
 export const OPENING_HINT = {
@@ -21,6 +23,7 @@ export const OPENING_HINT = {
   shop: "Amount this customer owes you (optional).",
   salary: "Salary payable opening balance (optional).",
   transport: "Opening driver payable balance (optional).",
+  vehicle: "Opening balance for this vehicle account (optional).",
 };
 
 const EMP_ROLES = ["salesperson", "accountant", "laborer", "officer", "manager"];
@@ -110,6 +113,11 @@ export function validateAccountForm(category, form) {
     case "transport":
       if (!form.name?.trim()) return "Driver name is required";
       if (!phone) return "Phone is required";
+      break;
+    case "vehicle":
+      if (!form.registrationNumber?.trim()) return "Registration number is required";
+      if (!form.vehicleType?.trim()) return "Vehicle type is required";
+      if (!form.driverPhone?.trim()) return "Driver phone is required";
       break;
     default:
       break;
@@ -356,6 +364,55 @@ export function AccountCategoryFields({
     );
   }
 
+  if (category === "vehicle") {
+    return (
+      <>
+        <FormSection title="Vehicle details" hint="Fleet vehicle linked to a ledger account">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Field label="Registration number" required>
+              {input({
+                value: form.registrationNumber,
+                onChange: (e) => set("registrationNumber", e.target.value),
+                placeholder: "e.g. LEA-1234",
+              })}
+            </Field>
+            <Field label="Vehicle type" required>
+              <select
+                className="input-field w-full text-sm"
+                value={form.vehicleType || "truck"}
+                onChange={(e) => set("vehicleType", e.target.value)}
+              >
+                {VEHICLE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Make">{input({ value: form.make, onChange: (e) => set("make", e.target.value), placeholder: "e.g. Hino" })}</Field>
+            <Field label="Model">{input({ value: form.model, onChange: (e) => set("model", e.target.value), placeholder: "e.g. 500" })}</Field>
+            <Field label="Year">{input({ type: "number", value: form.year, onChange: (e) => set("year", e.target.value), placeholder: "2020" })}</Field>
+            <Field label="Capacity (tons)">{input({ type: "number", step: "0.01", value: form.capacity, onChange: (e) => set("capacity", e.target.value), placeholder: "0" })}</Field>
+            <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
+            <Field label="Driver name">{input({ value: form.driverName, onChange: (e) => set("driverName", e.target.value), placeholder: "Assigned driver" })}</Field>
+            <Field label="Driver phone" required>{input({ value: form.driverPhone, onChange: (e) => set("driverPhone", e.target.value), placeholder: "03xx-xxxxxxx" })}</Field>
+            <div className="sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" checked={form.isOwned !== false} onChange={(e) => set("isOwned", e.target.checked)} />
+                Company owned vehicle
+              </label>
+            </div>
+            <div className="sm:col-span-2">
+              <Field label="Notes">
+                <textarea className="input-field w-full text-sm min-h-[72px] resize-y" value={form.notes ?? ""} onChange={(e) => set("notes", e.target.value)} />
+              </Field>
+            </div>
+          </div>
+        </FormSection>
+      </>
+    );
+  }
+
   return null;
 }
 
@@ -431,6 +488,17 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
         isActive: partyEntity?.isActive !== false,
       };
     case "salary":
+      return {
+        ...base,
+        currentBalance,
+        name: partyEntity?.name || account?.name?.replace(/\s*\(Salary\)\s*$/i, "") || "",
+        phone: partyEntity?.phone || account?.phone || "",
+        role: partyEntity?.role || "officer",
+        department: partyEntity?.department || "",
+        salary: partyEntity?.salary != null ? String(partyEntity.salary) : "",
+        cnic: partyEntity?.cnic || "",
+        isActive: partyEntity?.isActive !== false,
+      };
     case "transport":
       return {
         ...base,
@@ -441,6 +509,22 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
         department: partyEntity?.department || "",
         salary: partyEntity?.salary != null ? String(partyEntity.salary) : "",
         cnic: partyEntity?.cnic || "",
+        isActive: partyEntity?.isActive !== false,
+      };
+    case "vehicle":
+      return {
+        ...base,
+        currentBalance,
+        registrationNumber: partyEntity?.registrationNumber || account?.reference || "",
+        vehicleType: partyEntity?.vehicleType || "truck",
+        make: partyEntity?.make || "",
+        model: partyEntity?.model || "",
+        year: partyEntity?.year != null ? String(partyEntity.year) : "",
+        capacity: partyEntity?.capacity != null ? String(partyEntity.capacity) : "",
+        driverName: partyEntity?.driverName || "",
+        driverPhone: partyEntity?.driverPhone || account?.phone || "",
+        isOwned: partyEntity?.isOwned !== false,
+        notes: partyEntity?.notes || "",
         isActive: partyEntity?.isActive !== false,
       };
     default:

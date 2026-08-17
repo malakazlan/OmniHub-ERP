@@ -153,6 +153,16 @@ export async function DELETE(req, { params }) {
         data: { cashAccountId: null },
       });
       await tx.bankAccount.deleteMany({ where: { ledgerAccountId: accountId } });
+      if (account.category === "vehicle") {
+        const vehicle = await tx.vehicle.findFirst({ where: { accountId } });
+        if (vehicle) {
+          const transportCount = await tx.transport.count({ where: { vehicleId: vehicle.id } });
+          if (transportCount > 0) {
+            throw new Error("Cannot delete vehicle account with transport history");
+          }
+          await tx.vehicle.delete({ where: { id: vehicle.id } });
+        }
+      }
       await tx.account.delete({ where: { id: accountId } });
     });
 

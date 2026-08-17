@@ -13,11 +13,11 @@ import { useRegisterExport } from "@/hooks/useRegisterExport";
 import { DirectoryAdminNotice, confirmDirectoryDelete, useDirectoryAdmin } from "@/components/accounts/DirectoryAdminActions";
 import {
   BookOpen, Loader2, Landmark, Users, Wallet,
-  Banknote, Building, Store, Plus, Search, Sprout, Truck, X,
+  Banknote, Building, Store, Plus, Search, Sprout, Truck, Car, X,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
-const PROJECT_CATEGORIES = ["cash", "bank", "farmer", "company", "shop", "salary", "transport"];
+const PROJECT_CATEGORIES = ["cash", "bank", "farmer", "company", "shop", "salary", "transport", "vehicle"];
 
 const CATEGORY_LABELS = {
   cash: "Cash",
@@ -27,6 +27,7 @@ const CATEGORY_LABELS = {
   shop: "Shops",
   salary: "Employees",
   transport: "Drivers",
+  vehicle: "Vehicles",
 };
 
 const CATEGORY_ICONS = {
@@ -37,6 +38,7 @@ const CATEGORY_ICONS = {
   shop: Store,
   salary: Users,
   transport: Truck,
+  vehicle: Car,
 };
 
 const STAT_CARDS = [
@@ -258,7 +260,7 @@ function AccountsPageContent() {
             </div>
             <h1 className="erp-ac-page-title">Account register</h1>
             <p className="erp-ac-page-desc">
-              Master directory for cash, bank, suppliers, customers, staff and drivers — live balances, Excel-style grid.
+              Master directory for cash, bank, suppliers, customers, staff, drivers, and vehicles — live balances, Excel-style grid.
             </p>
           </div>
           {canCreate && (

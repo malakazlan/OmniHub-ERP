@@ -45,6 +45,7 @@ const CATEGORY_LABELS = {
   shop: "Shop",
   salary: "Employee",
   transport: "Driver Accounts",
+  vehicle: "Vehicle Accounts",
 };
 
 export default function GeneralLedgerPage() {

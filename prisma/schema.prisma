@@ -487,6 +487,7 @@ model Vehicle {
   driverName          String?
   driverPhone         String?
   driverAccountId     Int?             @unique
+  accountId           Int?             @unique
   isOwned             Boolean          @default(true) // true = fleet owned, false = hired
   isActive            Boolean          @default(true)
   notes               String?
