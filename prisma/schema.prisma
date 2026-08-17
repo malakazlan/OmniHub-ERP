@@ -239,6 +239,7 @@ model PurchaseOrder {
 
   // Payment
   paidAmount          Float            @default(0)
+  transportPaidAmount Float            @default(0)
   cashAmount          Float            @default(0)
   bankAmount          Float            @default(0)
   cashAccountId       Int?

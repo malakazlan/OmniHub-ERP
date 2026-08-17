@@ -31,6 +31,7 @@ export const NAV_SECTIONS = [
     title: "Finance",
     items: [
       { slug: "accounts", label: "Payments", href: "/accounts/payments", icon: Receipt, keywords: "cash bank transfer" },
+      { slug: "accounts", label: "Freight Pay", href: "/accounts/freight-pay", icon: Truck, keywords: "transport freight purchase bills" },
       { slug: "accounts", label: "Expenses", href: "/accounts/expenses", icon: Wallet2, keywords: "business expenses" },
       { slug: "accounts", label: "Journal Entries", href: "/accounts/journal", icon: BookText, keywords: "double entry adjustments" },
     ],
@@ -75,6 +76,7 @@ export const DASHBOARD_SHORTCUTS = [
   { slug: "accounts", label: "All Accounts", href: "/accounts" },
   { slug: "accounts", label: "General Ledger", href: "/accounts/ledger" },
   { slug: "accounts", label: "Payments", href: "/accounts/payments" },
+  { slug: "accounts", label: "Freight Pay", href: "/accounts/freight-pay" },
   { slug: "accounts", label: "Expenses", href: "/accounts/expenses" },
   { slug: "accounts", label: "Journal", href: "/accounts/journal" },
   { slug: "hr", label: "HR", href: "/hr" },

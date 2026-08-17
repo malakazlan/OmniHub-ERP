@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   BarChart3, TrendingUp, ShoppingCart, Package, Truck, PieChart,
-  CalendarCheck, Wallet2, CreditCard, Scale, Users,
+  CalendarCheck, Wallet2, CreditCard, Scale, Users, Banknote, Building2,
 } from "lucide-react";
 
 const SECTIONS = [
@@ -23,6 +23,8 @@ const SECTIONS = [
       { href: "/reports/receivables", title: "Receivables & Payables", desc: "Customer dues and vendor balances", icon: Scale, color: "is-accounts" },
       { href: "/reports/expenses", title: "Expense Report", desc: "Operating expenses by category", icon: Wallet2, color: "is-accounts" },
       { href: "/reports/payments", title: "Payment Register", desc: "All payments by method and date", icon: CreditCard, color: "is-accounts" },
+      { href: "/reports/cash-bank?category=cash", title: "Cash Report", desc: "Cash account balances, receipts & payments", icon: Banknote, color: "is-accounts" },
+      { href: "/reports/cash-bank?category=bank", title: "Bank Report", desc: "Bank account ledger and movements", icon: Building2, color: "is-accounts" },
     ],
   },
   {
