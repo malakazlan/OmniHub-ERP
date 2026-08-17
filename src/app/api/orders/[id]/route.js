@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import {
@@ -67,7 +67,7 @@ export async function PUT(req, { params }) {
       lockRatesToCatalog: mustScopeOrdersToSelf(user),
     });
 
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await runTransaction(async (tx) => {
       await tx.customerOrderItem.deleteMany({ where: { customerOrderId: existing.id } });
       return tx.customerOrder.update({
         where: { id: existing.id },
@@ -100,6 +100,12 @@ export async function PUT(req, { params }) {
     return Response.json({ success: true, order });
   } catch (error) {
     console.error("Update customer order error:", error);
+    if (error.code === "P2028") {
+      return Response.json(
+        { error: "Database busy — retry in a moment." },
+        { status: 503 }
+      );
+    }
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

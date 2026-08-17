@@ -31,6 +31,7 @@ export function isTransientDbError(error) {
   const msg = String(error?.message || "");
   const code = error?.code;
   return (
+    code === "P2028" ||
     code === "ECONNRESET" ||
     code === "ECONNREFUSED" ||
     code === "ETIMEDOUT" ||
