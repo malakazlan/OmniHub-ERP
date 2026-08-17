@@ -49,7 +49,7 @@ export async function GET(req) {
     const orders = await prisma.customerOrder.findMany({
       where,
       include: customerOrderInclude,
-      orderBy: { orderDate: "desc", id: "desc" },
+      orderBy: [{ orderDate: "desc" }, { id: "desc" }],
     });
 
     const safe = sanitizeCustomerOrders(orders, user);
