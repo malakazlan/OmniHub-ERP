@@ -4,6 +4,7 @@ import { generateAccountCode } from "@/lib/receipt";
 import { cashAccountWhereForUser } from "@/lib/accountAccess";
 import { directoryCreateBlocked } from "@/lib/directoryCreate";
 import { attachPartyMetaToAccounts } from "@/lib/accountRelations";
+import { applyOpeningBalance } from "@/lib/accountOpening";
 
 export async function GET(req) {
   try {
@@ -63,14 +64,13 @@ export async function POST(req) {
       if (blocked) return blocked;
     }
 
-    const { name, type, category, city, phone, openingBalance, reference } = body;
+    const { name, type, category, city, phone, openingBalance, openingBalanceDate, reference } = body;
 
     if (!name || !type || !category) {
       return Response.json({ error: "Name, type, and category are required" }, { status: 400 });
     }
 
     const code = await generateAccountCode(category);
-    const opening = parseFloat(openingBalance) || 0;
 
     const account = await prisma.account.create({
       data: {
@@ -80,26 +80,17 @@ export async function POST(req) {
         category,
         city,
         phone,
-        openingBalance: opening,
-        balance: opening,
+        openingBalance: 0,
+        balance: 0,
         reference,
       },
     });
 
-    if (opening !== 0) {
-      await prisma.ledgerEntry.create({
-        data: {
-          accountId: account.id,
-          date: new Date(),
-          description: "Opening balance",
-          debit: opening > 0 ? opening : 0,
-          credit: opening < 0 ? Math.abs(opening) : 0,
-          balance: opening,
-        },
-      });
-    }
+    await applyOpeningBalance(prisma, account.id, type, openingBalance, openingBalanceDate);
 
-    return Response.json({ success: true, account }, { status: 201 });
+    const refreshed = await prisma.account.findUnique({ where: { id: account.id } });
+
+    return Response.json({ success: true, account: refreshed }, { status: 201 });
   } catch (error) {
     console.error("Create account error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

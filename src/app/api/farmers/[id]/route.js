@@ -3,7 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 import { trimOrNull } from "@/lib/stringUtils";
-import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
+import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 
 // GET: Fetch a single farmer's details and transaction logs
 export async function GET(req, { params }) {
@@ -124,6 +124,9 @@ export async function PUT(req, { params }) {
           },
         });
         await syncAccountBalanceFromForm(tx, farmer.accountId, body.currentBalance);
+        if (body.openingBalanceDate) {
+          await updateOpeningBalanceDate(tx, farmer.accountId, body.openingBalanceDate);
+        }
       }
 
       return f;

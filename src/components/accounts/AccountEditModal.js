@@ -11,6 +11,8 @@ import {
   AccountCategoryFields,
   validateAccountForm,
   formFromPartyEntity,
+  openingBalanceDateFromEntries,
+  todayInputDate,
 } from "@/components/accounts/accountFormShared";
 
 export default function AccountEditModal({ isOpen, onClose, account, onSuccess }) {
@@ -57,7 +59,10 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               };
             }
           }
-          setForm(nextForm);
+          setForm({
+            ...nextForm,
+            openingBalanceDate: openingBalanceDateFromEntries(data.ledgerEntries),
+          });
         } else {
           showToast(data.error || "Failed to load account", "error");
         }
@@ -79,7 +84,10 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
     }
 
     const entityId = detail?.entityId;
-    const balancePayload = { currentBalance: form.currentBalance };
+    const balancePayload = {
+      currentBalance: form.currentBalance,
+      openingBalanceDate: form.openingBalanceDate,
+    };
 
     setSubmitting(true);
     try {

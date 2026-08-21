@@ -2,9 +2,9 @@ import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { userCanAccessAccount } from "@/lib/accountAccess";
 import { findPartyEntityByAccount } from "@/lib/accountRelations";
-import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
+import { LEDGER_ENTRY_ORDER, applyRunningBalances } from "@/lib/ledger";
 import { trimOrNull } from "@/lib/stringUtils";
-import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
+import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 
 export async function GET(req, { params }) {
   try {
@@ -20,10 +20,12 @@ export async function GET(req, { params }) {
     const allowed = await userCanAccessAccount(prisma, user, accountId);
     if (!allowed) return Response.json({ error: "You do not have access to this account" }, { status: 403 });
 
-    const ledgerEntries = await prisma.ledgerEntry.findMany({
-      where: { accountId },
-      orderBy: LEDGER_ENTRY_ORDER,
-    });
+    const ledgerEntries = applyRunningBalances(
+      await prisma.ledgerEntry.findMany({
+        where: { accountId },
+        orderBy: LEDGER_ENTRY_ORDER,
+      })
+    );
 
     const { partyEntity, bankMeta, entityId } = await findPartyEntityByAccount(account);
 
@@ -74,6 +76,9 @@ export async function PUT(req, { params }) {
       });
 
       await syncAccountBalanceFromForm(tx, accountId, body.currentBalance);
+      if (body.openingBalanceDate) {
+        await updateOpeningBalanceDate(tx, accountId, body.openingBalanceDate);
+      }
 
       if (body.bankMeta && updated.category === "bank") {
         const bm = body.bankMeta;

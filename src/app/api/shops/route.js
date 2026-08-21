@@ -68,7 +68,7 @@ export async function POST(req) {
         },
       });
 
-      await applyOpeningBalance(tx, account.id, "asset", openingBalance);
+      await applyOpeningBalance(tx, account.id, "asset", openingBalance, body.openingBalanceDate);
 
       const shop = await tx.shop.create({
         data: {

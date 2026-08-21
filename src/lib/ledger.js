@@ -3,6 +3,121 @@ import prisma from "./prisma";
 /** Oldest first — new entries appear at the bottom (statement / register order). */
 export const LEDGER_ENTRY_ORDER = [{ date: "asc" }, { id: "asc" }];
 
+/** Normalize ledger dates to start of local calendar day (opening balances sort first). */
+export function startOfLedgerDay(dateInput) {
+  const d = dateInput ? new Date(dateInput) : new Date();
+  if (Number.isNaN(d.getTime())) return new Date();
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+}
+
+export function isOpeningBalanceEntry(entry) {
+  if (!entry) return false;
+  if (entry.referenceType === "OpeningBalance") return true;
+  return String(entry.description || "").trim().toLowerCase() === "opening balance";
+}
+
+/** Statement order: date asc → opening balance first on same day → account id → entry id. */
+export function compareLedgerEntries(a, b) {
+  const da = startOfLedgerDay(a.date).getTime();
+  const db = startOfLedgerDay(b.date).getTime();
+  if (da !== db) return da - db;
+
+  const aOpen = isOpeningBalanceEntry(a) ? 0 : 1;
+  const bOpen = isOpeningBalanceEntry(b) ? 0 : 1;
+  if (aOpen !== bOpen) return aOpen - bOpen;
+
+  const aAcct = a.accountId || 0;
+  const bAcct = b.accountId || 0;
+  if (aAcct !== bAcct) return aAcct - bAcct;
+
+  return (a.id || 0) - (b.id || 0);
+}
+
+export function sortLedgerEntries(entries = []) {
+  return [...entries].sort(compareLedgerEntries);
+}
+
+/** Recompute running balance column from debit/credit in proper statement order. */
+export function applyRunningBalances(entries = []) {
+  const sorted = sortLedgerEntries(entries);
+  const runningByAccount = {};
+
+  return sorted.map((entry) => {
+    const accountId = entry.accountId;
+    runningByAccount[accountId] =
+      (runningByAccount[accountId] || 0) + (entry.debit || 0) - (entry.credit || 0);
+    return {
+      ...entry,
+      balance: Math.round(runningByAccount[accountId] * 100) / 100,
+    };
+  });
+}
+
+/** Sort + running balances for API responses. */
+export function prepareLedgerEntriesForDisplay(entries = []) {
+  return applyRunningBalances(entries);
+}
+
+/** Persist correct running balances after inserts, back-dated entries, or date changes. */
+export async function recomputeAndPersistAccountLedgerBalances(tx, accountId) {
+  const id = parseInt(accountId, 10);
+  if (!id) return 0;
+
+  const entries = await tx.ledgerEntry.findMany({
+    where: { accountId: id },
+    orderBy: LEDGER_ENTRY_ORDER,
+  });
+
+  const dateFixes = [];
+  for (const entry of entries) {
+    if (!isOpeningBalanceEntry(entry)) continue;
+    const normalized = startOfLedgerDay(entry.date);
+    const patch = {};
+    if (Math.abs(normalized.getTime() - new Date(entry.date).getTime()) > 1000) {
+      patch.date = normalized;
+      entry.date = normalized;
+    }
+    if (entry.referenceType !== "OpeningBalance") {
+      patch.referenceType = "OpeningBalance";
+    }
+    if (Object.keys(patch).length) {
+      dateFixes.push(
+        tx.ledgerEntry.update({
+          where: { id: entry.id },
+          data: patch,
+        })
+      );
+    }
+  }
+  if (dateFixes.length) await Promise.all(dateFixes);
+
+  const ordered = sortLedgerEntries(entries);
+  let running = 0;
+  const updates = [];
+  for (const entry of ordered) {
+    running += (entry.debit || 0) - (entry.credit || 0);
+    const balance = Math.round(running * 100) / 100;
+    if (Math.abs(balance - (entry.balance || 0)) > 0.001) {
+      updates.push(
+        tx.ledgerEntry.update({
+          where: { id: entry.id },
+          data: { balance },
+        })
+      );
+    }
+  }
+
+  if (updates.length) await Promise.all(updates);
+
+  const finalBalance = Math.round(running * 100) / 100;
+  await tx.account.update({
+    where: { id },
+    data: { balance: finalBalance },
+  });
+
+  return finalBalance;
+}
+
 /**
  * Create a ledger entry and update account running balance.
  */
@@ -43,47 +158,33 @@ export async function createLedgerEntries(tx, entries = []) {
   if (!normalized.length) return [];
 
   const accountIds = [...new Set(normalized.map((e) => e.accountId))];
-  const accounts = await tx.account.findMany({
-    where: { id: { in: accountIds } },
-    select: { id: true, balance: true },
-  });
-  const balanceById = Object.fromEntries(accounts.map((a) => [a.id, a.balance || 0]));
+  const created = [];
 
-  for (const id of accountIds) {
-    if (balanceById[id] === undefined) {
-      throw new Error(`Account ${id} not found`);
-    }
-  }
-
-  const rows = [];
   for (const entry of normalized) {
-    const newBalance = balanceById[entry.accountId] + entry.debit - entry.credit;
-    balanceById[entry.accountId] = newBalance;
-    rows.push({
-      accountId: entry.accountId,
-      date: entry.date,
-      description: entry.description,
-      reference: entry.reference,
-      referenceType: entry.referenceType,
-      referenceId: entry.referenceId,
-      debit: entry.debit,
-      credit: entry.credit,
-      balance: newBalance,
+    const row = await tx.ledgerEntry.create({
+      data: {
+        accountId: entry.accountId,
+        date: entry.date,
+        description: entry.description,
+        reference: entry.reference,
+        referenceType: entry.referenceType,
+        referenceId: entry.referenceId,
+        debit: entry.debit,
+        credit: entry.credit,
+        balance: 0,
+      },
     });
+    created.push(row);
   }
 
-  await tx.ledgerEntry.createMany({ data: rows });
+  await Promise.all(accountIds.map((id) => recomputeAndPersistAccountLedgerBalances(tx, id)));
 
-  await Promise.all(
-    accountIds.map((id) =>
-      tx.account.update({
-        where: { id },
-        data: { balance: balanceById[id] },
-      })
-    )
-  );
+  const refreshed = await tx.ledgerEntry.findMany({
+    where: { id: { in: created.map((c) => c.id) } },
+    orderBy: LEDGER_ENTRY_ORDER,
+  });
 
-  return rows;
+  return refreshed;
 }
 
 /**

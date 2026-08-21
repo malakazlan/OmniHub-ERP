@@ -4,7 +4,7 @@ import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePr
 import { MODULES } from "@/lib/constants";
 import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccounts";
 import { trimOrNull } from "@/lib/stringUtils";
-import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
+import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 
 async function fetchLoginUser(userId) {
   if (!userId) return null;
@@ -203,6 +203,9 @@ export async function PUT(req, { params }) {
           },
         });
         await syncAccountBalanceFromForm(tx, existing.accountId, body.currentBalance);
+        if (body.openingBalanceDate) {
+          await updateOpeningBalanceDate(tx, existing.accountId, body.openingBalanceDate);
+        }
       }
 
       return updated;

@@ -12,6 +12,7 @@ import {
   CATEGORY_TITLES,
   AccountCategoryFields,
   validateAccountForm,
+  todayInputDate,
 } from "@/components/accounts/accountFormShared";
 
 export default function AccountRegisterModal({ isOpen, onClose, category, onSuccess }) {
@@ -56,6 +57,7 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
               name: form.name.trim(),
               phone: form.phone.trim(),
               openingBalance: form.openingBalance,
+              openingBalanceDate: form.openingBalanceDate,
               assignToAdmin: form.assignToAdmin,
               assignToUserId: form.assignToAdmin ? undefined : form.assignToUserId || undefined,
               ...DIRECTORY_POST_FLAG,
@@ -93,6 +95,7 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
               salary: form.salary,
               cnic: form.cnic,
               openingBalance: form.openingBalance,
+              openingBalanceDate: form.openingBalanceDate,
               isActive: form.isActive,
               createAccount: true,
               createCashAccount: true,
@@ -116,6 +119,7 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
               cnic: form.cnic,
               salary: form.salary,
               openingBalance: form.openingBalance,
+              openingBalanceDate: form.openingBalanceDate,
               role: "driver",
               department: "Transport",
               isActive: form.isActive,
@@ -194,7 +198,7 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
 }
 
 function getEmptyForm(category) {
-  const base = { isActive: true, phone: "", openingBalance: "" };
+  const base = { isActive: true, phone: "", openingBalance: "", openingBalanceDate: todayInputDate() };
   switch (category) {
     case "cash":
       return { ...base, name: "", assignToAdmin: false, assignToUserId: "" };

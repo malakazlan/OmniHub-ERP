@@ -1,6 +1,6 @@
 import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
-import { syncAccountBalanceFromForm } from "@/lib/accountOpening";
+import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 import { trimOrNull } from "@/lib/stringUtils";
 
 export async function GET(req, { params }) {
@@ -88,6 +88,9 @@ export async function PUT(req, { params }) {
           },
         });
         await syncAccountBalanceFromForm(tx, existing.accountId, body.currentBalance);
+        if (body.openingBalanceDate) {
+          await updateOpeningBalanceDate(tx, existing.accountId, body.openingBalanceDate);
+        }
       }
 
       return updated;

@@ -4,6 +4,7 @@ import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/direc
 import { generateAccountCode } from "@/lib/receipt";
 import { logActivity } from "@/lib/activityLog";
 import { attachBankMetaToLedgerAccounts } from "@/lib/accountRelations";
+import { applyOpeningBalance } from "@/lib/accountOpening";
 
 export async function GET(req) {
   try {
@@ -42,6 +43,7 @@ export async function POST(req) {
       branchCode,
       branchName,
       openingBalance,
+      openingBalanceDate,
       ledgerName,
       phone,
     } = body;
@@ -55,7 +57,6 @@ export async function POST(req) {
     }
 
     const code = await generateAccountCode("bank");
-    const opening = parseFloat(openingBalance) || 0;
 
     const result = await runTransaction(async (tx) => {
       const account = await tx.account.create({
@@ -66,23 +67,12 @@ export async function POST(req) {
           category: "bank",
           phone: phone.trim(),
           reference: accountNumber?.trim() || null,
-          openingBalance: opening,
-          balance: opening,
+          openingBalance: 0,
+          balance: 0,
         },
       });
 
-      if (opening !== 0) {
-        await tx.ledgerEntry.create({
-          data: {
-            accountId: account.id,
-            date: new Date(),
-            description: "Opening balance",
-            debit: opening > 0 ? opening : 0,
-            credit: opening < 0 ? Math.abs(opening) : 0,
-            balance: opening,
-          },
-        });
-      }
+      await applyOpeningBalance(tx, account.id, "asset", openingBalance, openingBalanceDate);
 
       const bankMeta = await tx.bankAccount.create({
         data: {

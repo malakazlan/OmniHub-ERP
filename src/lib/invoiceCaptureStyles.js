@@ -18,10 +18,10 @@ export const INVOICE_CAPTURE_CSS = `
   box-shadow: none;
 }
 .erp-inv-header {
-  background: #111827;
+  background: linear-gradient(135deg, #0f172a 0%, #134e4a 52%, #047857 100%);
   color: #ffffff;
-  padding: 1.1rem 1.25rem 1rem;
-  border-bottom: 4px solid #047857;
+  padding: 1.15rem 1.25rem 1.05rem;
+  border-bottom: 3px solid #10b981;
 }
 .erp-inv-header-inner {
   display: grid;
@@ -87,8 +87,32 @@ export const INVOICE_CAPTURE_CSS = `
 .erp-inv-pay-badge.is-unpaid { background: #374151; color: #f3f4f6; border: 1px solid #4b5563; }
 .erp-inv-customer {
   padding: 0.85rem 1.25rem;
-  background: #ecfdf5;
-  border-bottom: 1px solid #bbf7d0;
+  background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
+  border-bottom: 1px solid #a7f3d0;
+}
+.erp-inv-customer-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 4px;
+  background: #ffffff;
+  border: 1px solid #bbf7d0;
+}
+.erp-inv-customer-balance-label {
+  font-size: 0.5625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #047857;
+}
+.erp-inv-customer-balance-value {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  font-family: ui-monospace, monospace;
+  color: #0f172a;
 }
 .erp-inv-customer-grid {
   display: grid;
@@ -257,6 +281,16 @@ export const INVOICE_CAPTURE_CSS = `
 .erp-inv-pay-value.is-settled { color: #047857; font-weight: 800; }
 .erp-inv-pay-value.is-due,
 .erp-inv-pay-value.is-settled { background: #ffffff; }
+.erp-inv-pay-label.is-balance,
+.erp-inv-pay-value.is-balance { background: #f1f5f9; font-weight: 700; color: #334155; }
+.erp-inv-pay-label.is-outstanding,
+.erp-inv-pay-value.is-outstanding {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  border-top: 2px solid #10b981;
+}
 .erp-inv-notes {
   padding: 0.65rem 1.25rem;
   font-size: 0.6875rem;

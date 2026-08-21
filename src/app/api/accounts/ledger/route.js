@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { userCanAccessAccount } from "@/lib/accountAccess";
-import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
+import { LEDGER_ENTRY_ORDER, applyRunningBalances } from "@/lib/ledger";
 import { enrichLedgerEntriesWithLineItems } from "@/lib/ledgerEnrichment";
 
 export async function GET(req) {
@@ -67,7 +67,9 @@ export async function GET(req) {
         })
       : null;
 
-    const enrichedEntries = await enrichLedgerEntriesWithLineItems(prisma, entries);
+    const enrichedEntries = applyRunningBalances(
+      await enrichLedgerEntriesWithLineItems(prisma, entries)
+    );
 
     return Response.json({ success: true, account, entries: enrichedEntries });
   } catch (error) {

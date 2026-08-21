@@ -1,4 +1,4 @@
-import { createLedgerEntry } from "./ledger";
+import { createLedgerEntry, recomputeAndPersistAccountLedgerBalances, startOfLedgerDay } from "./ledger";
 import { parseBalanceAmount, formAmountToLedgerBalance } from "./accountBalanceForm";
 
 /** Parse opening balance from form/API input. */
@@ -9,31 +9,73 @@ export function parseOpeningBalance(val) {
 /**
  * Post opening balance ledger entry for a new account.
  * Asset: positive = debit (cash, receivable). Liability: positive = credit (payable).
+ * Uses start-of-day date so the entry sorts in chronological ledger order.
  */
-export async function applyOpeningBalance(tx, accountId, accountType, openingBalanceRaw) {
+export async function applyOpeningBalance(
+  tx,
+  accountId,
+  accountType,
+  openingBalanceRaw,
+  openingDateRaw
+) {
   const amount = parseOpeningBalance(openingBalanceRaw);
   if (amount === 0) return;
+
+  let dateSource = openingDateRaw;
+  if (!dateSource) {
+    const account = await tx.account.findUnique({
+      where: { id: accountId },
+      select: { createdAt: true },
+    });
+    dateSource = account?.createdAt;
+  }
+  const date = startOfLedgerDay(dateSource);
 
   const isLiability = accountType === "liability";
   const debit = isLiability ? (amount < 0 ? Math.abs(amount) : 0) : amount > 0 ? amount : 0;
   const credit = isLiability ? (amount > 0 ? amount : 0) : amount < 0 ? Math.abs(amount) : 0;
-  const balance = debit - credit;
+  const signedOpening = debit - credit;
 
   await tx.account.update({
     where: { id: accountId },
-    data: { openingBalance: balance, balance },
+    data: { openingBalance: signedOpening },
   });
 
   await tx.ledgerEntry.create({
     data: {
       accountId,
-      date: new Date(),
+      date,
       description: "Opening balance",
+      referenceType: "OpeningBalance",
       debit,
       credit,
-      balance,
+      balance: 0,
     },
   });
+
+  await recomputeAndPersistAccountLedgerBalances(tx, accountId);
+}
+
+/** Update the opening balance ledger line date (re-flows in statement order). */
+export async function updateOpeningBalanceDate(tx, accountId, openingDateRaw) {
+  if (!openingDateRaw) return;
+
+  const opening = await tx.ledgerEntry.findFirst({
+    where: {
+      accountId,
+      OR: [{ referenceType: "OpeningBalance" }, { description: "Opening balance" }],
+    },
+    orderBy: [{ id: "asc" }],
+  });
+  if (!opening) return;
+
+  const date = startOfLedgerDay(openingDateRaw);
+  await tx.ledgerEntry.update({
+    where: { id: opening.id },
+    data: { date },
+  });
+
+  await recomputeAndPersistAccountLedgerBalances(tx, accountId);
 }
 
 /**

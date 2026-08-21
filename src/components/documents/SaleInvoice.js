@@ -8,6 +8,7 @@ import {
   saleCustomerPhone,
 } from "@/lib/saleCustomer";
 import { resolveSalePayment, salePaymentStatusLabel } from "@/lib/salePayment";
+import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 import { formatCurrency, formatDate, formatQuantity } from "@/lib/formatters";
 import { amountInWords } from "@/lib/amountInWords";
 
@@ -30,6 +31,12 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
   const items = sale.items || [];
   const payment = resolveSalePayment(sale);
   const customerPhone = saleCustomerPhone(sale);
+  const hasLedger = Boolean(sale.customerAccountId);
+
+  const customerBal = sale.customerAccountBalance ?? 0;
+  const balances = computeCustomerBalancesForSale(sale, customerBal);
+  const previousBalance = sale.previousBalance ?? balances.previousBalance;
+  const totalOutstanding = sale.totalOutstanding ?? sale.currentBalance ?? balances.totalOutstanding;
 
   const extraCosts = [
     ["Transport", sale.transportCost],
@@ -41,7 +48,6 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
 
   return (
     <article className="erp-sale-invoice">
-      {/* Header */}
       <header className="erp-inv-header">
         <div className="erp-inv-header-inner">
           <div className="erp-inv-brand">
@@ -63,7 +69,6 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
         </div>
       </header>
 
-      {/* Customer only — no payment summary */}
       <section className="erp-inv-customer">
         <div className="erp-inv-customer-grid">
           <div className="erp-inv-customer-cell">
@@ -83,6 +88,12 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
             <span className="erp-inv-cell-value is-cap">{(sale.status || "draft").replace(/_/g, " ")}</span>
           </div>
         </div>
+        {hasLedger && (
+          <div className="erp-inv-customer-balance">
+            <span className="erp-inv-customer-balance-label">Previous balance</span>
+            <span className="erp-inv-customer-balance-value">{formatCurrency(previousBalance)}</span>
+          </div>
+        )}
       </section>
 
       {(sale.vehicleNumber || sale.driverName) && (
@@ -96,7 +107,6 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
         </section>
       )}
 
-      {/* Line items */}
       <div className="erp-inv-table-wrap">
         <table className="erp-inv-table">
           <thead>
@@ -122,7 +132,6 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
         </table>
       </div>
 
-      {/* Bottom: words + payment grid */}
       <div className="erp-inv-bottom">
         <div className="erp-inv-words">
           <p className="erp-inv-words-label">Amount in words</p>
@@ -142,6 +151,13 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
             <div className="erp-inv-pay-head">Particulars</div>
             <div className="erp-inv-pay-head is-amt">Amount (Rs.)</div>
 
+            {hasLedger && (
+              <>
+                <div className="erp-inv-pay-label is-balance">Previous balance</div>
+                <div className="erp-inv-pay-value is-balance">{formatCurrency(previousBalance)}</div>
+              </>
+            )}
+
             <div className="erp-inv-pay-label">Subtotal</div>
             <div className="erp-inv-pay-value">{moneyPlain(sale.subtotal)}</div>
 
@@ -159,18 +175,25 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
               </>
             )}
 
-            <div className="erp-inv-pay-label is-grand">Total amount</div>
+            <div className="erp-inv-pay-label is-grand">Invoice total</div>
             <div className="erp-inv-pay-value is-grand">{moneyPlain(payment.totalAmount)}</div>
 
             <div className="erp-inv-pay-label">Amount received</div>
             <div className="erp-inv-pay-value">{moneyPlain(payment.paidAmount)}</div>
 
             <div className={`erp-inv-pay-label ${payment.balanceDue > 0 ? "is-due" : "is-settled"}`}>
-              Balance due
+              Balance due (this invoice)
             </div>
             <div className={`erp-inv-pay-value ${payment.balanceDue > 0 ? "is-due" : "is-settled"}`}>
               {moneyPlain(payment.balanceDue)}
             </div>
+
+            {hasLedger && (
+              <>
+                <div className="erp-inv-pay-label is-outstanding">Total outstanding</div>
+                <div className="erp-inv-pay-value is-outstanding">{formatCurrency(totalOutstanding)}</div>
+              </>
+            )}
           </div>
         </div>
       </div>

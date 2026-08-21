@@ -76,7 +76,7 @@ export async function POST(req) {
         },
       });
 
-      await applyOpeningBalance(tx, account.id, getAccountType(type), openingBalance);
+      await applyOpeningBalance(tx, account.id, getAccountType(type), openingBalance, body.openingBalanceDate);
 
       const company = await tx.company.create({
         data: {

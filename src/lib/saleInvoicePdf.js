@@ -2,6 +2,7 @@ import { jsPDF } from "jspdf";
 import { formatDate, formatQuantity } from "@/lib/formatters";
 import { saleCustomerDisplayName, saleCustomerTypeLabel, saleCustomerPhone } from "@/lib/saleCustomer";
 import { resolveSalePayment, salePaymentStatusLabel } from "@/lib/salePayment";
+import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 import { amountInWords } from "@/lib/amountInWords";
 
 const DEFAULT_COMPANY = {
@@ -133,10 +134,10 @@ function drawHeader(pdf, c, sale, grid, y) {
   const w = right - left;
   const h = LAYOUT.headerH;
 
-  setFill(pdf, COLORS.slate800);
+  setFill(pdf, COLORS.slate900);
   pdf.rect(left, y, w, h, "F");
-  setFill(pdf, COLORS.teal600);
-  pdf.rect(left, y + h - 1, w, 1, "F");
+  setFill(pdf, COLORS.teal700);
+  pdf.rect(left, y + h - 2.5, w, 2.5, "F");
 
   textAt(pdf, c.company_name || "Warraich Traders", left + LAYOUT.pad, y + 11, {
     size: TYPE.company,
@@ -159,7 +160,7 @@ function drawHeader(pdf, c, sale, grid, y) {
   }
 
   const rx = right - LAYOUT.pad;
-  textAt(pdf, "SALES INVOICE", rx, y + 10, {
+  textAt(pdf, "TAX INVOICE", rx, y + 10, {
     align: "right",
     size: TYPE.label,
     color: COLORS.teal200,
@@ -193,7 +194,10 @@ function drawHeader(pdf, c, sale, grid, y) {
 function drawInfoBoxes(pdf, sale, grid, y) {
   const { left, right } = grid;
   const w = right - left;
-  const h = LAYOUT.infoBoxH;
+  const hasLedger = Boolean(sale.customerAccountId);
+  const balances = computeCustomerBalancesForSale(sale, sale.customerAccountBalance ?? 0);
+  const previousBalance = sale.previousBalance ?? balances.previousBalance;
+  const h = hasLedger ? LAYOUT.infoBoxH + 8 : LAYOUT.infoBoxH;
 
   setFill(pdf, COLORS.teal50);
   setDraw(pdf, COLORS.teal200);
@@ -236,6 +240,25 @@ function drawInfoBoxes(pdf, sale, grid, y) {
     textAt(pdf, dispatch, left + LAYOUT.pad, baseY + line * 3, {
       size: TYPE.body,
       color: COLORS.slate600,
+    });
+  }
+
+  if (hasLedger) {
+    const balY = y + h - 7;
+    setFill(pdf, COLORS.white);
+    setDraw(pdf, COLORS.teal200);
+    pdf.setLineWidth(0.15);
+    pdf.roundedRect(left + LAYOUT.pad, balY - 4, w - LAYOUT.pad * 2, 6, 1, 1, "FD");
+    textAt(pdf, "Previous balance", left + LAYOUT.pad + 2, balY, {
+      size: TYPE.label,
+      color: COLORS.teal700,
+      style: "bold",
+    });
+    textAt(pdf, fmtMoney(previousBalance), right - LAYOUT.pad - 2, balY, {
+      align: "right",
+      size: TYPE.bodyLg,
+      color: COLORS.slate900,
+      style: "bold",
     });
   }
 
@@ -303,24 +326,29 @@ function drawTableRow(pdf, grid, y, item, index) {
 
 function drawSummary(pdf, grid, y, sale) {
   const payment = resolveSalePayment(sale);
+  const hasLedger = Boolean(sale.customerAccountId);
+  const balances = computeCustomerBalancesForSale(sale, sale.customerAccountBalance ?? 0);
+  const previousBalance = sale.previousBalance ?? balances.previousBalance;
+  const totalOutstanding = sale.totalOutstanding ?? sale.currentBalance ?? balances.totalOutstanding;
   const { summaryLeft, amountRight, right } = grid;
   const w = LAYOUT.summaryW;
   const pad = LAYOUT.pad;
 
   const rows = [
-    ["Items subtotal", sale.subtotal, false, false],
+    ...(hasLedger ? [["Previous balance", previousBalance, false, false, "balance"]] : []),
+    ["Subtotal", sale.subtotal, false, false, "normal"],
     ...(parseFloat(sale.transportCost) > 0
-      ? [["Transport", sale.transportCost, false, false]]
+      ? [["Transport", sale.transportCost, false, false, "normal"]]
       : []),
-    ...(parseFloat(sale.loadingCost) > 0 ? [["Loading", sale.loadingCost, false, false]] : []),
-    ...(parseFloat(sale.taxAmount) > 0 ? [["Tax / GST", sale.taxAmount, false, false]] : []),
+    ...(parseFloat(sale.loadingCost) > 0 ? [["Loading", sale.loadingCost, false, false, "normal"]] : []),
+    ...(parseFloat(sale.taxAmount) > 0 ? [["Tax / GST", sale.taxAmount, false, false, "normal"]] : []),
     ...(parseFloat(sale.discountAmount) > 0
-      ? [["Discount", sale.discountAmount, true, false]]
+      ? [["Discount", sale.discountAmount, true, false, "normal"]]
       : []),
   ];
 
   const innerRows = rows.length;
-  const blockH = 10 + innerRows * 6 + 28;
+  const blockH = 10 + innerRows * 6 + (hasLedger ? 40 : 28);
 
   setDraw(pdf, COLORS.slate200);
   setFill(pdf, COLORS.white);
@@ -328,14 +356,18 @@ function drawSummary(pdf, grid, y, sale) {
   pdf.roundedRect(summaryLeft, y, w, blockH, 1.5, 1.5, "FD");
 
   let sy = y + 6;
-  textAt(pdf, "Amount summary", summaryLeft + pad, sy, {
+  textAt(pdf, "Payment summary", summaryLeft + pad, sy, {
     size: TYPE.label,
     color: COLORS.slate500,
     style: "bold",
   });
   sy += 8;
 
-  for (const [label, val, isDiscount] of rows) {
+  for (const [label, val, isDiscount, , rowType] of rows) {
+    if (rowType === "balance") {
+      setFill(pdf, COLORS.slate100);
+      pdf.rect(summaryLeft + 0.5, sy - 3.5, w - 1, 6.5, "F");
+    }
     textAt(pdf, label, summaryLeft + pad, sy, { size: TYPE.body, color: COLORS.slate600 });
     if (isDiscount) {
       textAt(pdf, `− ${fmtMoney(val, false)}`, amountRight, sy, {
@@ -355,7 +387,7 @@ function drawSummary(pdf, grid, y, sale) {
   pdf.setLineWidth(0.15);
   pdf.line(summaryLeft, sy - 1, right, sy - 1);
 
-  textAt(pdf, "Grand total", summaryLeft + pad, sy + 5, {
+  textAt(pdf, "Invoice total", summaryLeft + pad, sy + 5, {
     size: TYPE.subhead,
     color: COLORS.teal700,
     style: "bold",
@@ -368,11 +400,11 @@ function drawSummary(pdf, grid, y, sale) {
   });
   sy += 11;
 
-  textAt(pdf, "Received to date", summaryLeft + pad, sy, { size: TYPE.body, color: COLORS.slate600 });
+  textAt(pdf, "Amount received", summaryLeft + pad, sy, { size: TYPE.body, color: COLORS.slate600 });
   moneyAt(pdf, amountRight, sy, payment.paidAmount);
   sy += 6;
 
-  textAt(pdf, "Balance due", summaryLeft + pad, sy + 4, {
+  textAt(pdf, "Balance due (this invoice)", summaryLeft + pad, sy + 4, {
     size: TYPE.bodyLg,
     color: payment.balanceDue > 0 ? COLORS.rose700 : COLORS.teal700,
     style: "bold",
@@ -383,6 +415,23 @@ function drawSummary(pdf, grid, y, sale) {
     color: payment.balanceDue > 0 ? COLORS.rose700 : COLORS.teal700,
     style: "bold",
   });
+  sy += 10;
+
+  if (hasLedger) {
+    setFill(pdf, COLORS.teal50);
+    pdf.rect(summaryLeft + 0.5, sy - 1, w - 1, 9, "F");
+    textAt(pdf, "Total outstanding", summaryLeft + pad, sy + 5, {
+      size: TYPE.subhead,
+      color: COLORS.teal700,
+      style: "bold",
+    });
+    textAt(pdf, fmtMoney(totalOutstanding), amountRight, sy + 5, {
+      align: "right",
+      size: TYPE.subhead,
+      color: COLORS.teal700,
+      style: "bold",
+    });
+  }
 
   return y + blockH + LAYOUT.sectionGap;
 }

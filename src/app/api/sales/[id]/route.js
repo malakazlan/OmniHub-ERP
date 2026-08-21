@@ -10,6 +10,7 @@ import {
   applySaleStockAndLedger,
 } from "@/lib/order-processing";
 import { validateWalkInFullPayment } from "@/lib/saleCustomer";
+import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
@@ -76,7 +77,30 @@ export async function GET(req, { params }) {
       return Response.json({ error: "Sale not found" }, { status: 404 });
     }
 
-    return Response.json({ success: true, sale });
+    let customerAccountBalance = 0;
+    if (sale.customerAccountId) {
+      const acc = await prisma.account.findUnique({
+        where: { id: sale.customerAccountId },
+        select: { balance: true },
+      });
+      customerAccountBalance = acc?.balance ?? 0;
+    }
+
+    const { previousBalance, currentBalance, totalOutstanding } = computeCustomerBalancesForSale(
+      sale,
+      customerAccountBalance
+    );
+
+    return Response.json({
+      success: true,
+      sale: {
+        ...sale,
+        customerAccountBalance,
+        previousBalance,
+        currentBalance,
+        totalOutstanding,
+      },
+    });
   } catch (error) {
     console.error("Fetch sale error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

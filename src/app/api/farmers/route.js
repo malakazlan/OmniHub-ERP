@@ -99,7 +99,7 @@ export async function POST(req) {
         },
       });
 
-      await applyOpeningBalance(tx, account.id, "liability", openingBalance);
+      await applyOpeningBalance(tx, account.id, "liability", openingBalance, body.openingBalanceDate);
 
       const newFarmer = await tx.farmer.create({
         data: {

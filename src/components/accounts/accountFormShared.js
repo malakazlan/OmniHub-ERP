@@ -56,6 +56,20 @@ export function Field({ label, required, children, hint }) {
   );
 }
 
+export function todayInputDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function openingBalanceDateFromEntries(entries) {
+  const opening = (entries || []).find(
+    (e) => e.referenceType === "OpeningBalance" || e.description === "Opening balance"
+  );
+  if (!opening?.date) return todayInputDate();
+  const d = new Date(opening.date);
+  if (Number.isNaN(d.getTime())) return todayInputDate();
+  return d.toISOString().slice(0, 10);
+}
+
 export function OpeningBalanceField({ value, onChange, hint, label = "Opening balance" }) {
   return (
     <Field label={label} hint={hint}>
@@ -72,18 +86,50 @@ export function OpeningBalanceField({ value, onChange, hint, label = "Opening ba
 }
 
 function BalanceField({ isEdit, form, set, openingHint }) {
-  const fieldKey = isEdit ? "currentBalance" : "openingBalance";
+  if (isEdit) {
+    return (
+      <>
+        <OpeningBalanceField
+          label="Current balance"
+          value={form.currentBalance ?? ""}
+          onChange={(e) => set("currentBalance", e.target.value)}
+          hint="Change the account balance. A balance adjustment will be posted to the ledger."
+        />
+        <Field
+          label="Opening balance date"
+          hint="Move the opening balance entry to this date in the ledger (start of day)."
+        >
+          <input
+            type="date"
+            value={form.openingBalanceDate ?? ""}
+            onChange={(e) => set("openingBalanceDate", e.target.value)}
+            className="input-field w-full text-sm"
+          />
+        </Field>
+      </>
+    );
+  }
+
   return (
-    <OpeningBalanceField
-      label={isEdit ? "Current balance" : "Opening balance"}
-      value={form[fieldKey] ?? ""}
-      onChange={(e) => set(fieldKey, e.target.value)}
-      hint={
-        isEdit
-          ? "Change the account balance. A balance adjustment will be posted to the ledger."
-          : openingHint
-      }
-    />
+    <>
+      <OpeningBalanceField
+        label="Opening balance"
+        value={form.openingBalance ?? ""}
+        onChange={(e) => set("openingBalance", e.target.value)}
+        hint={openingHint}
+      />
+      <Field
+        label="As of date"
+        hint="Opening balance appears in the ledger on this date (sorted with other entries)."
+      >
+        <input
+          type="date"
+          value={form.openingBalanceDate ?? todayInputDate()}
+          onChange={(e) => set("openingBalanceDate", e.target.value)}
+          className="input-field w-full text-sm"
+        />
+      </Field>
+    </>
   );
 }
 

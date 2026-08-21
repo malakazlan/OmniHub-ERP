@@ -45,7 +45,7 @@ export async function POST(req) {
     const blocked = directoryCreateBlocked(body);
     if (blocked) return blocked;
 
-    const { name, openingBalance, assignToUserId, assignToAdmin, phone } = body;
+    const { name, openingBalance, openingBalanceDate, assignToUserId, assignToAdmin, phone } = body;
     if (!name?.trim()) {
       return Response.json({ error: "Account name is required" }, { status: 400 });
     }
@@ -69,6 +69,7 @@ export async function POST(req) {
       const created = await createCashLedgerAccount(tx, {
         name: name.trim(),
         openingBalance,
+        openingBalanceDate,
         ownerUserId,
         phone: phone.trim(),
       });
