@@ -180,11 +180,14 @@ function isSalarySlipCaptureTarget(element) {
 }
 
 function isInvoiceCaptureTarget(element) {
-  return (
+  if (!element) return false;
+  return Boolean(
     element.classList?.contains("erp-sale-invoice") ||
     element.classList?.contains("erp-purchase-invoice") ||
-    Boolean(element.querySelector?.(".erp-sale-invoice")) ||
-    Boolean(element.querySelector?.(".erp-purchase-invoice"))
+    element.classList?.contains("erp-document-bill") ||
+    element.querySelector?.(".erp-sale-invoice") ||
+    element.querySelector?.(".erp-purchase-invoice") ||
+    element.querySelector?.(".erp-document-bill")
   );
 }
 

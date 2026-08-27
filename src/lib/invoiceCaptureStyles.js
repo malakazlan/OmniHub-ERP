@@ -617,4 +617,142 @@ export const PURCHASE_INVOICE_CAPTURE_CSS = `
 }
 `;
 
-export const DOCUMENT_CAPTURE_CSS = `${INVOICE_CAPTURE_CSS}\n${PURCHASE_INVOICE_CAPTURE_CSS}`;
+export const DOCUMENT_BILL_CAPTURE_CSS = `
+.erp-document-bill {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.45;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  box-shadow: none;
+}
+.erp-document-bill * {
+  box-sizing: border-box;
+}
+.erp-document-bill table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.erp-document-bill th,
+.erp-document-bill td {
+  border: 1px solid #cbd5e1;
+  padding: 0.375rem 0.5rem;
+}
+.erp-document-bill .font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
+}
+.erp-document-bill .tabular-nums {
+  font-variant-numeric: tabular-nums !important;
+}
+.erp-document-bill .flex {
+  display: flex !important;
+}
+.erp-document-bill .grid {
+  display: grid !important;
+}
+.erp-document-bill .grid-cols-1 {
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.erp-document-bill .grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.erp-document-bill .gap-0 {
+  gap: 0px !important;
+}
+.erp-document-bill .gap-2 {
+  gap: 0.5rem !important;
+}
+.erp-document-bill .text-right {
+  text-align: right !important;
+}
+.erp-document-bill .text-left {
+  text-align: left !important;
+}
+.erp-document-bill .text-center {
+  text-align: center !important;
+}
+.erp-document-bill .font-bold {
+  font-weight: 700 !important;
+}
+.erp-document-bill .font-semibold {
+  font-weight: 600 !important;
+}
+.erp-document-bill .font-black {
+  font-weight: 900 !important;
+}
+.erp-document-bill .uppercase {
+  text-transform: uppercase !important;
+}
+.erp-document-bill .shrink-0 {
+  flex-shrink: 0 !important;
+}
+.erp-document-bill .w-\[100px\] {
+  width: 100px !important;
+}
+.erp-document-bill .bg-slate-50 { background-color: #f8fafc !important; }
+.erp-document-bill .bg-slate-100 { background-color: #f1f5f9 !important; }
+.erp-document-bill .bg-slate-700 { background-color: #334155 !important; }
+.erp-document-bill .bg-rose-50 { background-color: #fff1f2 !important; }
+.erp-document-bill .bg-rose-700 { background-color: #be123c !important; }
+.erp-document-bill .bg-emerald-50 { background-color: #ecfdf5 !important; }
+.erp-document-bill .bg-emerald-700 { background-color: #047857 !important; }
+.erp-document-bill .text-rose-700 { color: #be123c !important; }
+.erp-document-bill .text-rose-800 { color: #9f1239 !important; }
+.erp-document-bill .text-emerald-700 { color: #047857 !important; }
+.erp-document-bill .text-emerald-800 { color: #065f46 !important; }
+.erp-document-bill .text-sky-800 { color: #075985 !important; }
+.erp-document-bill .text-slate-500 { color: #64748b !important; }
+.erp-document-bill .text-slate-700 { color: #334155 !important; }
+.erp-document-bill .text-slate-900 { color: #0f172a !important; }
+.erp-document-bill .erp-voucher-header {
+  padding: 1.15rem 1.25rem 1rem !important;
+  text-align: center !important;
+  color: #ffffff !important;
+  box-sizing: border-box !important;
+}
+.erp-document-bill .erp-voucher-header.is-pay {
+  background-color: #be123c !important;
+  background: #be123c !important;
+}
+.erp-document-bill .erp-voucher-header.is-receive {
+  background-color: #047857 !important;
+  background: #047857 !important;
+}
+.erp-document-bill .erp-voucher-company {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 1.15rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+  color: #ffffff !important;
+}
+.erp-document-bill .erp-voucher-sub {
+  margin: 0.2rem 0 0 0 !important;
+  padding: 0 !important;
+  font-size: 0.65rem !important;
+  font-weight: 500 !important;
+  color: #f1f5f9 !important;
+  line-height: 1.3 !important;
+  opacity: 0.9 !important;
+}
+.erp-document-bill .erp-voucher-title {
+  margin: 0.6rem 0 0 0 !important;
+  padding: 0 !important;
+  font-size: 1.1rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  line-height: 1.2 !important;
+  color: #ffffff !important;
+}
+`;
+
+export const DOCUMENT_CAPTURE_CSS = `${INVOICE_CAPTURE_CSS}\n${PURCHASE_INVOICE_CAPTURE_CSS}\n${DOCUMENT_BILL_CAPTURE_CSS}`;

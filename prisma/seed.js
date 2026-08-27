@@ -22,8 +22,8 @@ function parseDatabaseUrl(connectionString) {
 const adapter = new PrismaMariaDb(parseDatabaseUrl(process.env.DATABASE_URL));
 const prisma = new PrismaClient({ adapter });
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "metro@gmail.com";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "metro1234";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@warraichtraders.com";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin1234";
 
 async function main() {
   const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
@@ -32,7 +32,7 @@ async function main() {
     where: { email: ADMIN_EMAIL },
     update: {
       password: hashedPassword,
-      name: "Metro Admin",
+      name: "Warraich Traders",
       role: "admin",
       isActive: true,
       allowedModules: JSON.stringify([
@@ -42,7 +42,7 @@ async function main() {
     },
     create: {
       email: ADMIN_EMAIL,
-      name: "Metro Admin",
+      name: "Warraich Traders",
       password: hashedPassword,
       role: "admin",
       allowedModules: JSON.stringify([
@@ -51,6 +51,10 @@ async function main() {
       ]),
     },
   });
+
+  await prisma.$executeRawUnsafe(
+    `UPDATE \`users\` SET \`name\` = 'Warraich Traders' WHERE \`name\` COLLATE utf8mb4_unicode_ci LIKE '%Metro%' OR \`name\` = 'Metro Admin'`
+  );
   console.log(`Admin user ready: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
 
   const defaultCategories = ["Raw Materials", "Finished Feed", "Additives", "Packaging"];

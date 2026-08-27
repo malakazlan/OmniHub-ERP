@@ -48,7 +48,7 @@ export const ACCOUNT_CATEGORIES = [
 ];
 
 export const CURRENCY = "PKR";
-export const CURRENCY_SYMBOL = "₨";
+export const CURRENCY_SYMBOL = "Rs";
 
 export const MODULE_ACCENTS = {
   dashboard: { light: "#6366F1", dark: "#818CF8", label: "Dashboard" },

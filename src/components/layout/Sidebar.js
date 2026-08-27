@@ -249,28 +249,31 @@ export default function Sidebar({ isOpen, onClose }) {
             ))}
           </nav>
 
-          <div className={`shrink-0 transition-all duration-300 ${collapsed ? "p-2 pb-3" : "px-3 pb-4 pt-1.5"}`}>
-            <div
-              className={`erp-shell-footer-card flex items-center rounded-2xl ${
-                collapsed ? "justify-center p-2" : "gap-3 px-3 py-2.5"
-              }`}
-            >
-              <div className="rounded-xl flex items-center justify-center text-[11px] font-bold text-white shrink-0 w-10 h-10 bg-gradient-to-br from-[#0F52BA] via-[#1E64D4] to-[#0B3E8F] shadow-md border border-white/20">
-                WT
-              </div>
-              {!collapsed && (
+          <div className={`shrink-0 transition-all duration-300 border-t border-white/10 ${collapsed ? "p-2 pb-4" : "p-3 pb-5"}`}>
+            {!collapsed ? (
+              <div className="erp-shell-footer-card flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-900/60 border border-white/10">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0F52BA] via-[#1E64D4] to-[#0B3E8F] flex items-center justify-center text-[10px] font-extrabold text-white shrink-0 border border-white/20 shadow">
+                  AJS
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-slate-100 truncate">Enterprise edition</p>
-                  <p className="text-[10px] text-blue-300 flex items-center gap-1.5 mt-0.5 font-medium">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
-                    </span>
-                    Connected
+                  <p className="text-[10px] uppercase font-semibold text-slate-400 tracking-wider leading-none">
+                    Developed by
+                  </p>
+                  <p className="text-xs font-bold text-slate-100 truncate tracking-wide mt-1">
+                    AL-JANNAT SYSTEMS
                   </p>
                 </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div
+                className="flex justify-center py-1"
+                title="Developed by AL-JANNAT SYSTEMS"
+              >
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#0F52BA] via-[#1E64D4] to-[#0B3E8F] flex items-center justify-center text-[10px] font-extrabold text-white border border-white/20 shadow">
+                  AJS
+                </div>
+              </div>
+            )}
           </div>
         </aside>
 

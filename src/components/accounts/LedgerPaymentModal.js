@@ -50,19 +50,52 @@ export function LedgerPaymentModal({
   const defaultCashAccountId = useDefaultCashAccountId();
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+  const [selectedPartyId, setSelectedPartyId] = useState(selectedAccountId || "");
 
   const isPay = mode === "pay";
-  const partyName = account?.name || "";
+
+  const partyAccounts = useMemo(
+    () => accounts.filter((a) => a.category !== "cash" && a.category !== "bank" && a.isActive !== false),
+    [accounts]
+  );
+
+  const activeAccount = useMemo(() => {
+    if (selectedPartyId) {
+      return accounts.find((a) => String(a.id) === String(selectedPartyId)) || account;
+    }
+    return account;
+  }, [selectedPartyId, accounts, account]);
+
+  const partyName = activeAccount?.name || "";
 
   useEffect(() => {
     if (!open) return;
+    const initialPartyId = selectedAccountId || selectedPartyId || "";
+    setSelectedPartyId(initialPartyId);
+    const initialAccount = accounts.find((a) => String(a.id) === String(initialPartyId)) || account;
+    const initialPartyName = initialAccount?.name || "";
     setForm({
       ...emptyForm,
       paymentDate: new Date().toISOString().slice(0, 10),
       cashAccountId: defaultCashAccountId || "",
-      description: isPay ? `Payment to ${partyName}` : `Receipt from ${partyName}`,
+      description: isPay
+        ? (initialPartyName ? `Payment to ${initialPartyName}` : "Payment")
+        : (initialPartyName ? `Receipt from ${initialPartyName}` : "Receipt"),
     });
-  }, [open, mode, partyName, defaultCashAccountId, isPay]);
+  }, [open, mode, selectedAccountId, account, defaultCashAccountId, isPay, accounts]);
+
+  const handlePartyChange = (e) => {
+    const newId = e.target.value;
+    setSelectedPartyId(newId);
+    const newAcc = accounts.find((a) => String(a.id) === String(newId));
+    const newName = newAcc?.name || "";
+    setForm((f) => ({
+      ...f,
+      description: isPay
+        ? (newName ? `Payment to ${newName}` : "Payment")
+        : (newName ? `Receipt from ${newName}` : "Receipt"),
+    }));
+  };
 
   const cashAccounts = useMemo(
     () => accounts.filter((a) => a.category === "cash" && a.isActive !== false),
@@ -79,18 +112,18 @@ export function LedgerPaymentModal({
 
   const clearPreview = useMemo(() => {
     if (totalAmount <= 0) return "";
-    if (isPay && isVendorLedgerAccount(account) && outstandingPurchases.length > 0) {
+    if (isPay && isVendorLedgerAccount(activeAccount) && outstandingPurchases.length > 0) {
       return formatPurchaseClearSummary(
         planFifoPurchaseSettlement(outstandingPurchases, cashAmount, bankAmount).allocations
       );
     }
-    if (!isPay && isCustomerLedgerAccount(account) && outstandingSales.length > 0) {
+    if (!isPay && isCustomerLedgerAccount(activeAccount) && outstandingSales.length > 0) {
       return formatSaleClearSummary(
         planFifoSaleSettlement(outstandingSales, totalAmount).allocations
       );
     }
     return "";
-  }, [isPay, account, cashAmount, bankAmount, totalAmount, outstandingPurchases, outstandingSales]);
+  }, [isPay, activeAccount, cashAmount, bankAmount, totalAmount, outstandingPurchases, outstandingSales]);
 
   const fillFullDue = () => {
     const due = isPay ? purchaseTotalDue : salesTotalDue;
@@ -99,6 +132,11 @@ export function LedgerPaymentModal({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const effectivePartyId = selectedPartyId || selectedAccountId;
+    if (!effectivePartyId) {
+      showToast("Select a party account", "warning");
+      return;
+    }
     if (totalAmount <= 0) {
       showToast("Enter cash and/or bank amount", "warning");
       return;
@@ -120,7 +158,7 @@ export function LedgerPaymentModal({
     try {
       const payload = {
         mode,
-        partyAccountId: selectedAccountId,
+        partyAccountId: effectivePartyId,
         paymentDate: form.paymentDate,
         cashAmount,
         bankAmount,
@@ -128,8 +166,8 @@ export function LedgerPaymentModal({
         bankAccountId: form.bankAccountId || undefined,
         description: form.description.trim(),
         notes: form.notes.trim() || undefined,
-        fromAccountId: isPay ? undefined : String(selectedAccountId),
-        toAccountId: isPay ? String(selectedAccountId) : undefined,
+        fromAccountId: isPay ? undefined : String(effectivePartyId),
+        toAccountId: isPay ? String(effectivePartyId) : undefined,
       };
 
       const res = await fetch("/api/payments", {
@@ -160,7 +198,7 @@ export function LedgerPaymentModal({
     <Modal
       isOpen={open}
       onClose={onClose}
-      title={isPay ? `Pay — ${partyName}` : `Receive — ${partyName}`}
+      title={isPay ? (partyName ? `Pay — ${partyName}` : "Pay Out") : (partyName ? `Receive — ${partyName}` : "Receive In")}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -171,26 +209,41 @@ export function LedgerPaymentModal({
         >
           {isPay ? (
             <>
-              Pay <strong>{partyName}</strong> from your cash and/or bank. Purchase bills clear oldest first.
+              Pay <strong>{partyName || "selected party"}</strong> from your cash and/or bank. Purchase bills clear oldest first.
             </>
           ) : (
             <>
-              Receive from <strong>{partyName}</strong> into cash and/or bank. Sales invoices clear oldest first.
+              Receive from <strong>{partyName || "selected party"}</strong> into cash and/or bank. Sales invoices clear oldest first.
             </>
           )}
         </div>
 
-        {isPay && isVendorLedgerAccount(account) && (
-          <UnpaidPurchaseBillsPanel accountId={selectedAccountId} refreshKey={billsRefreshKey} embedded />
+        {isPay && isVendorLedgerAccount(activeAccount) && (
+          <UnpaidPurchaseBillsPanel accountId={selectedPartyId || selectedAccountId} refreshKey={billsRefreshKey} embedded />
         )}
-        {!isPay && isCustomerLedgerAccount(account) && (
-          <UnpaidSaleInvoicesPanel accountId={selectedAccountId} refreshKey={billsRefreshKey} embedded />
+        {!isPay && isCustomerLedgerAccount(activeAccount) && (
+          <UnpaidSaleInvoicesPanel accountId={selectedPartyId || selectedAccountId} refreshKey={billsRefreshKey} embedded />
         )}
 
-        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">Party account</p>
-          <p className="text-sm font-bold text-slate-900">{partyName}</p>
-          {due > 0 && (
+        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3 space-y-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Party account</p>
+          {selectedAccountId && account ? (
+            <p className="text-sm font-bold text-slate-900">{partyName}</p>
+          ) : (
+            <select
+              value={selectedPartyId}
+              onChange={handlePartyChange}
+              className="input-field w-full text-xs font-semibold"
+            >
+              <option value="">Select party account…</option>
+              {partyAccounts.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name} {a.code ? ` (${a.code})` : ""}
+                </option>
+              ))}
+            </select>
+          )}
+          {due > 0 && partyName && (
             <p className="text-xs text-slate-600 mt-1">
               Outstanding due: <span className="font-mono font-bold text-rose-700">{formatCurrency(due)}</span>
             </p>

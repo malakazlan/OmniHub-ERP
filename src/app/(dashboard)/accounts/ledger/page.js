@@ -310,18 +310,27 @@ export default function GeneralLedgerPage() {
 
     setDocLoading(true);
     try {
-      if (row.referenceType === "PurchaseOrder") {
-        const res = await fetch(`/api/purchases/${row.referenceId}`);
+      if (row.referenceType === "PurchaseOrder" || row.docType === "purchase") {
+        const id = row.referenceId || row.purchaseId;
+        const res = await fetch(`/api/purchases/${id}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load purchase");
         setPurchaseDoc(data.purchase);
         setReceiptOpen(true);
-      } else if (row.referenceType === "SaleOrder") {
-        const res = await fetch(`/api/sales/${row.referenceId}`);
+      } else if (row.referenceType === "SaleOrder" || row.docType === "sale") {
+        const id = row.referenceId || row.saleId;
+        const res = await fetch(`/api/sales/${id}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load sale");
         setSaleDoc(data.sale);
         setInvoiceOpen(true);
+      } else if (row.referenceType === "Payment" || row.docType === "payment") {
+        const id = row.referenceId || row.paymentId;
+        const res = await fetch(`/api/payments/${id}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load payment voucher");
+        setPaymentReceipt(data.payment);
+        setPaymentReceiptOpen(true);
       }
     } catch (err) {
       showToast(err.message || "Could not open document", "error");

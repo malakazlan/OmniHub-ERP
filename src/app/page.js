@@ -585,6 +585,21 @@ export default function LandingPage() {
           background: 'radial-gradient(ellipse at center, transparent 0%, rgba(2, 6, 23, 0.5) 100%)',
         }}
       />
+
+      {/* Professional Software Creator Credit Footer */}
+      <motion.footer
+        className="absolute bottom-5 inset-x-0 z-20 text-center px-4 pointer-events-auto"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 1, delay: 1.2, ease: "easeOut" }}
+      >
+        <p className="text-[11px] sm:text-xs text-slate-400/80 tracking-widest uppercase font-medium">
+          Designed & Engineered by{" "}
+          <span className="text-slate-200 font-bold tracking-wider hover:text-blue-400 transition-colors">
+            AL-JANNAT SYSTEMS
+          </span>
+        </p>
+      </motion.footer>
     </div>
   );
 }

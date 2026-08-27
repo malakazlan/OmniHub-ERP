@@ -90,22 +90,26 @@ export default function AccountLedgerPage() {
     if (!ledgerEntryOpensInvoice(entry)) return;
     setDocLoading(true);
     try {
-      if (entry.docType === "purchase" && entry.purchaseId) {
-        const res = await fetch(`/api/purchases/${entry.purchaseId}`);
+      const purchaseId = entry.purchaseId || (entry.referenceType === "PurchaseOrder" ? entry.referenceId : null);
+      const saleId = entry.saleId || (entry.referenceType === "SaleOrder" ? entry.referenceId : null);
+      const paymentId = entry.paymentId || (entry.referenceType === "Payment" ? entry.referenceId : null);
+
+      if (purchaseId) {
+        const res = await fetch(`/api/purchases/${purchaseId}`);
         const data = await res.json();
         if (res.ok && data.purchase) {
           setPurchaseDoc(data.purchase);
           setReceiptOpen(true);
         } else showToast(data.error || "Could not load purchase", "error");
-      } else if (entry.docType === "sale" && entry.saleId) {
-        const res = await fetch(`/api/sales/${entry.saleId}`);
+      } else if (saleId) {
+        const res = await fetch(`/api/sales/${saleId}`);
         const data = await res.json();
         if (res.ok && data.sale) {
           setSaleDoc(data.sale);
           setInvoiceOpen(true);
         } else showToast(data.error || "Could not load sale", "error");
-      } else if (entry.docType === "payment" && entry.paymentId) {
-        const res = await fetch(`/api/payments/${entry.paymentId}`);
+      } else if (paymentId) {
+        const res = await fetch(`/api/payments/${paymentId}`);
         const data = await res.json();
         if (res.ok && data.payment) {
           setPaymentReceipt(data.payment);

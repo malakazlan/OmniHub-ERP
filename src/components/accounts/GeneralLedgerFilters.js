@@ -99,18 +99,16 @@ export default function GeneralLedgerFilters({
             <Button
               type="button"
               onClick={onReceiveIn}
-              disabled={!selectedAccountId}
               variant="outline"
-              className="erp-ledger-pay-btn erp-ledger-pay-btn-in border-emerald-200 text-emerald-700 hover:bg-emerald-50 disabled:opacity-40"
+              className="erp-ledger-pay-btn erp-ledger-pay-btn-in border-emerald-200 text-emerald-700 hover:bg-emerald-50"
             >
               <ArrowDownLeft className="w-3.5 h-3.5" /> Receive In
             </Button>
             <Button
               type="button"
               onClick={onPayOut}
-              disabled={!selectedAccountId}
               variant="outline"
-              className="erp-ledger-pay-btn erp-ledger-pay-btn-out border-rose-200 text-rose-700 hover:bg-rose-50 disabled:opacity-40"
+              className="erp-ledger-pay-btn erp-ledger-pay-btn-out border-rose-200 text-rose-700 hover:bg-rose-50"
             >
               <ArrowUpRight className="w-3.5 h-3.5" /> Pay Out
             </Button>

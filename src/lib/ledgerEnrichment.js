@@ -12,8 +12,15 @@ export function isMainBillLedgerEntry(entry) {
 }
 
 export function ledgerEntryOpensInvoice(entry) {
+  if (entry?.docType) {
+    return entry.docType === "purchase" || entry.docType === "sale" || entry.docType === "payment";
+  }
   if (!entry?.referenceType || !entry.referenceId) return false;
-  return entry.referenceType === "PurchaseOrder" || entry.referenceType === "SaleOrder";
+  return (
+    entry.referenceType === "PurchaseOrder" ||
+    entry.referenceType === "SaleOrder" ||
+    entry.referenceType === "Payment"
+  );
 }
 
 function groupItemsByOrderId(items, key) {

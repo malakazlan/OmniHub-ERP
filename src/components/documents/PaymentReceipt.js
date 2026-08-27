@@ -40,16 +40,74 @@ export default function PaymentReceipt({ receipt, company = DEFAULT_COMPANY }) {
 
   return (
     <article className="erp-document-bill w-full max-w-[640px] mx-auto bg-white text-slate-900 border border-slate-300 shadow-sm overflow-hidden text-[12px]">
-      <header className={`${headerBg} text-white px-4 py-3 text-center`}>
-        <p className="text-base font-black uppercase tracking-wide">{c.company_name}</p>
-        {c.company_address && <p className="text-[10px] opacity-90 mt-0.5">{c.company_address}</p>}
+      <div
+        className={`erp-voucher-header ${isPay ? "is-pay" : "is-receive"}`}
+        style={{
+          backgroundColor: isPay ? "#be123c" : "#047857",
+          color: "#ffffff",
+          padding: "1.15rem 1rem 1rem",
+          textAlign: "center",
+        }}
+      >
+        <p
+          className="erp-voucher-company"
+          style={{
+            margin: 0,
+            padding: 0,
+            fontSize: "1.15rem",
+            fontWeight: 800,
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            lineHeight: 1.2,
+            color: "#ffffff",
+          }}
+        >
+          {c.company_name}
+        </p>
+        {c.company_address && (
+          <p
+            className="erp-voucher-sub"
+            style={{
+              margin: "0.2rem 0 0 0",
+              padding: 0,
+              fontSize: "0.65rem",
+              color: "#f1f5f9",
+              lineHeight: 1.3,
+            }}
+          >
+            {c.company_address}
+          </p>
+        )}
         {(c.company_phone || c.ntn) && (
-          <p className="text-[10px] opacity-80 mt-0.5">
+          <p
+            className="erp-voucher-sub"
+            style={{
+              margin: "0.2rem 0 0 0",
+              padding: 0,
+              fontSize: "0.65rem",
+              color: "#f1f5f9",
+              lineHeight: 1.3,
+            }}
+          >
             {[c.company_phone, c.ntn ? `NTN: ${c.ntn}` : ""].filter(Boolean).join(" · ")}
           </p>
         )}
-        <h1 className="mt-2 text-sm font-black uppercase tracking-[0.18em]">{title}</h1>
-      </header>
+        <div
+          className="erp-voucher-title"
+          style={{
+            margin: "0.6rem 0 0 0",
+            padding: 0,
+            fontSize: "1.1rem",
+            fontWeight: 900,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            lineHeight: 1.2,
+            color: "#ffffff",
+          }}
+        >
+          {title}
+        </div>
+      </div>
 
       <div className={`mx-4 mt-3 rounded-lg border px-3 py-2 text-center text-[11px] font-semibold ${bannerBg}`}>
         {isPay ? "Payment made to" : "Amount received from"}: {receipt.partyName}
