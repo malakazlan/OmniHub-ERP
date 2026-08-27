@@ -39,8 +39,15 @@ function inventoryColumns() {
       key: "cost",
       label: "Cost",
       align: "right",
-      pdfWidth: 24,
+      pdfWidth: 22,
       get: (r) => formatCurrency(r.costPrice),
+    },
+    {
+      key: "sale",
+      label: "Sale price",
+      align: "right",
+      pdfWidth: 22,
+      get: (r) => formatCurrency(r.salePrice),
     },
     {
       key: "value",

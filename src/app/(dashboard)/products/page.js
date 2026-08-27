@@ -26,6 +26,7 @@ const CATALOG_PRINT_COLS = [
   { key: "sku", label: "SKU", get: (r) => r.sku || "—", pdfWidth: 22 },
   { key: "category", label: "Category", get: (r) => r.category?.name || "—", pdfWidth: 28 },
   { key: "stock", label: "Stock", align: "right", pdfWidth: 22, get: (r) => formatQuantity(r.currentStock, r.unit) },
+  { key: "cost", label: "Cost", align: "right", pdfWidth: 22, get: (r) => formatCurrency(r.costPrice) },
   { key: "sale", label: "Sale price", align: "right", pdfWidth: 24, get: (r) => formatCurrency(r.salePrice) },
   { key: "status", label: "Status", pdfWidth: 18, get: (r) => (r.isActive ? "Active" : "Inactive") },
 ];

@@ -31,15 +31,15 @@ export default function ProductsRegister({
             <table className="erp-ledger-grid erp-prod-grid">
               <colgroup>
                 <col style={{ width: "2.5%" }} />
-                <col style={{ width: isInventory ? "20%" : "22%" }} />
+                <col style={{ width: isInventory ? "18%" : "20%" }} />
                 <col style={{ width: "8%" }} />
-                <col style={{ width: "11%" }} />
-                <col style={{ width: isInventory ? "10%" : "11%" }} />
-                {isInventory && <col style={{ width: "9%" }} />}
-                {isInventory && <col style={{ width: "10%" }} />}
-                {!isInventory && <col style={{ width: "10%" }} />}
-                {!isInventory && <col style={{ width: "8%" }} />}
-                <col style={{ width: isInventory ? "11%" : "10%" }} />
+                <col style={{ width: "10%" }} />
+                <col style={{ width: "9%" }} />
+                {isInventory && <col style={{ width: "8%" }} />}
+                <col style={{ width: "9%" }} />
+                <col style={{ width: "9%" }} />
+                {!isInventory && <col style={{ width: "7%" }} />}
+                <col style={{ width: isInventory ? "10%" : "9%" }} />
               </colgroup>
               <thead>
                 <tr>
@@ -49,8 +49,8 @@ export default function ProductsRegister({
                   <th className="erp-lg-th erp-prod-th">Category</th>
                   <th className="erp-lg-th erp-prod-th erp-lg-th-money">Stock</th>
                   {isInventory && <th className="erp-lg-th erp-prod-th erp-lg-th-money">Min</th>}
-                  {isInventory && <th className="erp-lg-th erp-prod-th erp-lg-th-money">Cost</th>}
-                  {!isInventory && <th className="erp-lg-th erp-prod-th erp-lg-th-money">Sale price</th>}
+                  <th className="erp-lg-th erp-prod-th erp-lg-th-money">Cost</th>
+                  <th className="erp-lg-th erp-prod-th erp-lg-th-money">Sale price</th>
                   {!isInventory && <th className="erp-lg-th erp-prod-th erp-ac-th-center">Status</th>}
                   <th className="erp-lg-th erp-prod-th erp-lg-th-money">
                     {isInventory ? "Stock value" : "Value"}
@@ -88,12 +88,8 @@ export default function ProductsRegister({
                           {formatQuantity(row.minimumStock, row.unit)}
                         </td>
                       )}
-                      {isInventory && (
-                        <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.costPrice)}</td>
-                      )}
-                      {!isInventory && (
-                        <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.salePrice)}</td>
-                      )}
+                      <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.costPrice)}</td>
+                      <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.salePrice)}</td>
                       {!isInventory && (
                         <td className="erp-lg-td erp-ac-td-center">
                           <span className={`erp-ac-status ${row.isActive ? "is-active" : "is-inactive"}`}>
@@ -109,7 +105,7 @@ export default function ProductsRegister({
               {footerLabel && (
                 <tfoot>
                   <tr className="erp-lg-foot erp-prod-foot">
-                    <td colSpan={isInventory ? 8 : 7} className="erp-lg-td erp-lg-td-total-label">{footerLabel}</td>
+                    <td colSpan={isInventory ? 8 : 8} className="erp-lg-td erp-lg-td-total-label">{footerLabel}</td>
                     <td className="erp-lg-td erp-lg-td-money erp-lg-balance">{footerValue}</td>
                   </tr>
                 </tfoot>
