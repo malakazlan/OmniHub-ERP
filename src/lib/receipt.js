@@ -13,6 +13,7 @@ const PREFIXES = {
   customerOrder: "ORD",
   ownerWithdrawal: "WD",
   transfer: "TRF",
+  donation: "DON",
 };
 
 /**
@@ -37,6 +38,7 @@ export async function generateDocumentNumber(type, date = new Date()) {
     customerOrder: () => findLatestByPrefix("customer_orders", "orderNumber", pattern),
     ownerWithdrawal: () => findLatestByPrefix("owner_withdrawals", "withdrawalNumber", pattern),
     transfer: () => findLatestByPrefix("journal_entries", "entryNumber", pattern),
+    donation: () => findLatestByPrefix("donations", "donationNumber", pattern),
   };
 
   const fetcher = counters[type];

@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Package,
   ShoppingCart, DollarSign, Truck, BookOpen, Users,
   BarChart3, Settings, Receipt, Wallet2, BookText,
-  Car, ArrowRightLeft,
+  Car, ArrowRightLeft, Heart,
 } from "lucide-react";
 
 export const NAV_SECTIONS = [
@@ -33,6 +33,7 @@ export const NAV_SECTIONS = [
     items: [
       { slug: "accounts", label: "Payments", href: "/accounts/payments", icon: Receipt, keywords: "cash bank transfer" },
       { slug: "accounts", label: "Money Transfer", href: "/accounts/transfers", icon: ArrowRightLeft, keywords: "cash bank internal transfer deposit" },
+      { slug: "accounts", label: "Donations", href: "/accounts/donations", icon: Heart, keywords: "charity zakat sadqa cash donation" },
       { slug: "accounts", label: "Expenses", href: "/accounts/expenses", icon: Wallet2, keywords: "business expenses" },
       { slug: "accounts", label: "Journal Entries", href: "/accounts/journal", icon: BookText, keywords: "double entry adjustments" },
     ],
@@ -79,6 +80,7 @@ export const DASHBOARD_SHORTCUTS = [
   { slug: "accounts", label: "General Ledger", href: "/accounts/ledger" },
   { slug: "accounts", label: "Payments", href: "/accounts/payments" },
   { slug: "accounts", label: "Money Transfer", href: "/accounts/transfers" },
+  { slug: "accounts", label: "Donations", href: "/accounts/donations" },
   { slug: "accounts", label: "Expenses", href: "/accounts/expenses" },
   { slug: "accounts", label: "Journal", href: "/accounts/journal" },
   { slug: "hr", label: "HR", href: "/hr" },
