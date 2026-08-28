@@ -16,7 +16,7 @@ export function isOpeningBalanceEntry(entry) {
   return String(entry.description || "").trim().toLowerCase() === "opening balance";
 }
 
-/** Statement order: date asc → opening balance first on same day → account id → entry id. */
+/** Statement order: date asc → opening balance first on same day → entry id (posting time). */
 export function compareLedgerEntries(a, b) {
   const da = startOfLedgerDay(a.date).getTime();
   const db = startOfLedgerDay(b.date).getTime();
@@ -26,11 +26,13 @@ export function compareLedgerEntries(a, b) {
   const bOpen = isOpeningBalanceEntry(b) ? 0 : 1;
   if (aOpen !== bOpen) return aOpen - bOpen;
 
-  const aAcct = a.accountId || 0;
-  const bAcct = b.accountId || 0;
-  if (aAcct !== bAcct) return aAcct - bAcct;
+  // Use ledger entry id — reflects when the transaction was posted (not account id grouping).
+  const aId = a.id || 0;
+  const bId = b.id || 0;
+  if (aId !== bId) return aId - bId;
 
-  return (a.id || 0) - (b.id || 0);
+  // Same journal: debit line before credit when ids tie (should not happen).
+  return (b.debit || 0) - (a.debit || 0);
 }
 
 export function sortLedgerEntries(entries = []) {
@@ -228,8 +230,9 @@ export async function createJournalEntry(tx, {
     },
   });
 
-  for (const line of lines) {
-    await createLedgerEntry(tx, {
+  await createLedgerEntries(
+    tx,
+    lines.map((line) => ({
       accountId: line.accountId,
       date: entryDate || new Date(),
       description: line.description || description,
@@ -238,8 +241,8 @@ export async function createJournalEntry(tx, {
       referenceId: journal.id,
       debit: line.debit || 0,
       credit: line.credit || 0,
-    });
-  }
+    }))
+  );
 
   return journal;
 }

@@ -6310,6 +6310,484 @@ input[type="number"]::-webkit-inner-spin-button {
   color: #0f766e;
 }
 
+/* ── Money Transfer (indigo / navy finance theme) ── */
+.erp-transfer-surface {
+  --erp-xfer-accent: #2563eb;
+  --erp-xfer-accent-deep: #1e40af;
+  --erp-xfer-accent-soft: #eff6ff;
+  --erp-xfer-accent-border: #bfdbfe;
+  --erp-xfer-navy: #0f172a;
+  --erp-xfer-panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(37, 99, 235, 0.12);
+  background: linear-gradient(180deg, #eef2ff 0%, #f8fafc 22%, #f8fafc 100%);
+  min-height: 100%;
+}
+
+.erp-xfer-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 1.5rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 52%, #2563eb 100%);
+  border-radius: 16px;
+  box-shadow: var(--erp-xfer-panel-shadow);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.erp-xfer-page-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 120% at 100% 0%, rgba(255, 255, 255, 0.08) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.erp-xfer-page-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.erp-xfer-page-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #bfdbfe;
+  margin-bottom: 0.55rem;
+}
+
+.erp-xfer-page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: #fff;
+}
+
+.erp-xfer-page-desc {
+  margin-top: 0.45rem;
+  max-width: 36rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+}
+
+.erp-xfer-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-xfer-btn-ghost {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #f8fafc !important;
+}
+
+.erp-xfer-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
+.erp-xfer-btn-primary {
+  background: #fff !important;
+  color: #1e40af !important;
+  border: none !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.15);
+}
+
+.erp-xfer-btn-primary:hover {
+  background: #eff6ff !important;
+}
+
+.erp-xfer-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (max-width: 1024px) {
+  .erp-xfer-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .erp-xfer-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+.erp-xfer-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem 1.05rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: var(--erp-xfer-panel-shadow);
+}
+
+.erp-xfer-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.erp-xfer-stat-icon.is-total {
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #1d4ed8;
+}
+
+.erp-xfer-stat-icon.is-cash {
+  background: linear-gradient(135deg, #fef3c7, #fffbeb);
+  color: #b45309;
+}
+
+.erp-xfer-stat-icon.is-bank {
+  background: linear-gradient(135deg, #e0e7ff, #eef2ff);
+  color: #4338ca;
+}
+
+.erp-xfer-stat-icon.is-value {
+  background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+  color: #047857;
+}
+
+.erp-xfer-stat-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.erp-xfer-stat-value {
+  margin-top: 0.1rem;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-xfer-type-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 1024px) {
+  .erp-xfer-type-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .erp-xfer-type-strip {
+    grid-template-columns: 1fr;
+  }
+}
+
+.erp-xfer-type-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: var(--erp-xfer-panel-shadow);
+}
+
+.erp-xfer-type-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.erp-xfer-type-card-icon.cash-cash {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.erp-xfer-type-card-icon.cash-bank {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.erp-xfer-type-card-icon.bank-bank {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+
+.erp-xfer-type-card-icon.bank-cash {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.erp-xfer-type-card-title {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.erp-xfer-type-card-desc {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+.erp-xfer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: var(--erp-xfer-panel-shadow);
+}
+
+.erp-xfer-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.erp-xfer-search-wrap input {
+  width: 100%;
+  height: 2.5rem;
+  padding: 0 0.85rem 0 2.35rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.erp-xfer-search-wrap input:focus {
+  outline: none;
+  border-color: var(--erp-xfer-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #fff;
+}
+
+.erp-xfer-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.erp-xfer-date-input {
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.erp-xfer-date-input:focus {
+  outline: none;
+  border-color: var(--erp-xfer-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #fff;
+}
+
+.erp-xfer-register {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--erp-xfer-panel-shadow);
+}
+
+.erp-xfer-register-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-xfer-register-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.erp-xfer-register-meta {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.erp-xfer-grid .erp-xfer-th {
+  background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%) !important;
+  color: #fff !important;
+  border-color: #1e3a8a !important;
+  font-size: 0.625rem !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.erp-xfer-doc-no {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.erp-xfer-empty {
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+}
+
+.erp-xfer-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  color: #2563eb;
+  margin-bottom: 0.85rem;
+}
+
+.erp-xfer-form .erp-xfer-type-btn {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  padding: 1rem;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.erp-xfer-form .erp-xfer-type-btn:hover {
+  border-color: #bfdbfe;
+  background: #f8fafc;
+}
+
+.erp-xfer-form .erp-xfer-type-btn.is-active {
+  border-color: #2563eb;
+  background: linear-gradient(180deg, #eff6ff 0%, #fff 100%);
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.15), 0 8px 20px -12px rgba(37, 99, 235, 0.35);
+}
+
+.erp-xfer-form .erp-xfer-type-btn.is-active.cash-cash {
+  border-color: #d97706;
+  background: linear-gradient(180deg, #fffbeb 0%, #fff 100%);
+  box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.12);
+}
+
+.erp-xfer-form .erp-xfer-type-btn.is-active.cash-bank {
+  border-color: #059669;
+  background: linear-gradient(180deg, #ecfdf5 0%, #fff 100%);
+  box-shadow: 0 0 0 1px rgba(5, 150, 105, 0.12);
+}
+
+.erp-xfer-form .erp-xfer-type-btn.is-active.bank-bank {
+  border-color: #4f46e5;
+  background: linear-gradient(180deg, #eef2ff 0%, #fff 100%);
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.12);
+}
+
+.erp-xfer-form .erp-xfer-type-btn.is-active.bank-cash {
+  border-color: #0284c7;
+  background: linear-gradient(180deg, #f0f9ff 0%, #fff 100%);
+  box-shadow: 0 0 0 1px rgba(2, 132, 199, 0.12);
+}
+
+.erp-xfer-flow-panel {
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
+  padding: 1.15rem;
+}
+
+.erp-xfer-flow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #bfdbfe;
+  color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12);
+}
+
+.erp-xfer-preview {
+  border-radius: 12px;
+  border: 1px solid #bbf7d0;
+  background: linear-gradient(180deg, #ecfdf5 0%, #f0fdf4 100%);
+  padding: 0.85rem 1rem;
+  font-size: 0.8125rem;
+  color: #065f46;
+}
+
+.erp-xfer-badge-cash-cash {
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.erp-xfer-badge-cash-bank {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.erp-xfer-badge-bank-bank {
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+.erp-xfer-badge-bank-cash {
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
 .erp-fin-cat-pill {
   display: inline-flex;
   padding: 0.15rem 0.45rem;
