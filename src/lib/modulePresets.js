@@ -8,9 +8,9 @@ export function defaultModulesForRole(role) {
     case "manager":
       return MODULES.filter((m) => m !== "settings");
     case "salesperson":
-      return ["dashboard", "shops", "products", "orders", "sales", "transport"];
+      return ["dashboard", "shops", "dealers", "products", "orders", "sales", "transport"];
     case "accountant":
-      return ["dashboard", "accounts", "reports", "purchases", "sales"];
+      return ["dashboard", "accounts", "reports", "purchases", "sales", "dealers", "shops"];
     case "driver":
       return ["dashboard", "transport"];
     case "viewer":

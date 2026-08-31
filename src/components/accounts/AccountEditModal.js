@@ -21,6 +21,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState([]);
+  const [dealers, setDealers] = useState([]);
   const [detail, setDetail] = useState(null);
   const [form, setForm] = useState({ isActive: true });
 
@@ -36,9 +37,13 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
       category === "cash"
         ? fetch("/api/settings/users").then((r) => r.json())
         : Promise.resolve(null);
+    const dealersPromise =
+      category === "shop"
+        ? fetch("/api/dealers").then((r) => r.json())
+        : Promise.resolve(null);
 
-    Promise.all([accountPromise, usersPromise])
-      .then(([data, usersData]) => {
+    Promise.all([accountPromise, usersPromise, dealersPromise])
+      .then(([data, usersData, dealersData]) => {
         if (data.account) {
           setDetail(data);
           let nextForm = formFromPartyEntity(
@@ -58,6 +63,9 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
                 assignToUserId: owner?.role === "admin" ? "" : String(data.account.ownerUserId),
               };
             }
+          }
+          if (category === "shop" && dealersData) {
+            setDealers((dealersData.dealers || []).filter((d) => d.isActive !== false));
           }
           setForm({
             ...nextForm,
@@ -145,6 +153,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
               phone: form.phone.trim(),
               city: form.city || null,
               shopType: form.shopType,
+              dealerId: form.dealerId || null,
               whatsappNumber: form.whatsappNumber || null,
               address: form.address || null,
               isActive: form.isActive,
@@ -292,6 +301,7 @@ export default function AccountEditModal({ isOpen, onClose, account, onSuccess }
             setForm={setForm}
             mode="edit"
             users={users}
+            dealers={dealers}
             accountMeta={detail?.account || account}
           />
 

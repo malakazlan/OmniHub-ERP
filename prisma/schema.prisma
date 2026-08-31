@@ -141,6 +141,24 @@ model Company {
   @@map("companies")
 }
 
+model Dealer {
+  id              Int      @id @default(autoincrement())
+  name            String
+  contactPerson   String?
+  phone           String?
+  whatsappNumber  String?
+  city            String?
+  address         String?  @db.Text
+  isActive        Boolean  @default(true)
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  shops           Shop[]
+
+  @@map("dealers")
+}
+
 model Shop {
   id              Int           @id @default(autoincrement())
   name            String
@@ -155,14 +173,17 @@ model Shop {
   creditLimit     Float         @default(0)
   isActive        Boolean       @default(true)
   assignedTo      Int?          // Salesperson userId
+  dealerId        Int?
   notes           String?       @db.Text
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   // Relations
+  dealer          Dealer?       @relation(fields: [dealerId], references: [id])
   saleOrders      SaleOrder[]
   customerOrders  CustomerOrder[]
 
+  @@index([dealerId])
   @@map("shops")
 }
 
@@ -576,6 +597,7 @@ model LedgerEntry {
   debit           Float    @default(0)
   credit          Float    @default(0)
   balance         Float    @default(0)
+  lineItems       String?  @db.LongText // JSON snapshot of bill lines at posting time
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 

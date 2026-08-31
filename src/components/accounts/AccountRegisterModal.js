@@ -20,6 +20,7 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
   const isAdmin = useDirectoryAdmin();
   const [submitting, setSubmitting] = useState(false);
   const [users, setUsers] = useState([]);
+  const [dealers, setDealers] = useState([]);
   const [form, setForm] = useState(() => getEmptyForm(category));
 
   useEffect(() => {
@@ -28,6 +29,13 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
       .then((r) => r.json())
       .then((d) => setUsers((d.users || []).filter((u) => u.isActive)));
   }, [isOpen, isAdmin]);
+
+  useEffect(() => {
+    if (!isOpen || category !== "shop") return;
+    fetch("/api/dealers")
+      .then((r) => r.json())
+      .then((d) => setDealers((d.dealers || []).filter((dealer) => dealer.isActive !== false)));
+  }, [isOpen, category]);
 
   useEffect(() => {
     setForm(getEmptyForm(category));
@@ -190,6 +198,7 @@ export default function AccountRegisterModal({ isOpen, onClose, category, onSucc
           setForm={setForm}
           mode="create"
           users={users}
+          dealers={dealers}
           loginFields={loginFields}
         />
       </form>
@@ -209,7 +218,7 @@ function getEmptyForm(category) {
     case "company":
       return { ...base, name: "", contactPerson: "", city: "", email: "", ntn: "", strn: "", companyType: "both", whatsappNumber: "", address: "" };
     case "shop":
-      return { ...base, name: "", ownerName: "", city: "", shopType: "retail", whatsappNumber: "", address: "" };
+      return { ...base, name: "", ownerName: "", city: "", shopType: "retail", dealerId: "", whatsappNumber: "", address: "" };
     case "salary": {
       const role = "officer";
       const loginRole = loginRoleFromEmployeeRole(role);

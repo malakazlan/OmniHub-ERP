@@ -7,6 +7,7 @@ import { useToast } from "@/context/ToastContext";
 import GeneralLedgerRegister from "@/components/accounts/GeneralLedgerRegister";
 import { PurchaseReceiptPanel } from "@/components/documents/PurchaseReceiptPanel";
 import { SaleInvoicePanel } from "@/components/documents/SaleInvoicePanel";
+import { SaleReturnReceiptPanel } from "@/components/documents/SaleReturnReceiptPanel";
 import { PaymentReceiptPanel } from "@/components/documents/PaymentReceiptPanel";
 import { getSaleWhatsAppPhone, getPurchaseWhatsAppPhone, getPaymentReceiptWhatsAppPhone } from "@/lib/invoicePartyContact";
 import {
@@ -48,6 +49,9 @@ export default function AccountLedgerPage() {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [paymentReceiptOpen, setPaymentReceiptOpen] = useState(false);
+  const [saleReturnDoc, setSaleReturnDoc] = useState(null);
+  const [saleReturnSale, setSaleReturnSale] = useState(null);
+  const [returnReceiptOpen, setReturnReceiptOpen] = useState(false);
 
   const fetchLedger = useCallback(async () => {
     try {
@@ -94,6 +98,9 @@ export default function AccountLedgerPage() {
       const saleId = entry.saleId || (entry.referenceType === "SaleOrder" ? entry.referenceId : null);
       const paymentId = entry.paymentId || (entry.referenceType === "Payment" ? entry.referenceId : null);
 
+      const saleReturnId =
+        entry.saleReturnId || (entry.referenceType === "SaleReturn" ? entry.referenceId : null);
+
       if (purchaseId) {
         const res = await fetch(`/api/purchases/${purchaseId}`);
         const data = await res.json();
@@ -101,6 +108,14 @@ export default function AccountLedgerPage() {
           setPurchaseDoc(data.purchase);
           setReceiptOpen(true);
         } else showToast(data.error || "Could not load purchase", "error");
+      } else if (saleReturnId) {
+        const res = await fetch(`/api/sales/returns/${saleReturnId}`);
+        const data = await res.json();
+        if (res.ok && data.saleReturn) {
+          setSaleReturnDoc(data.saleReturn);
+          setSaleReturnSale(data.sale);
+          setReturnReceiptOpen(true);
+        } else showToast(data.error || "Could not load return receipt", "error");
       } else if (saleId) {
         const res = await fetch(`/api/sales/${saleId}`);
         const data = await res.json();
@@ -251,6 +266,17 @@ export default function AccountLedgerPage() {
         receipt={paymentReceipt}
         company={companySettings}
         whatsappPhone={getPaymentReceiptWhatsAppPhone(paymentReceipt) || account?.whatsappNumber || account?.phone}
+      />
+      <SaleReturnReceiptPanel
+        saleReturn={saleReturnDoc}
+        sale={saleReturnSale}
+        company={companySettings}
+        open={returnReceiptOpen}
+        onClose={() => {
+          setReturnReceiptOpen(false);
+          setSaleReturnDoc(null);
+          setSaleReturnSale(null);
+        }}
       />
     </div>
   );

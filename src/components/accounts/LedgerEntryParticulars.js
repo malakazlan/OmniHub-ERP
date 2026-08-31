@@ -2,9 +2,9 @@
 
 import React from "react";
 import { formatCurrency } from "@/lib/formatters";
-import { ledgerEntryOpensInvoice } from "@/lib/ledgerEnrichment";
+import { ledgerEntryOpensInvoice } from "@/lib/ledgerDisplay";
 import { formatLedgerParticularsText } from "@/lib/ledgerParticulars";
-import { FileText, ShoppingCart, Receipt } from "lucide-react";
+import { FileText, ShoppingCart, Receipt, Undo2 } from "lucide-react";
 
 export function LedgerEntryParticulars({ entry, onOpenDocument }) {
   const canOpen = ledgerEntryOpensInvoice(entry) && onOpenDocument;
@@ -19,6 +19,8 @@ export function LedgerEntryParticulars({ entry, onOpenDocument }) {
   const Icon =
     entry.documentType === "purchase" || entry.referenceType === "PurchaseOrder"
       ? ShoppingCart
+      : entry.documentType === "sale_return" || entry.referenceType === "SaleReturn"
+        ? Undo2
       : entry.documentType === "sale" || entry.referenceType === "SaleOrder"
         ? Receipt
         : FileText;
@@ -28,6 +30,8 @@ export function LedgerEntryParticulars({ entry, onOpenDocument }) {
       ? "erp-lg-doc-purchase"
       : entry.referenceType === "SaleOrder"
         ? "erp-lg-doc-sale"
+        : entry.referenceType === "SaleReturn"
+          ? "erp-lg-doc-return"
         : entry.referenceType === "Payment"
           ? "erp-lg-doc-payment"
           : "erp-lg-doc-journal";
@@ -38,7 +42,7 @@ export function LedgerEntryParticulars({ entry, onOpenDocument }) {
       onClick={handleClick}
       role={canOpen ? "button" : undefined}
       tabIndex={canOpen ? 0 : undefined}
-      title={canOpen ? "Click to open bill / invoice" : undefined}
+      title={canOpen ? "Click to open bill / invoice / return receipt" : undefined}
     >
       <div className="erp-lg-particulars-head">
         <span className={`erp-lg-doc-tag ${typeClass}`}>

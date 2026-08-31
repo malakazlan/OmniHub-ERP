@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Package,
   ShoppingCart, DollarSign, Truck, BookOpen, Users,
   BarChart3, Settings, Receipt, Wallet2, BookText,
-  Car, ArrowRightLeft, Heart,
+  Car, ArrowRightLeft, Heart, Handshake,
 } from "lucide-react";
 
 export const NAV_SECTIONS = [
@@ -16,8 +16,10 @@ export const NAV_SECTIONS = [
     title: "Purchase & Sales",
     items: [
       { slug: "purchases", label: "Purchases", href: "/purchases", icon: ShoppingCart, keywords: "buy procurement" },
+      { slug: "purchases", label: "Purchase Vendors", href: "/purchases/vendors", icon: Users, keywords: "supplier farmer items quantity vendor" },
       { slug: "sales", label: "Sales", href: "/sales", icon: DollarSign, keywords: "sell invoices" },
       { slug: "orders", label: "Orders", href: "/orders", icon: Receipt, keywords: "customer orders quotes" },
+      { slug: "dealers", label: "Dealers", href: "/dealers", icon: Handshake, keywords: "dealer distributor shops pending receivable" },
       { slug: "accounts", label: "Freight Pay", href: "/accounts/freight-pay", icon: Truck, keywords: "transport freight purchase bills deduct" },
     ],
   },
@@ -68,9 +70,11 @@ export const DASHBOARD_SHORTCUTS = [
   { slug: "farmers", label: "Farmers", href: "/farmers" },
   { slug: "companies", label: "Companies", href: "/companies" },
   { slug: "shops", label: "Shops", href: "/shops" },
+  { slug: "dealers", label: "Dealers", href: "/dealers" },
   { slug: "products", label: "Products", href: "/products" },
   { slug: "products", label: "Inventory Report", href: "/reports/inventory" },
   { slug: "purchases", label: "Purchases", href: "/purchases" },
+  { slug: "purchases", label: "Purchase Vendors", href: "/purchases/vendors" },
   { slug: "sales", label: "Sales", href: "/sales" },
   { slug: "orders", label: "Orders", href: "/orders" },
   { slug: "accounts", label: "Freight Pay", href: "/accounts/freight-pay" },
@@ -118,6 +122,13 @@ export const NAV_THEME = {
     accent: "#F59E0B",
     tileIcon: "bg-amber-50 text-[#D87A00] ring-1 ring-amber-100 shadow-sm",
     tileAccent: "bg-[#D87A00]",
+  },
+  dealers: {
+    inactive: "bg-white/[0.04] text-violet-400 border border-white/5",
+    active: "bg-gradient-to-br from-violet-600 to-purple-800 text-white shadow-md shadow-violet-950/40 border border-white/15",
+    accent: "#8B5CF6",
+    tileIcon: "bg-violet-50 text-violet-700 ring-1 ring-violet-100 shadow-sm",
+    tileAccent: "bg-violet-600",
   },
   products: {
     inactive: "bg-white/[0.04] text-violet-400 border border-white/5",
@@ -203,6 +214,15 @@ export function isNavItemActive(pathname, href) {
   }
   if (href === "/transport/vehicles") {
     return pathname === "/transport/vehicles" || pathname.startsWith("/transport/vehicles/");
+  }
+  if (href === "/purchases") {
+    return (
+      pathname === "/purchases" ||
+      (pathname.startsWith("/purchases/") && !pathname.startsWith("/purchases/vendors"))
+    );
+  }
+  if (href === "/purchases/vendors") {
+    return pathname === "/purchases/vendors" || pathname.startsWith("/purchases/vendors/");
   }
   if (href === "/orders/my" || href === "/orders") {
     return pathname === href || pathname.startsWith(`${href}/`);

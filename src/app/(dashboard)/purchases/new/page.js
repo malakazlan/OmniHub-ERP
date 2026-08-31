@@ -18,6 +18,7 @@ import {
   Banknote,
   Landmark,
   Receipt,
+  AlertTriangle,
 } from "lucide-react";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
@@ -91,7 +92,9 @@ export default function NewPurchasePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
+  const correctId = searchParams.get("correct");
   const isEdit = Boolean(editId);
+  const isCorrection = Boolean(correctId);
   const { showToast } = useToast();
   const defaultCashAccountId = useDefaultCashAccountId();
 
@@ -123,6 +126,41 @@ export default function NewPurchasePage() {
 
   const [lineEntry, setLineEntry] = useState({ productId: "", quantity: "", rate: "" });
   const [cartItems, setCartItems] = useState([]);
+  const [correctionReason, setCorrectionReason] = useState("");
+  const [correctionBillNumber, setCorrectionBillNumber] = useState("");
+
+  const applyPurchaseToForm = (purchase) => {
+    if (!purchase) return;
+    setVendorType(purchase.farmerId ? "farmer" : "company");
+    setCorrectionBillNumber(purchase.purchaseNumber || "");
+    setForm({
+      vendorId: String(purchase.farmerId || purchase.companyId || ""),
+      purchaseDate: purchase.purchaseDate?.slice?.(0, 10) || new Date().toISOString().slice(0, 10),
+      supplierInvoiceRef: "",
+      transportCost: purchase.transportCost ? String(purchase.transportCost) : "",
+      loadingCost: purchase.loadingCost ? String(purchase.loadingCost) : "",
+      labourCost: purchase.labourCost ? String(purchase.labourCost) : "",
+      taxAmount: purchase.taxAmount ? String(purchase.taxAmount) : "",
+      discountAmount: purchase.discountAmount ? String(purchase.discountAmount) : "",
+      cashAmount: purchase.cashAmount ? String(purchase.cashAmount) : "",
+      bankAmount: purchase.bankAmount ? String(purchase.bankAmount) : "",
+      cashAccountId: purchase.cashAccountId ? String(purchase.cashAccountId) : "",
+      bankAccountId: purchase.bankAccountId ? String(purchase.bankAccountId) : "",
+      vehicleNumber: purchase.vehicleNumber || "",
+      driverName: purchase.driverName || "",
+      notes: purchase.notes || "",
+    });
+    setCartItems(
+      (purchase.items || []).map((item) => ({
+        productId: String(item.productId),
+        productName: item.productName,
+        unit: item.unit,
+        quantity: String(item.quantity),
+        rate: String(item.rate),
+        amount: item.amount,
+      }))
+    );
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -144,7 +182,16 @@ export default function NewPurchasePage() {
         if (productsRes.ok) setProducts(productsData.products || []);
         if (accountsRes.ok) setAccounts((accountsData.accounts || []).filter((a) => a.isActive));
 
-        if (editId) {
+        if (correctId) {
+          const corrRes = await fetch(`/api/purchases/${correctId}/correct`);
+          const corrData = await corrRes.json();
+          if (!corrRes.ok || !corrData.canCorrect) {
+            showToast(corrData.reason || corrData.error || "This bill cannot be corrected", "warning");
+            router.push(`/purchases/${correctId}`);
+            return;
+          }
+          applyPurchaseToForm(corrData.purchase);
+        } else if (editId) {
           const poRes = await fetch(`/api/purchases/${editId}`);
           const poData = await poRes.json();
           const po = poData.purchase;
@@ -194,12 +241,12 @@ export default function NewPurchasePage() {
       }
     };
     load();
-  }, [editId, router, showToast]);
+  }, [editId, correctId, router, showToast]);
 
   useEffect(() => {
-    if (!defaultCashAccountId || editId) return;
+    if (!defaultCashAccountId || editId || isCorrection) return;
     setForm((f) => applyDefaultCashAccount(f, defaultCashAccountId));
-  }, [defaultCashAccountId, editId]);
+  }, [defaultCashAccountId, editId, isCorrection]);
 
   const vendorOptions = vendorType === "farmer" ? farmers : companies;
 
@@ -311,6 +358,76 @@ export default function NewPurchasePage() {
     return rate > 0 ? rate + cartChargePerUnit : 0;
   };
 
+  const handleCorrectionSubmit = async () => {
+    const reason = correctionReason.trim();
+    if (reason.length < 3) {
+      showToast("Enter a correction reason (minimum 3 characters)", "warning");
+      return;
+    }
+    if (!form.vendorId) {
+      showToast(`Please select a ${vendorType}`, "warning");
+      return;
+    }
+    const vendorName = selectedVendor?.name?.trim();
+    if (!vendorName) {
+      showToast("Could not resolve supplier name", "error");
+      return;
+    }
+    if (cartItems.length === 0) {
+      showToast("Add at least one item to the cart", "warning");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        vendorName,
+        farmerId: vendorType === "farmer" ? parseInt(form.vendorId, 10) : null,
+        companyId: vendorType === "company" ? parseInt(form.vendorId, 10) : null,
+        purchaseDate: form.purchaseDate,
+        items: cartItems.map((item) => ({
+          productId: parseInt(item.productId, 10),
+          productName: item.productName,
+          quantity: parseNumber(item.quantity),
+          unit: item.unit,
+          rate: parseNumber(item.rate),
+          amount: parseNumber(item.amount),
+        })),
+        transportCost: parseNumber(form.transportCost),
+        loadingCost: parseNumber(form.loadingCost),
+        labourCost: parseNumber(form.labourCost),
+        taxAmount: parseNumber(form.taxAmount),
+        discountAmount: parseNumber(form.discountAmount),
+        cashAmount: parseNumber(form.cashAmount),
+        bankAmount: parseNumber(form.bankAmount),
+        cashAccountId: form.cashAccountId ? parseInt(form.cashAccountId, 10) : null,
+        bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : null,
+        vehicleNumber: form.vehicleNumber || null,
+        driverName: form.driverName || null,
+        notes: form.notes || null,
+        correctionReason: reason,
+      };
+
+      const res = await fetch(`/api/purchases/${correctId}/correct`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast(`Bill ${correctionBillNumber || data.purchase?.purchaseNumber || ""} corrected`, "success");
+        router.push(`/purchases/${correctId}`);
+      } else {
+        showToast(data.error || "Failed to correct bill", "error");
+      }
+    } catch {
+      showToast("Error processing request", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (status) => {
     if (!form.vendorId) {
       showToast(`Please select a ${vendorType}`, "warning");
@@ -406,20 +523,35 @@ export default function NewPurchasePage() {
     <div className="page-enter pb-8 erp-purchases-page space-y-5 sm:space-y-6">
       <PageHeader
         module="purchases"
-        title={isEdit ? "Edit purchase order" : "New purchase order"}
-        description="Supplier, items, settlement, and payment."
+        title={
+          isCorrection
+            ? `Correct bill · ${correctionBillNumber || "…"}`
+            : isEdit
+              ? "Edit purchase order"
+              : "New purchase order"
+        }
+        description={
+          isCorrection
+            ? "Update line items, charges, or payment. Stock and ledger will be re-posted."
+            : "Supplier, items, settlement, and payment."
+        }
         icon={ShoppingCart}
-        breadcrumbs={[
-          { label: "Purchases", href: "/purchases" },
-          { label: isEdit ? "Edit" : "New bill" },
-        ]}
+        breadcrumbs={
+          isCorrection
+            ? [
+                { label: "Purchases", href: "/purchases" },
+                { label: correctionBillNumber || "Bill", href: correctId ? `/purchases/${correctId}` : "/purchases" },
+                { label: "Correct" },
+              ]
+            : [{ label: "Purchases", href: "/purchases" }, { label: isEdit ? "Edit" : "New bill" }]
+        }
         actions={
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-2 w-full sm:w-auto">
             <Link
-              href="/purchases"
+              href={isCorrection && correctId ? `/purchases/${correctId}` : "/purchases"}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200/90 bg-white text-sm font-medium text-slate-600 hover:text-blue-700 hover:border-blue-200 hover:bg-blue-50/60 transition-all duration-200 ease-out"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to list
+              <ArrowLeft className="w-4 h-4" /> {isCorrection ? "Back to bill" : "Back to list"}
             </Link>
             <div className="w-full sm:w-[9.5rem]">
               <FieldLabel>Bill date</FieldLabel>
@@ -433,6 +565,33 @@ export default function NewPurchasePage() {
           </div>
         }
       />
+
+      {isCorrection && (
+        <div className="erp-doc-section p-4 sm:p-5 rounded-xl border border-amber-200/90 bg-gradient-to-br from-amber-50/90 to-orange-50/40">
+          <div className="flex gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-amber-950">Bill correction mode</p>
+                <p className="text-xs text-amber-900/75 mt-1 leading-relaxed">
+                  You are correcting a posted purchase bill. Stock movements and ledger entries will be reversed, then
+                  re-applied with your changes. The bill number stays the same.
+                </p>
+              </div>
+              <div>
+                <FieldLabel className="text-amber-900/70">Reason for correction *</FieldLabel>
+                <textarea
+                  value={correctionReason}
+                  onChange={(e) => setCorrectionReason(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. Wrong quantity entered for Product X"
+                  className="input-field w-full text-sm bg-white/90 border-amber-200/80 focus:border-amber-400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Supplier */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -903,29 +1062,60 @@ export default function NewPurchasePage() {
           </div>
         </div>
         <div className="erp-doc-actions flex flex-col-reverse sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            disabled={submitting}
-            variant="outline"
-            onClick={() => handleSubmit("draft")}
-            className="min-h-[42px] sm:min-w-[140px] bg-white border-slate-200/90 text-slate-700 shadow-none rounded-lg transition-all duration-200"
-          >
-            <Save className="w-4 h-4" /> Save draft
-          </Button>
-          <Button
-            type="button"
-            disabled={submitting}
-            variant="primary"
-            onClick={() => handleSubmit("confirmed")}
-            className="min-h-[42px] sm:min-w-[200px] rounded-lg shadow-md transition-all duration-200 active:scale-[0.99]"
-          >
-            {submitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4" />
-            )}
-            Post bill
-          </Button>
+          {isCorrection ? (
+            <>
+              <Link href={correctId ? `/purchases/${correctId}` : "/purchases"}>
+                <Button
+                  type="button"
+                  disabled={submitting}
+                  variant="outline"
+                  className="min-h-[42px] sm:min-w-[140px] bg-white border-slate-200/90 text-slate-700 shadow-none rounded-lg"
+                >
+                  Cancel
+                </Button>
+              </Link>
+              <Button
+                type="button"
+                disabled={submitting || correctionReason.trim().length < 3}
+                variant="primary"
+                onClick={handleCorrectionSubmit}
+                className="min-h-[42px] sm:min-w-[220px] rounded-lg shadow-md bg-amber-600 hover:bg-amber-700 border-amber-600"
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                Apply correction
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                disabled={submitting}
+                variant="outline"
+                onClick={() => handleSubmit("draft")}
+                className="min-h-[42px] sm:min-w-[140px] bg-white border-slate-200/90 text-slate-700 shadow-none rounded-lg transition-all duration-200"
+              >
+                <Save className="w-4 h-4" /> Save draft
+              </Button>
+              <Button
+                type="button"
+                disabled={submitting}
+                variant="primary"
+                onClick={() => handleSubmit("confirmed")}
+                className="min-h-[42px] sm:min-w-[200px] rounded-lg shadow-md transition-all duration-200 active:scale-[0.99]"
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                Post bill
+              </Button>
+            </>
+          )}
         </div>
       </DocSection>
     </div>

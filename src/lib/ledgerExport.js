@@ -23,6 +23,8 @@ export const LEDGER_ENTRY_TYPE_OPTIONS = [
 export function getLedgerEntryType(entry) {
   if (entry.referenceType === "PurchaseOrder") return "purchase";
   if (entry.referenceType === "SaleOrder") return "sale";
+  if (entry.referenceType === "SaleReturn") return "sale_return";
+  if (entry.referenceType === "PurchaseReturn") return "purchase_return";
   if (entry.referenceType === "Payment") return "payment";
   return "other";
 }

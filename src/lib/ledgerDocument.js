@@ -9,6 +9,10 @@ export function resolveLedgerDocument(entry) {
       return { type: "purchase", id: entry.referenceId, label: "Purchase bill" };
     case "SaleOrder":
       return { type: "sale", id: entry.referenceId, label: "Sales invoice" };
+    case "SaleReturn":
+      return { type: "sale_return", id: entry.referenceId, label: "Sale return receipt" };
+    case "PurchaseReturn":
+      return { type: "purchase_return", id: entry.referenceId, label: "Purchase return receipt" };
     case "Payment":
       return { type: "payment", id: entry.referenceId, label: "Payment voucher" };
     default:

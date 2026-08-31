@@ -1,4 +1,7 @@
 import prisma from "./prisma";
+import { serializeLedgerLineItems, parseLedgerLineItems } from "./ledgerDisplay";
+
+export { serializeLedgerLineItems, parseLedgerLineItems } from "./ledgerDisplay";
 
 /** Oldest first — new entries appear at the bottom (statement / register order). */
 export const LEDGER_ENTRY_ORDER = [{ date: "asc" }, { id: "asc" }];
@@ -132,9 +135,10 @@ export async function createLedgerEntry(tx, {
   referenceId,
   debit = 0,
   credit = 0,
+  lineItems = null,
 }) {
   const [entry] = await createLedgerEntries(tx, [
-    { accountId, date, description, reference, referenceType, referenceId, debit, credit },
+    { accountId, date, description, reference, referenceType, referenceId, debit, credit, lineItems },
   ]);
   return entry;
 }
@@ -154,6 +158,12 @@ export async function createLedgerEntries(tx, entries = []) {
       referenceId: e.referenceId ?? null,
       debit: parseFloat(e.debit) || 0,
       credit: parseFloat(e.credit) || 0,
+      lineItems:
+        typeof e.lineItems === "string"
+          ? e.lineItems
+          : e.lineItems
+            ? serializeLedgerLineItems(e.lineItems)
+            : null,
     }))
     .filter((e) => e.accountId && (Math.abs(e.debit) > 0.001 || Math.abs(e.credit) > 0.001));
 
@@ -174,6 +184,7 @@ export async function createLedgerEntries(tx, entries = []) {
         debit: entry.debit,
         credit: entry.credit,
         balance: 0,
+        lineItems: entry.lineItems ?? null,
       },
     });
     created.push(row);

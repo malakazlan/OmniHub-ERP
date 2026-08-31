@@ -12,6 +12,7 @@ export async function GET(req) {
     const shops = await prisma.shop.findMany({
       include: {
         saleOrders: { select: { totalAmount: true, paidAmount: true } },
+        dealer: { select: { id: true, name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -49,7 +50,7 @@ export async function POST(req) {
 
     const {
       name, ownerName, phone, whatsappNumber, city, area, address,
-      shopType, creditLimit, assignedTo, notes, openingBalance,
+      shopType, creditLimit, assignedTo, dealerId, notes, openingBalance,
     } = body;
 
     if (!name?.trim()) return Response.json({ error: "Shop name is required" }, { status: 400 });
@@ -82,6 +83,7 @@ export async function POST(req) {
           shopType: shopType || "retail",
           creditLimit: parseFloat(creditLimit) || 0,
           assignedTo: assignedTo ? parseInt(assignedTo) : null,
+          dealerId: dealerId ? parseInt(dealerId, 10) : null,
           notes,
           accountId: account.id,
         },

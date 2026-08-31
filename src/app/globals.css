@@ -85,6 +85,7 @@
   --accent-farmers: var(--status-success);
   --accent-companies: #2563EB;
   --accent-shops: var(--status-warning);
+  --accent-dealers: #7C3AED;
   --accent-products: #6D28D9;
   --accent-purchases: var(--brand-primary);
   --accent-sales: var(--status-success);
@@ -129,6 +130,7 @@
   --color-acc-farmers: var(--accent-farmers);
   --color-acc-companies: var(--accent-companies);
   --color-acc-shops: var(--accent-shops);
+  --color-acc-dealers: var(--accent-dealers);
   --color-acc-products: var(--accent-products);
   --color-acc-purchases: var(--accent-purchases);
   --color-acc-sales: var(--accent-sales);
@@ -3088,6 +3090,26 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-inv-table .text-muted { color: var(--inv-muted); }
 .erp-inv-table .font-mono { font-family: ui-monospace, monospace; }
 
+.erp-inv-returns {
+  padding: 0 1.25rem 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.erp-inv-returns-title {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+}
+
+.erp-inv-returns-table thead th {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
 .erp-inv-bottom {
   display: grid;
   grid-template-columns: 1fr;
@@ -5009,6 +5031,41 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-lg-doc-payment {
   background: #f0f9ff;
   color: #0369a1;
+}
+
+.erp-lg-doc-return {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.erp-return-badge {
+  display: inline-flex;
+  margin-top: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.5625rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: #dc2626;
+  color: #fff;
+}
+
+.erp-return-header {
+  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #b91c1c 100%) !important;
+}
+
+.erp-return-reason {
+  margin: 0 1.25rem 0.5rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #475569;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.erp-return-total {
+  color: #dc2626 !important;
 }
 
 .erp-lg-doc-journal {
@@ -10768,4 +10825,1696 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-don-form .erp-don-btn-primary {
   background: linear-gradient(135deg, #e11d48 0%, #be123c 100%) !important;
   color: #fff !important;
+}
+
+/* ── Dealers module ── */
+.erp-dealer-surface {
+  --erp-dealer-accent: #7c3aed;
+  --erp-dealer-accent-deep: #5b21b6;
+  --erp-dealer-accent-soft: #f5f3ff;
+  --erp-dealer-accent-border: #ddd6fe;
+  --erp-dealer-panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(124, 58, 237, 0.14);
+  background: linear-gradient(180deg, #f5f3ff 0%, #f8fafc 20%, #f8fafc 100%);
+  min-height: 100%;
+}
+
+.erp-dealer-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.erp-dealer-breadcrumb a {
+  color: #7c3aed;
+  transition: color 0.15s ease;
+}
+
+.erp-dealer-breadcrumb a:hover {
+  color: #5b21b6;
+}
+
+.erp-dealer-breadcrumb span:last-child {
+  color: #475569;
+}
+
+.erp-dealer-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.5rem 1.6rem;
+  background: linear-gradient(135deg, #2e1065 0%, #5b21b6 48%, #7c3aed 100%);
+  border-radius: 18px;
+  box-shadow: var(--erp-dealer-panel-shadow);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.erp-dealer-page-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 120% at 100% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.erp-dealer-page-header > * {
+  position: relative;
+  z-index: 1;
+}
+
+.erp-dealer-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.erp-dealer-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+  color: #e9d5ff;
+}
+
+.erp-dealer-page-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #ddd6fe;
+  margin-bottom: 0.5rem;
+}
+
+.erp-dealer-page-title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.erp-dealer-page-desc {
+  margin-top: 0.5rem;
+  max-width: 40rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #ddd6fe;
+}
+
+.erp-dealer-page-desc strong {
+  color: #fff;
+  font-weight: 700;
+}
+
+.erp-dealer-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
+.erp-dealer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #ede9fe;
+}
+
+.erp-dealer-chip.is-active {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(52, 211, 153, 0.35);
+  color: #a7f3d0;
+}
+
+.erp-dealer-chip.is-inactive {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: rgba(252, 165, 165, 0.3);
+  color: #fecaca;
+}
+
+.erp-dealer-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-dealer-btn-ghost {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #fff !important;
+}
+
+.erp-dealer-page-header .erp-dealer-btn-primary,
+.erp-dealer-btn-create {
+  background: linear-gradient(135deg, #fff 0%, #ede9fe 100%) !important;
+  color: #5b21b6 !important;
+  border: none !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+}
+
+.erp-dealer-page-header .erp-dealer-btn-primary:hover,
+.erp-dealer-btn-create:hover {
+  background: #fff !important;
+}
+
+.erp-dealer-flow-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+  border-radius: 16px;
+  box-shadow: var(--erp-dealer-panel-shadow);
+}
+
+.erp-dealer-flow-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 9rem;
+}
+
+.erp-dealer-flow-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.erp-dealer-flow-item.is-out .erp-dealer-flow-icon {
+  background: rgba(251, 146, 60, 0.2);
+  color: #fdba74;
+}
+
+.erp-dealer-flow-item.is-in .erp-dealer-flow-icon {
+  background: rgba(52, 211, 153, 0.2);
+  color: #6ee7b7;
+}
+
+.erp-dealer-flow-item.is-pending .erp-dealer-flow-icon {
+  background: rgba(248, 113, 113, 0.2);
+  color: #fca5a5;
+}
+
+.erp-dealer-flow-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a5b4fc;
+}
+
+.erp-dealer-flow-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.erp-dealer-flow-arrow {
+  font-size: 1.125rem;
+  font-weight: 300;
+  color: #6366f1;
+  opacity: 0.7;
+}
+
+.erp-dealer-collection-rate {
+  margin-left: auto;
+  text-align: right;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 767px) {
+  .erp-dealer-collection-rate {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    width: 100%;
+    text-align: left;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.erp-dealer-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .erp-dealer-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.erp-dealer-stat {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 14px;
+  box-shadow: var(--erp-dealer-panel-shadow);
+}
+
+.erp-dealer-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.erp-dealer-stat-icon.is-shops { background: #f5f3ff; color: #7c3aed; }
+.erp-dealer-stat-icon.is-out { background: #fff7ed; color: #ea580c; }
+.erp-dealer-stat-icon.is-in { background: #ecfdf5; color: #059669; }
+.erp-dealer-stat-icon.is-pending { background: #fef2f2; color: #dc2626; }
+
+.erp-dealer-stat-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.erp-dealer-stat-value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-dealer-stat-sub {
+  font-size: 0.625rem;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+.erp-dealer-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 14px;
+  box-shadow: var(--erp-dealer-panel-shadow);
+}
+
+.erp-dealer-toolbar-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.erp-dealer-toolbar-desc {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+  max-width: 28rem;
+}
+
+.erp-dealer-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-dealer-date-input {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  background: #fafafa;
+  color: #334155;
+}
+
+.erp-dealer-date-input:focus {
+  outline: none;
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  background: #fff;
+}
+
+.erp-dealer-clear-btn {
+  padding: 0.45rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.erp-dealer-clear-btn:hover {
+  background: #ede9fe;
+}
+
+.erp-dealer-register {
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--erp-dealer-panel-shadow);
+}
+
+.erp-dealer-register-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid #ede9fe;
+  background: linear-gradient(180deg, #fff 0%, #faf5ff 100%);
+}
+
+.erp-dealer-register-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.erp-dealer-register-meta {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.erp-dealer-th {
+  background: linear-gradient(180deg, #f5f3ff 0%, #ede9fe 100%) !important;
+  color: #5b21b6 !important;
+}
+
+.erp-dealer-shop-link {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #6d28d9;
+  transition: color 0.15s ease;
+}
+
+.erp-dealer-shop-link:hover {
+  color: #5b21b6;
+  text-decoration: underline;
+}
+
+.erp-dealer-shop-meta {
+  font-size: 0.625rem;
+  color: #94a3b8;
+}
+
+.erp-dealer-amt {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.erp-dealer-amt.is-out { color: #ea580c; }
+.erp-dealer-amt.is-in { color: #059669; }
+.erp-dealer-amt.is-pending { color: #dc2626; }
+.erp-dealer-amt.is-invoice { color: #b45309; }
+.erp-dealer-amt.is-neutral { color: #64748b; }
+
+.erp-dealer-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.erp-dealer-status.is-active {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.erp-dealer-status.is-inactive {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.erp-dealer-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.erp-dealer-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 14px;
+  background: #f5f3ff;
+  color: #7c3aed;
+  margin-bottom: 0.75rem;
+}
+
+.erp-dealer-footer {
+  background: linear-gradient(180deg, #faf5ff 0%, #f5f3ff 100%) !important;
+  border-top: 1px solid #ddd6fe !important;
+  color: #475569 !important;
+  font-size: 0.75rem;
+}
+
+.erp-dealer-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  font-size: 0.8125rem;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.erp-dealer-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 14px;
+  box-shadow: var(--erp-dealer-panel-shadow);
+}
+
+.erp-dealer-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.erp-dealer-tab:hover {
+  color: #5b21b6;
+  background: #faf5ff;
+}
+
+.erp-dealer-tab.is-active {
+  color: #5b21b6;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  box-shadow: inset 0 0 0 1px #ddd6fe;
+}
+
+.erp-dealer-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 14rem;
+}
+
+.erp-dealer-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.erp-dealer-search-wrap input {
+  width: 100%;
+  padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  background: #fafafa;
+}
+
+.erp-dealer-search-wrap input:focus {
+  outline: none;
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  background: #fff;
+}
+
+.erp-dealer-filter-row,
+.erp-dealer-analytics-filter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-dealer-analytics-filter-grid {
+  justify-content: flex-end;
+}
+
+@media (min-width: 1024px) {
+  .erp-dealer-toolbar {
+    flex-wrap: nowrap;
+  }
+  .erp-dealer-analytics-filters {
+    align-items: flex-start;
+  }
+}
+
+.erp-dealer-select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: #fafafa;
+  min-width: 7.5rem;
+}
+
+.erp-dealer-select:focus {
+  outline: none;
+  border-color: #a78bfa;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+  background: #fff;
+}
+
+.erp-dealer-analytics-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .erp-dealer-analytics-kpis {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.erp-dealer-analytics-kpi {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid #ede9fe;
+  border-radius: 12px;
+  box-shadow: var(--erp-dealer-panel-shadow);
+}
+
+.erp-dealer-analytics-kpi-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+}
+
+.erp-dealer-analytics-kpi-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.15rem;
+}
+
+.erp-dealer-rate-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 6.5rem;
+}
+
+.erp-dealer-rate-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.erp-dealer-rate-fill {
+  height: 100%;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+}
+
+.erp-dealer-rate-text {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  color: #5b21b6;
+  font-variant-numeric: tabular-nums;
+  min-width: 2rem;
+  text-align: right;
+}
+
+/* ── Purchase vendors module ── */
+.erp-pv-surface {
+  --erp-pv-panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -8px rgba(37, 99, 235, 0.14);
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 20%, #f8fafc 100%);
+  min-height: 100%;
+}
+
+.erp-pv-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.erp-pv-breadcrumb a { color: #2563eb; }
+.erp-pv-breadcrumb a:hover { color: #1d4ed8; }
+.erp-pv-breadcrumb span:last-child { color: #475569; }
+
+.erp-pv-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 1.5rem 1.6rem;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 48%, #2563eb 100%);
+  border-radius: 18px;
+  box-shadow: var(--erp-pv-panel-shadow);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.erp-pv-page-header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 90% 120% at 100% 0%, rgba(255, 255, 255, 0.1) 0%, transparent 55%);
+  pointer-events: none;
+}
+
+.erp-pv-page-header > * { position: relative; z-index: 1; }
+
+.erp-pv-header-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.erp-pv-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  flex-shrink: 0;
+  color: #bfdbfe;
+}
+
+.erp-pv-page-badge {
+  display: inline-flex;
+  padding: 0.28rem 0.7rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #bfdbfe;
+  margin-bottom: 0.5rem;
+}
+
+.erp-pv-page-title {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.erp-pv-page-desc {
+  margin-top: 0.5rem;
+  max-width: 40rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: #bfdbfe;
+}
+
+.erp-pv-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
+}
+
+.erp-pv-chip {
+  display: inline-flex;
+  padding: 0.32rem 0.65rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #dbeafe;
+}
+
+.erp-pv-chip.is-link {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.erp-pv-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.erp-pv-btn-ghost {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #fff !important;
+}
+
+.erp-pv-btn-primary {
+  background: linear-gradient(135deg, #fff 0%, #dbeafe 100%) !important;
+  color: #1d4ed8 !important;
+  border: none !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15) !important;
+}
+
+.erp-pv-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .erp-pv-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.erp-pv-stat {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem;
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  box-shadow: var(--erp-pv-panel-shadow);
+}
+
+.erp-pv-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.erp-pv-stat-icon.is-vendors { background: #eff6ff; color: #2563eb; }
+.erp-pv-stat-icon.is-bills { background: #f0fdf4; color: #059669; }
+.erp-pv-stat-icon.is-items { background: #f5f3ff; color: #7c3aed; }
+.erp-pv-stat-icon.is-value { background: #fff7ed; color: #ea580c; }
+
+.erp-pv-stat-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+}
+
+.erp-pv-stat-value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.erp-pv-stat-sub {
+  font-size: 0.625rem;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+.erp-pv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  box-shadow: var(--erp-pv-panel-shadow);
+}
+
+.erp-pv-search-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 14rem;
+}
+
+.erp-pv-search-icon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1rem;
+  height: 1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.erp-pv-search-wrap input {
+  width: 100%;
+  padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  background: #fafafa;
+}
+
+.erp-pv-search-wrap input:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  background: #fff;
+}
+
+.erp-pv-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-pv-select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  background: #fafafa;
+  min-width: 7.5rem;
+}
+
+.erp-pv-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  box-shadow: var(--erp-pv-panel-shadow);
+}
+
+.erp-pv-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.erp-pv-tab.is-active {
+  color: #1d4ed8;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.erp-pv-register {
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--erp-pv-panel-shadow);
+}
+
+.erp-pv-register-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fff;
+}
+
+.erp-pv-register-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.erp-pv-register-meta {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.15rem;
+}
+
+.erp-pv-th {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+  color: #1e40af !important;
+}
+
+.erp-pv-vendor-link {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.erp-pv-vendor-link:hover {
+  text-decoration: underline;
+}
+
+.erp-pv-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.erp-pv-type.is-farmer {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.erp-pv-type.is-company {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.erp-pv-amt {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.erp-pv-count-badge {
+  display: inline-flex;
+  min-width: 1.75rem;
+  justify-content: center;
+  padding: 0.25rem 0.55rem;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1d4ed8;
+  font-size: 0.6875rem;
+  font-weight: 800;
+  border: 1px solid #bfdbfe;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
+}
+
+.erp-pv-bill-no {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
+.erp-pv-bill-no:hover { text-decoration: underline; }
+
+.erp-pv-status {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.erp-pv-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+}
+
+.erp-pv-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 14px;
+  background: #eff6ff;
+  color: #2563eb;
+  margin-bottom: 0.75rem;
+}
+
+.erp-pv-footer {
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border-top: 1px solid #bfdbfe !important;
+  font-size: 0.75rem;
+  color: #475569 !important;
+}
+
+/* Purchase vendor detail polish */
+.erp-pv-flow-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  border-radius: 16px;
+  box-shadow: var(--erp-pv-panel-shadow);
+}
+
+.erp-pv-flow-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 8.5rem;
+}
+
+.erp-pv-flow-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.erp-pv-flow-icon.is-bills { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
+.erp-pv-flow-icon.is-lines { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; }
+.erp-pv-flow-icon.is-qty { background: rgba(96, 165, 250, 0.2); color: #93c5fd; }
+.erp-pv-flow-icon.is-value { background: rgba(251, 146, 60, 0.2); color: #fdba74; }
+
+.erp-pv-flow-label {
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #93c5fd;
+}
+
+.erp-pv-flow-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.erp-pv-flow-arrow {
+  font-size: 1.125rem;
+  color: #3b82f6;
+  opacity: 0.65;
+}
+
+.erp-pv-flow-payable {
+  margin-left: auto;
+  text-align: right;
+  padding-left: 1rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 767px) {
+  .erp-pv-flow-payable {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    width: 100%;
+    text-align: left;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+.erp-pv-top-products {
+  padding: 1rem 1.15rem;
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+  box-shadow: var(--erp-pv-panel-shadow);
+}
+
+.erp-pv-top-products-title {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.erp-pv-top-products-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .erp-pv-top-products-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (min-width: 1280px) {
+  .erp-pv-top-products-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.erp-pv-top-product-card {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+  border: 1px solid #dbeafe;
+}
+
+.erp-pv-top-product-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  flex-shrink: 0;
+}
+
+.erp-pv-top-product-name {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.erp-pv-top-product-meta {
+  font-size: 0.625rem;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+.erp-pv-top-product-value {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #1e40af;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.erp-pv-register-detail {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.erp-pv-register-head-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.erp-pv-register-head-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%);
+  color: #2563eb;
+  flex-shrink: 0;
+  border: 1px solid #bfdbfe;
+}
+
+.erp-pv-register-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.erp-pv-register-filters .erp-pv-search-wrap {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.erp-pv-register-filters .erp-pv-search-wrap input {
+  background: #fff;
+}
+
+.erp-pv-grid-wrap {
+  overflow: hidden;
+}
+
+.erp-pv-grid-scroll {
+  overflow: auto;
+  max-height: min(65vh, 540px);
+}
+
+.erp-pv-grid-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 10rem;
+}
+
+.erp-pv-grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.8125rem;
+}
+
+.erp-pv-g-th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+}
+
+.erp-pv-grid-items col.col-num { width: 2.25rem; }
+.erp-pv-grid-items col.col-num-sm { width: 2.75rem; }
+.erp-pv-grid-items col.col-product { width: 9rem; }
+.erp-pv-grid-items col.col-sku { width: 5rem; }
+.erp-pv-grid-items col.col-unit { width: 3.75rem; }
+.erp-pv-grid-items col.col-money { width: 6.5rem; }
+.erp-pv-grid-items col.col-date { width: 6.25rem; }
+
+.erp-pv-grid-vendors col.col-num { width: 2.25rem; }
+.erp-pv-grid-vendors col.col-vendor { width: 11rem; }
+.erp-pv-grid-vendors col.col-type { width: 4.75rem; }
+.erp-pv-grid-vendors col.col-city { width: 6.5rem; }
+.erp-pv-grid-vendors col.col-num-sm { width: 3rem; }
+.erp-pv-grid-vendors col.col-money-lg { width: 7.5rem; }
+.erp-pv-grid-vendors col.col-date { width: 6.5rem; }
+
+.erp-pv-g-th.col-vendor,
+.erp-pv-g-td.col-vendor {
+  max-width: 11rem;
+}
+
+.erp-pv-g-vendor-link {
+  display: block;
+  font-weight: 600;
+  color: #1d4ed8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-pv-g-vendor-link:hover {
+  text-decoration: underline;
+}
+
+.erp-pv-g-vendor-name {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-pv-g-th.col-type,
+.erp-pv-g-td.col-type {
+  white-space: nowrap;
+}
+
+.erp-pv-g-type {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.erp-pv-g-type.is-farmer {
+  color: #047857;
+}
+
+.erp-pv-g-type.is-company {
+  color: #1d4ed8;
+}
+
+.erp-pv-g-th.col-city,
+.erp-pv-g-td.col-city {
+  font-size: 0.75rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-pv-g-th.col-money-lg,
+.erp-pv-g-td.col-money-lg {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-vendor-row.is-clickable {
+  cursor: pointer;
+}
+
+.erp-pv-vendor-row.is-clickable:hover .erp-pv-g-td {
+  background: #eff6ff;
+}
+
+.erp-pv-register-filters .erp-pv-select {
+  min-width: 8.5rem;
+}
+
+.erp-pv-register-filters .erp-pv-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.erp-pv-g-th.col-num,
+.erp-pv-g-td.col-num {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-g-th.col-num-sm,
+.erp-pv-g-td.col-num-sm {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-g-th.col-product,
+.erp-pv-g-td.col-product {
+  max-width: 9rem;
+}
+
+.erp-pv-g-th.col-sku,
+.erp-pv-g-td.col-sku {
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.erp-pv-g-th.col-unit,
+.erp-pv-g-td.col-unit {
+  white-space: nowrap;
+}
+
+.erp-pv-g-th.col-money,
+.erp-pv-g-td.col-money {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-g-th.col-date,
+.erp-pv-g-td.col-date {
+  white-space: nowrap;
+}
+
+.erp-pv-g-td {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  vertical-align: middle;
+  background: #fff;
+  line-height: 1.35;
+  color: #334155;
+}
+
+.erp-pv-grid tbody tr:nth-child(even) .erp-pv-g-td {
+  background: #fafbfc;
+}
+
+.erp-pv-grid tbody tr:hover .erp-pv-g-td {
+  background: #eff6ff;
+}
+
+.erp-pv-g-product {
+  display: block;
+  font-weight: 600;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.erp-pv-g-td.is-qty {
+  font-weight: 700;
+  color: #1e40af;
+}
+
+.erp-pv-g-td.is-total {
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.erp-pv-g-paid {
+  color: #059669;
+  font-weight: 600;
+}
+
+.erp-pv-g-due {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.erp-pv-g-muted {
+  color: #94a3b8;
+}
+
+.erp-pv-g-foot .erp-pv-g-td {
+  background: #f8fafc !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  border-top: 2px solid #cbd5e1;
+}
+
+.erp-pv-g-foot strong {
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.erp-pv-detail-grid {
+  border-top: 1px solid #e2e8f0;
+}
+
+.erp-pv-product-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.erp-pv-product-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.erp-pv-product-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.erp-pv-product-sku {
+  font-size: 0.625rem;
+  font-family: ui-monospace, monospace;
+  color: #94a3b8;
+  margin-top: 0.1rem;
+}
+
+.erp-pv-qty-value {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: #1e40af;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-unit-badge {
+  display: inline-flex;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.erp-pv-rate {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-amt.is-strong {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: #1e3a8a;
+}
+
+.erp-pv-amt.is-paid {
+  color: #059669;
+  font-weight: 700;
+}
+
+.erp-pv-amt.is-due {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.erp-pv-amt.is-neutral {
+  color: #94a3b8;
+}
+
+.erp-pv-date-pill {
+  display: inline-flex;
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+.erp-pv-bill-status {
+  display: inline-flex;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.erp-pv-bill-status.is-confirmed,
+.erp-pv-bill-status.is-received {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.erp-pv-bill-status.is-draft {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.erp-pv-detail-footer {
+  font-weight: 600;
+}
+
+.erp-pv-tab:hover {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.erp-pv-page-header .erp-pv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.erp-pv-meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.85rem;
 }

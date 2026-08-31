@@ -4,6 +4,7 @@ import { saleCustomerDisplayName, saleCustomerTypeLabel, saleCustomerPhone } fro
 import { resolveSalePayment, salePaymentStatusLabel } from "@/lib/salePayment";
 import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 import { amountInWords } from "@/lib/amountInWords";
+import { buildInvoiceLineItems } from "@/lib/saleReturn";
 
 const DEFAULT_COMPANY = {
   company_name: "Warraich Traders",
@@ -324,7 +325,7 @@ function drawTableRow(pdf, grid, y, item, index) {
   return y + h;
 }
 
-function drawSummary(pdf, grid, y, sale) {
+function drawSummary(pdf, grid, y, sale, totalReturned = 0, grossSubtotal = 0) {
   const payment = resolveSalePayment(sale);
   const hasLedger = Boolean(sale.customerAccountId);
   const balances = computeCustomerBalancesForSale(sale, sale.customerAccountBalance ?? 0);
@@ -336,6 +337,12 @@ function drawSummary(pdf, grid, y, sale) {
 
   const rows = [
     ...(hasLedger ? [["Previous balance", previousBalance, false, false, "balance"]] : []),
+    ...(totalReturned > 0
+      ? [
+          ["Gross subtotal", grossSubtotal, false, false, "normal"],
+          ["Returns", totalReturned, true, false, "normal"],
+        ]
+      : []),
     ["Subtotal", sale.subtotal, false, false, "normal"],
     ...(parseFloat(sale.transportCost) > 0
       ? [["Transport", sale.transportCost, false, false, "normal"]]
@@ -458,10 +465,16 @@ export function downloadSaleInvoicePdf(sale, company = {}, filename = "invoice.p
   y = drawInfoBoxes(pdf, sale, grid, y);
   y = sectionTitle(pdf, grid, y, "Line items");
 
+  const { netItems, returnEntries, totalReturned } = buildInvoiceLineItems(
+    sale.items || [],
+    sale.returns || []
+  );
+  const grossSubtotal = (sale.items || []).reduce((s, row) => s + (Number(row.amount) || 0), 0);
+
   const tableTop = y;
   y = drawTableHeader(pdf, grid, y);
 
-  (sale.items || []).forEach((item, i) => {
+  netItems.forEach((item, i) => {
     y = ensurePage(pdf, y, restartY, LAYOUT.rowH + 4);
     if (y === restartY) {
       y = drawTableHeader(pdf, grid, y);
@@ -473,12 +486,36 @@ export function downloadSaleInvoicePdf(sale, company = {}, filename = "invoice.p
   pdf.setLineWidth(0.2);
   pdf.rect(grid.left, tableTop, grid.right - grid.left, y - tableTop);
 
+  if (returnEntries.length > 0) {
+    y += 4;
+    y = ensurePage(pdf, y, restartY, LAYOUT.rowH + 8);
+    y = sectionTitle(pdf, grid, y, "Sales returns");
+    const returnsTop = y;
+    y = drawTableHeader(pdf, grid, y);
+    returnEntries.forEach((item, i) => {
+      y = ensurePage(pdf, y, restartY, LAYOUT.rowH + 4);
+      if (y === restartY) {
+        y = drawTableHeader(pdf, grid, y);
+      }
+      y = drawTableRow(pdf, grid, y, {
+        productName: `${item.returnNumber} · ${item.productName}`,
+        quantity: item.quantity,
+        unit: item.unit,
+        rate: item.rate,
+        amount: -Math.abs(item.amount),
+      }, i);
+    });
+    setDraw(pdf, COLORS.slate200);
+    pdf.setLineWidth(0.2);
+    pdf.rect(grid.left, returnsTop, grid.right - grid.left, y - returnsTop);
+  }
+
   y += 4;
   y = ensurePage(pdf, y, restartY, 50);
-  y = drawSummary(pdf, grid, y, sale);
+  y = drawSummary(pdf, grid, y, sale, totalReturned, grossSubtotal);
 
   y = sectionTitle(pdf, grid, y, "Amount in words");
-  const words = amountInWords(sale.totalAmount);
+  const words = amountInWords(resolveSalePayment(sale).totalAmount);
   const wordLines = pdf.splitTextToSize(words, contentW - 24);
   const boxH = 8 + wordLines.length * 4.5;
   setFill(pdf, COLORS.slate50);

@@ -70,6 +70,15 @@ export default function ShopsPage() {
       ),
     },
     {
+      header: "Dealer",
+      accessor: "dealer",
+      cell: (row) => row.dealer?.name ? (
+        <Link href={`/dealers/${row.dealer.id}`} className="text-xs font-semibold text-violet-600 hover:underline">
+          {row.dealer.name}
+        </Link>
+      ) : <span className="text-xs text-slate-400">—</span>,
+    },
+    {
       header: "Receivable",
       accessor: "balance",
       cell: (row) => (

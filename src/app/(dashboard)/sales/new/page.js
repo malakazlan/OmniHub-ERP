@@ -22,6 +22,7 @@ import {
   Banknote,
   Landmark,
   Receipt,
+  AlertTriangle,
 } from "lucide-react";
 import { parseNumber } from "@/lib/formatters";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
@@ -108,6 +109,8 @@ export default function NewSalePage() {
 function NewSalePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const correctId = searchParams.get("correct");
+  const isCorrection = Boolean(correctId);
   const { showToast } = useToast();
   const defaultCashAccountId = useDefaultCashAccountId();
   const [loading, setLoading] = useState(true);
@@ -136,6 +139,43 @@ function NewSalePageInner() {
   const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
   const [acceptedOrders, setAcceptedOrders] = useState([]);
   const [customerOrderId, setCustomerOrderId] = useState("");
+  const [correctionReason, setCorrectionReason] = useState("");
+  const [correctionInvoice, setCorrectionInvoice] = useState("");
+
+  const applySaleToForm = (sale) => {
+    if (!sale) return;
+    let type = "walkin";
+    if (sale.farmerId) type = "farmer";
+    else if (sale.shopId) type = "shop";
+    else if (sale.companyId) type = "company";
+
+    setCustomerType(type);
+    setCorrectionInvoice(sale.invoiceNumber || "");
+    setForm({
+      customerId: String(sale.farmerId || sale.shopId || sale.companyId || ""),
+      walkInName: type === "walkin" ? sale.customerName || "" : "",
+      saleDate: sale.saleDate?.slice?.(0, 10) || new Date().toISOString().slice(0, 10),
+      transportCost: sale.transportCost ? String(sale.transportCost) : "",
+      loadingCost: sale.loadingCost ? String(sale.loadingCost) : "",
+      taxAmount: sale.taxAmount ? String(sale.taxAmount) : "",
+      discountAmount: sale.discountAmount ? String(sale.discountAmount) : "",
+      cashAmount: sale.cashAmount ? String(sale.cashAmount) : "",
+      bankAmount: sale.bankAmount ? String(sale.bankAmount) : "",
+      cashAccountId: sale.cashAccountId ? String(sale.cashAccountId) : "",
+      bankAccountId: sale.bankAccountId ? String(sale.bankAccountId) : "",
+      notes: sale.notes || "",
+    });
+    setItems(
+      sale.items?.length
+        ? sale.items.map((line) => ({
+            productId: String(line.productId),
+            quantity: String(line.quantity),
+            rate: String(line.rate),
+            amount: line.amount,
+          }))
+        : [{ ...EMPTY_ITEM }]
+    );
+  };
 
   const applyOrderToForm = (order, productList) => {
     if (!order) return;
@@ -191,7 +231,16 @@ function NewSalePageInner() {
         if (accountsRes.ok) setAccounts((accountsData.accounts || []).filter((a) => a.isActive));
 
         const orderIdParam = searchParams.get("orderId");
-        if (orderIdParam) {
+        if (correctId) {
+          const corrRes = await fetch(`/api/sales/${correctId}/correct`);
+          const corrData = await corrRes.json();
+          if (!corrRes.ok || !corrData.canCorrect) {
+            showToast(corrData.reason || corrData.error || "This bill cannot be corrected", "warning");
+            router.push(`/sales/${correctId}`);
+            return;
+          }
+          applySaleToForm(corrData.sale);
+        } else if (orderIdParam) {
           const orderRes = await fetch(`/api/orders/${orderIdParam}`);
           const orderJson = await orderRes.json();
           if (orderRes.ok && orderJson.order?.status === "accepted") {
@@ -209,9 +258,9 @@ function NewSalePageInner() {
   }, [showToast, searchParams]);
 
   useEffect(() => {
-    if (!defaultCashAccountId) return;
+    if (!defaultCashAccountId || isCorrection) return;
     setForm((f) => applyDefaultCashAccount(f, defaultCashAccountId));
-  }, [defaultCashAccountId]);
+  }, [defaultCashAccountId, isCorrection]);
 
   const customerOptions = useMemo(() => {
     if (customerType === "farmer") return farmers;
@@ -274,16 +323,57 @@ function NewSalePageInner() {
 
   const handleChange = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
-  const handleSubmit = async (status) => {
+  const buildSalePayload = (validItems) => {
+    const customer = customerOptions.find((c) => String(c.id) === String(form.customerId));
+    const walkInLabel = form.walkInName?.trim() || "—";
+
+    let cashAmt = parseNumber(form.cashAmount);
+    let bankAmt = parseNumber(form.bankAmount);
+    if (customerType === "walkin" && !isCorrection && cashAmt + bankAmt + 0.009 < totalAmount) {
+      cashAmt = Math.max(totalAmount - bankAmt, 0);
+    }
+
+    return {
+      customerType,
+      customerName: customerType === "walkin" ? walkInLabel : customer?.name || "",
+      farmerId: customerType === "farmer" ? parseInt(form.customerId, 10) : null,
+      shopId: customerType === "shop" ? parseInt(form.customerId, 10) : null,
+      companyId: customerType === "company" ? parseInt(form.customerId, 10) : null,
+      customerOrderId: customerOrderId ? parseInt(customerOrderId, 10) : null,
+      saleDate: form.saleDate,
+      items: validItems.map((item) => {
+        const product = products.find((p) => String(p.id) === String(item.productId));
+        return {
+          productId: parseInt(item.productId, 10),
+          productName: product?.name || "",
+          quantity: parseNumber(item.quantity),
+          unit: product?.unit || "kg",
+          rate: parseNumber(item.rate),
+          amount: parseNumber(item.amount),
+        };
+      }),
+      transportCost: parseNumber(form.transportCost),
+      loadingCost: parseNumber(form.loadingCost),
+      taxAmount: parseNumber(form.taxAmount),
+      discountAmount: parseNumber(form.discountAmount),
+      cashAmount: cashAmt,
+      bankAmount: bankAmt,
+      cashAccountId: form.cashAccountId ? parseInt(form.cashAccountId, 10) : null,
+      bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : null,
+      notes: form.notes || null,
+    };
+  };
+
+  const validateSaleForm = (status) => {
     if (customerType !== "walkin" && !form.customerId) {
       showToast(`Please select a ${customerType}`, "warning");
-      return;
+      return null;
     }
 
     const validItems = items.filter((item) => item.productId && parseNumber(item.quantity) > 0);
     if (validItems.length === 0) {
       showToast("Add at least one product line", "warning");
-      return;
+      return null;
     }
 
     const cashAmt = parseNumber(form.cashAmount);
@@ -293,60 +383,66 @@ function NewSalePageInner() {
     if (customerType === "walkin" && status === "confirmed") {
       if (paid + 0.009 < totalAmount) {
         showToast("Walk-in sales must be paid in full before confirming", "warning");
-        return;
+        return null;
       }
       if (cashAmt > 0 && !form.cashAccountId) {
         showToast("Select a cash account for this payment", "warning");
-        return;
+        return null;
       }
       if (bankAmt > 0 && !form.bankAccountId) {
         showToast("Select a bank account for this payment", "warning");
-        return;
+        return null;
       }
     }
 
+    return validItems;
+  };
+
+  const handleCorrectionSubmit = async () => {
+    const reason = correctionReason.trim();
+    if (reason.length < 3) {
+      showToast("Enter a correction reason (minimum 3 characters)", "warning");
+      return;
+    }
+
+    const validItems = validateSaleForm("confirmed");
+    if (!validItems) return;
+
     setSubmitting(true);
     try {
-      const customer = customerOptions.find((c) => String(c.id) === String(form.customerId));
-      const walkInLabel = form.walkInName?.trim() || "—";
-
-      let cashAmt = parseNumber(form.cashAmount);
-      let bankAmt = parseNumber(form.bankAmount);
-      if (customerType === "walkin" && status === "confirmed" && cashAmt + bankAmt + 0.009 < totalAmount) {
-        cashAmt = Math.max(totalAmount - bankAmt, 0);
-      }
-
       const payload = {
-        customerType,
-        customerName:
-          customerType === "walkin"
-            ? walkInLabel
-            : customer?.name || "",
-        farmerId: customerType === "farmer" ? parseInt(form.customerId, 10) : null,
-        shopId: customerType === "shop" ? parseInt(form.customerId, 10) : null,
-        companyId: customerType === "company" ? parseInt(form.customerId, 10) : null,
-        customerOrderId: customerOrderId ? parseInt(customerOrderId, 10) : null,
-        saleDate: form.saleDate,
-        items: validItems.map((item) => {
-          const product = products.find((p) => String(p.id) === String(item.productId));
-          return {
-            productId: parseInt(item.productId, 10),
-            productName: product?.name || "",
-            quantity: parseNumber(item.quantity),
-            unit: product?.unit || "kg",
-            rate: parseNumber(item.rate),
-            amount: parseNumber(item.amount),
-          };
-        }),
-        transportCost: parseNumber(form.transportCost),
-        loadingCost: parseNumber(form.loadingCost),
-        taxAmount: parseNumber(form.taxAmount),
-        discountAmount: parseNumber(form.discountAmount),
-        cashAmount: cashAmt,
-        bankAmount: bankAmt,
-        cashAccountId: form.cashAccountId ? parseInt(form.cashAccountId, 10) : null,
-        bankAccountId: form.bankAccountId ? parseInt(form.bankAccountId, 10) : null,
-        notes: form.notes || null,
+        ...buildSalePayload(validItems),
+        correctionReason: reason,
+      };
+
+      const res = await fetch(`/api/sales/${correctId}/correct`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast(`Bill ${correctionInvoice || data.sale?.invoiceNumber || ""} corrected`, "success");
+        router.push(`/sales/${correctId}`);
+      } else {
+        showToast(data.error || "Failed to correct bill", "error");
+      }
+    } catch {
+      showToast("Error processing request", "error");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = async (status) => {
+    const validItems = validateSaleForm(status);
+    if (!validItems) return;
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        ...buildSalePayload(validItems),
         status,
       };
 
@@ -387,20 +483,29 @@ function NewSalePageInner() {
     <div className="page-enter pb-8 erp-sales-page space-y-5 sm:space-y-6">
       <PageHeader
         module="sales"
-        title="New sale invoice"
-        description="Customer, line items, charges, and payment."
+        title={isCorrection ? `Correct bill · ${correctionInvoice || "…"}` : "New sale invoice"}
+        description={
+          isCorrection
+            ? "Update line items, charges, or payment. Stock and ledger will be re-posted."
+            : "Customer, line items, charges, and payment."
+        }
         icon={DollarSign}
-        breadcrumbs={[
-          { label: "Sales", href: "/sales" },
-          { label: "New invoice" },
-        ]}
+        breadcrumbs={
+          isCorrection
+            ? [
+                { label: "Sales", href: "/sales" },
+                { label: correctionInvoice || "Bill", href: correctId ? `/sales/${correctId}` : "/sales" },
+                { label: "Correct" },
+              ]
+            : [{ label: "Sales", href: "/sales" }, { label: "New invoice" }]
+        }
         actions={
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-2 w-full sm:w-auto">
             <Link
-              href="/sales"
+              href={isCorrection && correctId ? `/sales/${correctId}` : "/sales"}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200/90 bg-white text-sm font-medium text-slate-600 hover:text-green-700 hover:border-green-200 hover:bg-green-50/60 transition-all duration-200 ease-out"
             >
-              <ArrowLeft className="w-4 h-4" /> Back to list
+              <ArrowLeft className="w-4 h-4" /> {isCorrection ? "Back to bill" : "Back to list"}
             </Link>
             <div className="w-full sm:w-[9.5rem]">
               <FieldLabel>Invoice date</FieldLabel>
@@ -415,7 +520,35 @@ function NewSalePageInner() {
         }
       />
 
-      {acceptedOrders.length > 0 && (
+      {isCorrection && (
+        <div className="erp-doc-section p-4 sm:p-5 rounded-xl border border-amber-200/90 bg-gradient-to-br from-amber-50/90 to-orange-50/40">
+          <div className="flex gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div className="min-w-0 flex-1 space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-amber-950">Bill correction mode</p>
+                <p className="text-xs text-amber-900/75 mt-1 leading-relaxed">
+                  You are correcting a posted invoice. Stock movements and ledger entries for this bill will be
+                  reversed, then re-applied with your changes. The invoice number stays the same and a correction
+                  note is added to the bill history.
+                </p>
+              </div>
+              <div>
+                <FieldLabel className="text-amber-900/70">Reason for correction *</FieldLabel>
+                <textarea
+                  value={correctionReason}
+                  onChange={(e) => setCorrectionReason(e.target.value)}
+                  rows={2}
+                  placeholder="e.g. Wrong quantity entered for Product X"
+                  className="input-field w-full text-sm bg-white/90 border-amber-200/80 focus:border-amber-400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {!isCorrection && acceptedOrders.length > 0 && (
         <div className="erp-doc-section p-4 rounded-xl border border-green-100 bg-green-50/40">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-green-800/70 mb-2">
             Load accepted order
@@ -853,30 +986,61 @@ function NewSalePageInner() {
           </div>
         </div>
         <div className="erp-doc-actions flex flex-col-reverse sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            disabled={submitting}
-            variant="outline"
-            onClick={() => handleSubmit("draft")}
-            className="min-h-[42px] sm:min-w-[140px] bg-white border-slate-200/90 text-slate-700 shadow-none rounded-lg transition-all duration-200"
-          >
-            <Save className="w-4 h-4" /> Save draft
-          </Button>
-          <Button
-            type="button"
-            disabled={submitting || (isWalkIn && walkInNeedsPayment)}
-            variant="brand"
-            onClick={() => handleSubmit("confirmed")}
-            className="min-h-[42px] sm:min-w-[200px] rounded-lg shadow-md transition-all duration-200 active:scale-[0.99]"
-            title={isWalkIn && walkInNeedsPayment ? "Walk-in sales require full payment" : undefined}
-          >
-            {submitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4" />
-            )}
-            Confirm sale
-          </Button>
+          {isCorrection ? (
+            <>
+              <Link href={correctId ? `/sales/${correctId}` : "/sales"}>
+                <Button
+                  type="button"
+                  disabled={submitting}
+                  variant="outline"
+                  className="min-h-[42px] sm:min-w-[140px] bg-white border-slate-200/90 text-slate-700 shadow-none rounded-lg"
+                >
+                  Cancel
+                </Button>
+              </Link>
+              <Button
+                type="button"
+                disabled={submitting || correctionReason.trim().length < 3}
+                variant="brand"
+                onClick={handleCorrectionSubmit}
+                className="min-h-[42px] sm:min-w-[220px] rounded-lg shadow-md bg-amber-600 hover:bg-amber-700 border-amber-600"
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                Apply correction
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                disabled={submitting}
+                variant="outline"
+                onClick={() => handleSubmit("draft")}
+                className="min-h-[42px] sm:min-w-[140px] bg-white border-slate-200/90 text-slate-700 shadow-none rounded-lg transition-all duration-200"
+              >
+                <Save className="w-4 h-4" /> Save draft
+              </Button>
+              <Button
+                type="button"
+                disabled={submitting || (isWalkIn && walkInNeedsPayment)}
+                variant="brand"
+                onClick={() => handleSubmit("confirmed")}
+                className="min-h-[42px] sm:min-w-[200px] rounded-lg shadow-md transition-all duration-200 active:scale-[0.99]"
+                title={isWalkIn && walkInNeedsPayment ? "Walk-in sales require full payment" : undefined}
+              >
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="w-4 h-4" />
+                )}
+                Confirm sale
+              </Button>
+            </>
+          )}
         </div>
       </DocSection>
     </div>

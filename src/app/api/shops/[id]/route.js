@@ -16,6 +16,7 @@ export async function GET(req, { params }) {
       where: { id: shopId },
       include: {
         saleOrders: { orderBy: { saleDate: "desc" }, take: 10 },
+        dealer: { select: { id: true, name: true, phone: true, city: true } },
       },
     });
 
@@ -67,6 +68,7 @@ export async function PUT(req, { params }) {
           shopType: body.shopType,
           creditLimit: body.creditLimit !== undefined ? parseFloat(body.creditLimit) : shop.creditLimit,
           assignedTo: body.assignedTo !== undefined ? (body.assignedTo ? parseInt(body.assignedTo) : null) : shop.assignedTo,
+          dealerId: body.dealerId !== undefined ? (body.dealerId ? parseInt(body.dealerId, 10) : null) : shop.dealerId,
           notes: body.notes,
           isActive: body.isActive !== undefined ? body.isActive : shop.isActive,
         },

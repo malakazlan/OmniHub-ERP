@@ -9,6 +9,7 @@ import {
 } from "@/lib/saleCustomer";
 import { resolveSalePayment, salePaymentStatusLabel } from "@/lib/salePayment";
 import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
+import { buildInvoiceLineItems } from "@/lib/saleReturn";
 import { formatCurrency, formatDate, formatQuantity } from "@/lib/formatters";
 import { amountInWords } from "@/lib/amountInWords";
 
@@ -28,8 +29,11 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
   if (!sale) return null;
 
   const c = { ...DEFAULT_COMPANY, ...company };
-  const items = sale.items || [];
   const payment = resolveSalePayment(sale);
+  const { netItems, returnEntries, totalReturned } = buildInvoiceLineItems(
+    sale.items || [],
+    sale.returns || []
+  );
   const customerPhone = saleCustomerPhone(sale);
   const hasLedger = Boolean(sale.customerAccountId);
 
@@ -45,6 +49,7 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
   ].filter(([, v]) => parseFloat(v) > 0);
 
   const discount = parseFloat(sale.discountAmount) > 0 ? sale.discountAmount : null;
+  const grossSubtotal = (sale.items || []).reduce((s, row) => s + (row.amount || 0), 0);
 
   return (
     <article className="erp-sale-invoice">
@@ -119,10 +124,17 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
             </tr>
           </thead>
           <tbody>
-            {items.map((item, i) => (
+            {netItems.map((item, i) => (
               <tr key={item.id || i}>
                 <td className="text-center text-muted">{i + 1}</td>
-                <td className="font-medium">{item.productName}</td>
+                <td className="font-medium">
+                  {item.productName}
+                  {item.returnedQuantity > 0 && (
+                    <span className="block text-[10px] font-normal text-slate-500 mt-0.5">
+                      {formatQuantity(item.returnedQuantity, item.unit)} returned
+                    </span>
+                  )}
+                </td>
                 <td className="text-right tabular-nums">{formatQuantity(item.quantity, item.unit)}</td>
                 <td className="text-right font-mono tabular-nums">{moneyPlain(item.rate)}</td>
                 <td className="text-right font-mono font-semibold tabular-nums">{moneyPlain(item.amount)}</td>
@@ -131,6 +143,32 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
           </tbody>
         </table>
       </div>
+
+      {returnEntries.length > 0 && (
+        <div className="erp-inv-returns">
+          <p className="erp-inv-returns-title">Sales returns</p>
+          <table className="erp-inv-table erp-inv-returns-table">
+            <thead>
+              <tr>
+                <th>Return #</th>
+                <th>Product</th>
+                <th className="text-right">Qty</th>
+                <th className="text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {returnEntries.map((row, i) => (
+                <tr key={`${row.returnNumber}-${row.productId}-${i}`}>
+                  <td className="font-mono text-xs">{row.returnNumber}</td>
+                  <td>{row.productName}</td>
+                  <td className="text-right tabular-nums">{formatQuantity(row.quantity, row.unit)}</td>
+                  <td className="text-right font-mono text-red-700">− {moneyPlain(row.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="erp-inv-bottom">
         <div className="erp-inv-words">
@@ -155,6 +193,15 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
               <>
                 <div className="erp-inv-pay-label is-balance">Previous balance</div>
                 <div className="erp-inv-pay-value is-balance">{formatCurrency(previousBalance)}</div>
+              </>
+            )}
+
+            {totalReturned > 0 && (
+              <>
+                <div className="erp-inv-pay-label">Gross subtotal</div>
+                <div className="erp-inv-pay-value">{moneyPlain(grossSubtotal)}</div>
+                <div className="erp-inv-pay-label">Returns</div>
+                <div className="erp-inv-pay-value is-discount">− {moneyPlain(totalReturned)}</div>
               </>
             )}
 

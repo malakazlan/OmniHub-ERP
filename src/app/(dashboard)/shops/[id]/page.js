@@ -39,6 +39,7 @@ export default function ShopDetailPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(null);
+  const [dealers, setDealers] = useState([]);
 
   const fetchShop = async () => {
     try {
@@ -60,6 +61,10 @@ export default function ShopDetailPage() {
 
   useEffect(() => {
     if (id) fetchShop();
+    fetch("/api/dealers")
+      .then((r) => r.json())
+      .then((d) => setDealers((d.dealers || []).filter((dealer) => dealer.isActive !== false)))
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -68,6 +73,7 @@ export default function ShopDetailPage() {
       name: shop.name || "", ownerName: shop.ownerName || "", phone: shop.phone || "",
       whatsappNumber: shop.whatsappNumber || "", city: shop.city || "", area: shop.area || "",
       address: shop.address || "", shopType: shop.shopType || "retail", creditLimit: shop.creditLimit ?? "",
+      dealerId: shop.dealerId ? String(shop.dealerId) : "",
       notes: shop.notes || "", isActive: shop.isActive,
     });
     setModalOpen(true);
@@ -212,6 +218,16 @@ export default function ShopDetailPage() {
               <DetailRow label="WhatsApp" value={shop.whatsappNumber} />
               <DetailRow label="City" value={shop.city} />
               <DetailRow label="Area" value={shop.area} />
+              <DetailRow
+                label="Dealer"
+                value={
+                  shop.dealer ? (
+                    <Link href={`/dealers/${shop.dealer.id}`} className="text-violet-600 hover:underline">
+                      {shop.dealer.name}
+                    </Link>
+                  ) : "—"
+                }
+              />
             </CardContent>
           </Card>
 
@@ -254,6 +270,15 @@ export default function ShopDetailPage() {
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500">Credit Limit (₨)</label>
                 <input type="number" value={form.creditLimit} onChange={handleChange("creditLimit")} className="input-field text-xs" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-slate-500">Dealer</label>
+                <select value={form.dealerId} onChange={handleChange("dealerId")} className="input-field text-xs">
+                  <option value="">No dealer assigned</option>
+                  {dealers.map((d) => (
+                    <option key={d.id} value={String(d.id)}>{d.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-500">Phone</label>

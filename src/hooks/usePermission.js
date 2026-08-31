@@ -29,8 +29,8 @@ export default function usePermission() {
         return action === "view";
 
       case "salesperson":
-        // Salespersons can view/create sales/shops/products/orders, own records
-        if (moduleSlug === "sales" || moduleSlug === "shops" || moduleSlug === "orders") {
+        // Salespersons can view/create sales/shops/products/orders/dealers, own records
+        if (moduleSlug === "sales" || moduleSlug === "shops" || moduleSlug === "dealers" || moduleSlug === "orders") {
           return action === "create" || action === "view" || action === "edit" || action === "delete";
         }
         if (moduleSlug === "products" || moduleSlug === "farmers" || moduleSlug === "companies" || moduleSlug === "transport") {

@@ -11,8 +11,9 @@ import GeneralLedgerFilters from "@/components/accounts/GeneralLedgerFilters";
 import { LedgerPaymentModal } from "@/components/accounts/LedgerPaymentModal";
 import { PurchaseReceiptPanel } from "@/components/documents/PurchaseReceiptPanel";
 import { SaleInvoicePanel } from "@/components/documents/SaleInvoicePanel";
+import { SaleReturnReceiptPanel } from "@/components/documents/SaleReturnReceiptPanel";
 import { PaymentReceiptPanel } from "@/components/documents/PaymentReceiptPanel";
-import { ledgerEntryOpensInvoice } from "@/lib/ledgerEnrichment";
+import { ledgerEntryOpensInvoice } from "@/lib/ledgerDisplay";
 import {
   getSaleWhatsAppPhone,
   getPurchaseWhatsAppPhone,
@@ -77,6 +78,9 @@ export default function GeneralLedgerPage() {
   const [invoiceOpen, setInvoiceOpen] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState(null);
   const [paymentReceiptOpen, setPaymentReceiptOpen] = useState(false);
+  const [saleReturnDoc, setSaleReturnDoc] = useState(null);
+  const [saleReturnSale, setSaleReturnSale] = useState(null);
+  const [returnReceiptOpen, setReturnReceiptOpen] = useState(false);
 
   useEffect(() => {
     async function loadAccounts() {
@@ -324,6 +328,14 @@ export default function GeneralLedgerPage() {
         if (!res.ok) throw new Error(data.error || "Failed to load sale");
         setSaleDoc(data.sale);
         setInvoiceOpen(true);
+      } else if (row.referenceType === "SaleReturn" || row.docType === "sale_return") {
+        const id = row.saleReturnId || row.referenceId;
+        const res = await fetch(`/api/sales/returns/${id}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load return receipt");
+        setSaleReturnDoc(data.saleReturn);
+        setSaleReturnSale(data.sale);
+        setReturnReceiptOpen(true);
       } else if (row.referenceType === "Payment" || row.docType === "payment") {
         const id = row.referenceId || row.paymentId;
         const res = await fetch(`/api/payments/${id}`);
@@ -512,6 +524,18 @@ export default function GeneralLedgerPage() {
           account?.whatsappNumber ||
           account?.phone
         }
+      />
+
+      <SaleReturnReceiptPanel
+        saleReturn={saleReturnDoc}
+        sale={saleReturnSale}
+        company={companySettings}
+        open={returnReceiptOpen}
+        onClose={() => {
+          setReturnReceiptOpen(false);
+          setSaleReturnDoc(null);
+          setSaleReturnSale(null);
+        }}
       />
     </div>
   );

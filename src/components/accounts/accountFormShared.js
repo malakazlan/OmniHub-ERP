@@ -178,6 +178,7 @@ export function AccountCategoryFields({
   setField,
   mode = "create",
   users = [],
+  dealers = [],
   accountMeta = null,
   loginFields = null,
 }) {
@@ -345,6 +346,14 @@ export function AccountCategoryFields({
                 <option value="retail">Retail</option>
                 <option value="wholesale">Wholesale</option>
                 <option value="distributor">Distributor</option>
+              </select>
+            </Field>
+            <Field label="Dealer">
+              <select className="input-field w-full text-sm" value={form.dealerId ?? ""} onChange={(e) => set("dealerId", e.target.value)}>
+                <option value="">No dealer assigned</option>
+                {dealers.map((d) => (
+                  <option key={d.id} value={String(d.id)}>{d.name}</option>
+                ))}
               </select>
             </Field>
             <Field label="WhatsApp">{input({ value: form.whatsappNumber, onChange: (e) => set("whatsappNumber", e.target.value) })}</Field>
@@ -529,6 +538,7 @@ export function formFromPartyEntity(category, account, partyEntity, bankMeta) {
         phone: partyEntity?.phone || "",
         city: partyEntity?.city || "",
         shopType: partyEntity?.shopType || "retail",
+        dealerId: partyEntity?.dealerId ? String(partyEntity.dealerId) : "",
         whatsappNumber: partyEntity?.whatsappNumber || "",
         address: partyEntity?.address || "",
         isActive: partyEntity?.isActive !== false,

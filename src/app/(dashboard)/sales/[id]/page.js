@@ -19,9 +19,11 @@ import {
   Truck,
   FileText,
   Undo2,
+  FilePenLine,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/formatters";
 import { resolveSalePayment } from "@/lib/salePayment";
+import { buildInvoiceLineItems } from "@/lib/saleReturn";
 import { SaleInvoicePanel, SaleInvoicePreviewCard } from "@/components/documents/SaleInvoicePanel";
 
 const STATUS_VARIANTS = {
@@ -61,6 +63,7 @@ export default function SaleDetailPage() {
   const [submittingReturn, setSubmittingReturn] = useState(false);
   const [companySettings, setCompanySettings] = useState(null);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [correctionMeta, setCorrectionMeta] = useState(null);
 
   const fetchReturns = async () => {
     try {
@@ -73,16 +76,30 @@ export default function SaleDetailPage() {
   };
 
   const openReturnModal = () => {
+    const returnedByProduct = {};
+    for (const record of returns) {
+      for (const item of record.items || []) {
+        returnedByProduct[item.productId] =
+          (returnedByProduct[item.productId] || 0) + (item.quantity || 0);
+      }
+    }
+
     setReturnLines(
-      (sale?.items || []).map((item) => ({
-        productId: item.productId,
-        productName: item.productName,
-        unit: item.unit,
-        rate: item.rate,
-        maxQty: item.quantity,
-        quantity: 0,
-        selected: false,
-      }))
+      (sale?.items || [])
+        .map((item) => {
+          const alreadyReturned = returnedByProduct[item.productId] || 0;
+          const remaining = Math.max(item.quantity - alreadyReturned, 0);
+          return {
+            productId: item.productId,
+            productName: item.productName,
+            unit: item.unit,
+            rate: item.rate,
+            maxQty: remaining,
+            quantity: 0,
+            selected: false,
+          };
+        })
+        .filter((line) => line.maxQty > 0)
     );
     setReturnMeta({ returnDate: new Date().toISOString().slice(0, 10), reason: "", notes: "" });
     setReturnModal(true);
@@ -120,7 +137,9 @@ export default function SaleDetailPage() {
       if (res.ok) {
         showToast(`Return ${data.return?.returnNumber || ""} recorded!`, "success");
         setReturnModal(false);
-        fetchReturns();
+        await fetchReturns();
+        await fetchSale();
+        await fetchCorrectionMeta();
       } else {
         showToast(data.error || "Failed to record return", "error");
       }
@@ -147,10 +166,21 @@ export default function SaleDetailPage() {
     }
   };
 
+  const fetchCorrectionMeta = async () => {
+    try {
+      const res = await fetch(`/api/sales/${id}/correct`);
+      const data = await res.json();
+      if (res.ok) setCorrectionMeta(data);
+    } catch {
+      /* ignore */
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchSale();
       fetchReturns();
+      fetchCorrectionMeta();
     }
     fetch("/api/settings")
       .then((r) => r.json())
@@ -197,7 +227,16 @@ export default function SaleDetailPage() {
 
   const payment = resolveSalePayment(sale);
   const balanceDue = payment.balanceDue;
+  const totalReturned = sale.totalReturned ?? returns.reduce((s, r) => s + (r.returnAmount || 0), 0);
+  const { netItems: invoiceItems } = buildInvoiceLineItems(sale.items || [], returns);
   const canReturn = sale.status === "confirmed" || sale.status === "dispatched" || sale.status === "delivered";
+  const hasReturnableItems = (sale.items || []).some((item) => {
+    const returned = returns.reduce((sum, record) => {
+      const match = (record.items || []).find((row) => row.productId === item.productId);
+      return sum + (match?.quantity || 0);
+    }, 0);
+    return item.quantity - returned > 0;
+  });
 
   return (
     <div className="space-y-6 page-enter pb-10">
@@ -216,7 +255,14 @@ export default function SaleDetailPage() {
             <Badge variant={PAYMENT_VARIANTS[payment.paymentStatus] || "neutral"}>
               {payment.paymentStatus}
             </Badge>
-            {canReturn && (
+            {correctionMeta?.canCorrect && (
+              <Link href={`/sales/new?correct=${id}`}>
+                <Button variant="outline" className="border-amber-200 text-amber-900 bg-amber-50/60">
+                  <FilePenLine className="w-4 h-4" /> Correct bill
+                </Button>
+              </Link>
+            )}
+            {canReturn && hasReturnableItems && (
               <Button onClick={openReturnModal} variant="outline" className="border-slate-200 text-slate-700">
                 <Undo2 className="w-4 h-4" /> Record Return
               </Button>
@@ -237,10 +283,10 @@ export default function SaleDetailPage() {
         }
       />
 
-      <SaleInvoicePreviewCard sale={sale} onOpen={() => setInvoiceOpen(true)} />
+      <SaleInvoicePreviewCard sale={{ ...sale, returns }} onOpen={() => setInvoiceOpen(true)} />
 
       <SaleInvoicePanel
-        sale={sale}
+        sale={{ ...sale, returns }}
         company={companySettings}
         open={invoiceOpen}
         onClose={() => setInvoiceOpen(false)}
@@ -248,7 +294,6 @@ export default function SaleDetailPage() {
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
-          {/* Line Items */}
           <Card>
             <CardHeader>
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -267,9 +312,16 @@ export default function SaleDetailPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {(sale.items || []).map((item, i) => (
+                    {invoiceItems.map((item, i) => (
                       <tr key={item.id || i} className="text-sm">
-                        <td className="px-5 py-3 font-semibold text-slate-900">{item.productName}</td>
+                        <td className="px-5 py-3 font-semibold text-slate-900">
+                          {item.productName}
+                          {item.returnedQuantity > 0 && (
+                            <span className="block text-[10px] font-normal text-slate-500">
+                              {formatQuantity(item.returnedQuantity, item.unit)} returned
+                            </span>
+                          )}
+                        </td>
                         <td className="px-5 py-3 text-slate-600">
                           {formatQuantity(item.quantity, item.unit)}
                         </td>
@@ -292,7 +344,6 @@ export default function SaleDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Returns */}
           {returns.length > 0 && (
             <Card>
               <CardHeader>
@@ -329,7 +380,6 @@ export default function SaleDetailPage() {
             </Card>
           )}
 
-          {/* Notes */}
           {sale.notes && (
             <Card>
               <CardHeader>
@@ -345,7 +395,6 @@ export default function SaleDetailPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Customer Info */}
           <Card>
             <CardHeader>
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -362,7 +411,6 @@ export default function SaleDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Amount Breakdown */}
           <Card>
             <CardHeader>
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -375,8 +423,13 @@ export default function SaleDetailPage() {
               <DetailRow label="Loading" value={formatCurrency(sale.loadingCost)} mono />
               <DetailRow label="Tax" value={formatCurrency(sale.taxAmount)} mono />
               <DetailRow label="Discount" value={formatCurrency(sale.discountAmount)} mono />
+              {totalReturned > 0 && (
+                <DetailRow label="Returns" value={`− ${formatCurrency(totalReturned)}`} mono />
+              )}
               <div className="flex justify-between items-center pt-3 mt-2 border-t border-slate-200">
-                <span className="text-sm font-bold text-slate-900">Grand Total</span>
+                <span className="text-sm font-bold text-slate-900">
+                  {totalReturned > 0 ? "Net Total" : "Grand Total"}
+                </span>
                 <span className="font-mono font-black text-acc-sales text-lg">
                   {formatCurrency(sale.totalAmount)}
                 </span>
@@ -384,7 +437,6 @@ export default function SaleDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Payment */}
           <Card>
             <CardHeader>
               <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
@@ -402,7 +454,6 @@ export default function SaleDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Transport */}
           {(sale.vehicleNumber || sale.driverName) && (
             <Card>
               <CardHeader>
@@ -419,12 +470,7 @@ export default function SaleDetailPage() {
         </div>
       </div>
 
-      <Modal
-        isOpen={returnModal}
-        onClose={() => setReturnModal(false)}
-        title="Record Sale Return"
-        size="lg"
-      >
+      <Modal isOpen={returnModal} onClose={() => setReturnModal(false)} title="Record Sale Return" size="lg">
         <form onSubmit={handleSubmitReturn} className="space-y-4">
           <p className="text-xs text-slate-500">
             Select items being returned by <span className="font-semibold text-slate-900">{sale.customerName}</span> for invoice{" "}

@@ -23,6 +23,7 @@ import {
   Pencil,
   Trash2,
   Wallet,
+  FilePenLine,
 } from "lucide-react";
 import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/formatters";
 import { PurchaseReceiptPanel } from "@/components/documents/PurchaseReceiptPanel";
@@ -68,6 +69,7 @@ export default function PurchaseDetailPage() {
   const [returnLines, setReturnLines] = useState([]);
   const [returnMeta, setReturnMeta] = useState({ returnDate: "", reason: "", notes: "" });
   const [submittingReturn, setSubmittingReturn] = useState(false);
+  const [correctionMeta, setCorrectionMeta] = useState(null);
 
   const fetchPurchase = async () => {
     try {
@@ -107,10 +109,21 @@ export default function PurchaseDetailPage() {
     }
   };
 
+  const fetchCorrectionMeta = async () => {
+    try {
+      const res = await fetch(`/api/purchases/${id}/correct`);
+      const data = await res.json();
+      if (res.ok) setCorrectionMeta(data);
+    } catch {
+      /* ignore */
+    }
+  };
+
   useEffect(() => {
     if (id) {
       fetchPurchase();
       fetchReturns();
+      fetchCorrectionMeta();
     }
     fetch("/api/settings")
       .then((r) => r.json())
@@ -219,6 +232,7 @@ export default function PurchaseDetailPage() {
         showToast(`Return ${data.return?.returnNumber || ""} recorded!`, "success");
         setReturnModal(false);
         fetchReturns();
+        fetchCorrectionMeta();
       } else {
         showToast(data.error || "Failed to record return", "error");
       }
@@ -363,6 +377,13 @@ export default function PurchaseDetailPage() {
                 >
                   <FileText className="w-4 h-4" /> Print bill
                 </Button>
+              )}
+              {isConfirmed && correctionMeta?.canCorrect && (
+                <Link href={`/purchases/new?correct=${id}`}>
+                  <Button variant="outline" className="border-amber-200 text-amber-900 bg-amber-50/60 min-h-[40px]">
+                    <FilePenLine className="w-4 h-4" /> Correct bill
+                  </Button>
+                </Link>
               )}
               {canReturn && (
                 <Button onClick={openReturnModal} variant="outline" className="border-slate-200 min-h-[40px]">

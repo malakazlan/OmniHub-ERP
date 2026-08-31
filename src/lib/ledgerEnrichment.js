@@ -1,27 +1,19 @@
-/** Main bill posting lines (not payment-on-bill legs). */
-export function isMainBillLedgerEntry(entry) {
-  if (!entry?.referenceType || !entry.referenceId) return false;
-  const desc = entry.description || "";
-  if (entry.referenceType === "PurchaseOrder") {
-    return /^Purchase\s/i.test(desc);
-  }
-  if (entry.referenceType === "SaleOrder") {
-    return /^Sale\s/i.test(desc);
-  }
-  return false;
-}
+import {
+  isMainBillLedgerEntry,
+  isMainSaleReturnLedgerEntry,
+  isMainPurchaseReturnLedgerEntry,
+  mapPurchaseItemForLedger,
+  mapSaleItemForLedger,
+  mapReturnItemForLedger,
+  resolveHistoricalLineItems,
+} from "@/lib/ledgerDisplay";
 
-export function ledgerEntryOpensInvoice(entry) {
-  if (entry?.docType) {
-    return entry.docType === "purchase" || entry.docType === "sale" || entry.docType === "payment";
-  }
-  if (!entry?.referenceType || !entry.referenceId) return false;
-  return (
-    entry.referenceType === "PurchaseOrder" ||
-    entry.referenceType === "SaleOrder" ||
-    entry.referenceType === "Payment"
-  );
-}
+export {
+  isMainBillLedgerEntry,
+  isMainSaleReturnLedgerEntry,
+  isMainPurchaseReturnLedgerEntry,
+  ledgerEntryOpensInvoice,
+} from "@/lib/ledgerDisplay";
 
 function groupItemsByOrderId(items, key) {
   const map = new Map();
@@ -33,38 +25,23 @@ function groupItemsByOrderId(items, key) {
   return map;
 }
 
-function mapPurchaseItem(item) {
-  return {
-    name: item.productName,
-    quantity: item.quantity,
-    unit: item.unit,
-    rate: item.rate,
-    amount: item.amount,
-  };
-}
-
-function mapSaleItem(item) {
-  return {
-    name: item.productName,
-    quantity: item.quantity,
-    unit: item.unit,
-    rate: item.rate,
-    amount: item.amount,
-  };
-}
-
-/** Attach lineItems to purchase/sale bill ledger rows for display. */
+/** Attach lineItems to purchase/sale bill and return ledger rows for display. */
 export async function enrichLedgerEntriesWithLineItems(db, entries) {
   const purchaseIds = new Set();
   const saleIds = new Set();
+  const saleReturnIds = new Set();
+  const purchaseReturnIds = new Set();
 
   for (const entry of entries) {
-    if (!isMainBillLedgerEntry(entry)) continue;
-    if (entry.referenceType === "PurchaseOrder") purchaseIds.add(entry.referenceId);
-    if (entry.referenceType === "SaleOrder") saleIds.add(entry.referenceId);
+    if (isMainBillLedgerEntry(entry)) {
+      if (entry.referenceType === "PurchaseOrder") purchaseIds.add(entry.referenceId);
+      if (entry.referenceType === "SaleOrder") saleIds.add(entry.referenceId);
+    }
+    if (isMainSaleReturnLedgerEntry(entry)) saleReturnIds.add(entry.referenceId);
+    if (isMainPurchaseReturnLedgerEntry(entry)) purchaseReturnIds.add(entry.referenceId);
   }
 
-  const [purchaseItems, saleItems] = await Promise.all([
+  const [purchaseItems, saleItems, saleReturns, purchaseReturns, purchases, sales] = await Promise.all([
     purchaseIds.size
       ? db.purchaseItem.findMany({
           where: { purchaseOrderId: { in: [...purchaseIds] } },
@@ -77,22 +54,98 @@ export async function enrichLedgerEntriesWithLineItems(db, entries) {
           orderBy: { id: "asc" },
         })
       : [],
+    saleReturnIds.size
+      ? db.saleReturn.findMany({
+          where: { id: { in: [...saleReturnIds] } },
+        })
+      : [],
+    purchaseReturnIds.size
+      ? db.purchaseReturn.findMany({
+          where: { id: { in: [...purchaseReturnIds] } },
+        })
+      : [],
+    purchaseIds.size
+      ? db.purchaseOrder.findMany({
+          where: { id: { in: [...purchaseIds] } },
+          select: { id: true, totalAmount: true },
+        })
+      : [],
+    saleIds.size
+      ? db.saleOrder.findMany({
+          where: { id: { in: [...saleIds] } },
+          select: { id: true, totalAmount: true },
+        })
+      : [],
   ]);
 
   const purchaseMap = groupItemsByOrderId(purchaseItems, "purchaseOrderId");
   const saleMap = groupItemsByOrderId(saleItems, "saleOrderId");
+  const purchaseTotalMap = new Map(purchases.map((p) => [p.id, p.totalAmount]));
+  const saleTotalMap = new Map(sales.map((s) => [s.id, s.totalAmount]));
+
+  const saleReturnMap = new Map();
+  for (const record of saleReturns) {
+    try {
+      const items = JSON.parse(record.items || "[]");
+      saleReturnMap.set(record.id, items.map(mapReturnItemForLedger));
+    } catch {
+      saleReturnMap.set(record.id, []);
+    }
+  }
+
+  const purchaseReturnMap = new Map();
+  for (const record of purchaseReturns) {
+    try {
+      const items = JSON.parse(record.items || "[]");
+      purchaseReturnMap.set(record.id, items.map(mapReturnItemForLedger));
+    } catch {
+      purchaseReturnMap.set(record.id, []);
+    }
+  }
 
   return entries.map((entry) => {
-    if (!isMainBillLedgerEntry(entry)) return entry;
+    if (isMainBillLedgerEntry(entry)) {
+      if (entry.referenceType === "PurchaseOrder") {
+        const rawItems = purchaseMap.get(entry.referenceId) || [];
+        const lineItems = resolveHistoricalLineItems(
+          entry,
+          rawItems,
+          purchaseTotalMap.get(entry.referenceId),
+          mapPurchaseItemForLedger
+        );
+        return { ...entry, lineItems, documentType: "purchase" };
+      }
 
-    if (entry.referenceType === "PurchaseOrder") {
-      const lineItems = (purchaseMap.get(entry.referenceId) || []).map(mapPurchaseItem);
-      return { ...entry, lineItems, documentType: "purchase" };
+      if (entry.referenceType === "SaleOrder") {
+        const rawItems = saleMap.get(entry.referenceId) || [];
+        const lineItems = resolveHistoricalLineItems(
+          entry,
+          rawItems,
+          saleTotalMap.get(entry.referenceId),
+          mapSaleItemForLedger
+        );
+        return { ...entry, lineItems, documentType: "sale" };
+      }
     }
 
-    if (entry.referenceType === "SaleOrder") {
-      const lineItems = (saleMap.get(entry.referenceId) || []).map(mapSaleItem);
-      return { ...entry, lineItems, documentType: "sale" };
+    if (isMainSaleReturnLedgerEntry(entry)) {
+      const lineItems = saleReturnMap.get(entry.referenceId) || [];
+      return {
+        ...entry,
+        lineItems,
+        documentType: "sale_return",
+        saleReturnId: entry.referenceId,
+      };
+    }
+
+    if (isMainPurchaseReturnLedgerEntry(entry)) {
+      const lineItems = purchaseReturnMap.get(entry.referenceId) || [];
+      return {
+        ...entry,
+        lineItems,
+        documentType: "purchase_return",
+        purchaseReturnId: entry.referenceId,
+      };
     }
 
     return entry;

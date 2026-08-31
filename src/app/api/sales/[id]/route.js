@@ -11,6 +11,7 @@ import {
 } from "@/lib/order-processing";
 import { validateWalkInFullPayment } from "@/lib/saleCustomer";
 import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
+import { reconcileSaleOrderWithReturns, normalizeSaleReturns } from "@/lib/saleReturn";
 
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
@@ -68,9 +69,16 @@ export async function GET(req, { params }) {
     const { id } = await params;
     const saleId = parseInt(id, 10);
 
+    await prisma.$transaction(async (tx) => {
+      await reconcileSaleOrderWithReturns(tx, saleId);
+    });
+
     const sale = await prisma.saleOrder.findUnique({
       where: { id: saleId },
-      include: saleInclude,
+      include: {
+        ...saleInclude,
+        returns: { orderBy: { returnDate: "desc" } },
+      },
     });
 
     if (!sale) {
@@ -91,10 +99,18 @@ export async function GET(req, { params }) {
       customerAccountBalance
     );
 
+    const parsedReturns = normalizeSaleReturns(sale.returns || []);
+    const totalReturned = parsedReturns.reduce(
+      (sum, row) => sum + (row.returnAmount || 0),
+      0
+    );
+
     return Response.json({
       success: true,
       sale: {
         ...sale,
+        returns: parsedReturns,
+        totalReturned,
         customerAccountBalance,
         previousBalance,
         currentBalance,

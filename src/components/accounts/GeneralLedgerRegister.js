@@ -4,7 +4,7 @@ import React, { useEffect, useRef, forwardRef } from "react";
 import { BookOpen, Loader2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { LedgerEntryParticulars } from "@/components/accounts/LedgerEntryParticulars";
-import { ledgerEntryOpensInvoice } from "@/lib/ledgerEnrichment";
+import { ledgerEntryOpensInvoice } from "@/lib/ledgerDisplay";
 
 const GeneralLedgerRegister = forwardRef(function GeneralLedgerRegister(
   {

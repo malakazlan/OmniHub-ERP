@@ -23,6 +23,11 @@ const ACCENT = {
     bar: "bg-acc-shops",
     borderTop: "border-t-amber-500",
   },
+  dealers: {
+    icon: "bg-violet-50 text-violet-600 ring-1 ring-violet-100",
+    bar: "bg-acc-dealers",
+    borderTop: "border-t-violet-500",
+  },
   products: {
     icon: "bg-violet-50 text-violet-600 ring-1 ring-violet-100",
     bar: "bg-acc-products",
