@@ -7,7 +7,7 @@ import {
   applyPurchaseStockAndLedger,
   shouldApplyPurchaseEffects,
 } from "@/lib/order-processing";
-import { createLedgerEntry } from "@/lib/ledger";
+import { createLedgerEntry, findActiveOrderLedgerEntries } from "@/lib/ledger";
 
 const CORRECTABLE_STATUSES = new Set(["confirmed", "received"]);
 
@@ -58,9 +58,10 @@ async function reversePurchaseStock(tx, purchase, items) {
 }
 
 async function reversePurchaseLedgerEntries(tx, purchase, correctionDate) {
-  const entries = await tx.ledgerEntry.findMany({
-    where: { referenceType: "PurchaseOrder", referenceId: purchase.id },
-    orderBy: { id: "asc" },
+  const entries = await findActiveOrderLedgerEntries(tx, {
+    orderReferenceType: "PurchaseOrder",
+    correctionReferenceType: "PurchaseCorrection",
+    orderId: purchase.id,
   });
 
   for (const entry of entries) {

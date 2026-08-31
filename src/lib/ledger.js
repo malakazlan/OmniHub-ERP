@@ -124,6 +124,30 @@ export async function recomputeAndPersistAccountLedgerBalances(tx, accountId) {
 }
 
 /**
+ * Current bill posting legs only — skips SaleOrder/PurchaseOrder rows already
+ * reversed by a prior correction (entries at or before the last correction id).
+ */
+export async function findActiveOrderLedgerEntries(
+  tx,
+  { orderReferenceType, correctionReferenceType, orderId }
+) {
+  const lastCorrection = await tx.ledgerEntry.findFirst({
+    where: { referenceType: correctionReferenceType, referenceId: orderId },
+    orderBy: { id: "desc" },
+    select: { id: true },
+  });
+
+  return tx.ledgerEntry.findMany({
+    where: {
+      referenceType: orderReferenceType,
+      referenceId: orderId,
+      ...(lastCorrection ? { id: { gt: lastCorrection.id } } : {}),
+    },
+    orderBy: { id: "asc" },
+  });
+}
+
+/**
  * Create a ledger entry and update account running balance.
  */
 export async function createLedgerEntry(tx, {

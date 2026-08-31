@@ -1,5 +1,5 @@
 import { parseNum, computePaymentStatus, normalizeItems, computeItemSubtotal, resolveCustomerAccountId, applySaleStockAndLedger, shouldApplySaleEffects } from "@/lib/order-processing";
-import { createLedgerEntry } from "@/lib/ledger";
+import { createLedgerEntry, findActiveOrderLedgerEntries } from "@/lib/ledger";
 import { reconcileSaleOrderWithReturns } from "@/lib/saleReturn";
 
 const CORRECTABLE_STATUSES = new Set(["confirmed", "dispatched", "delivered"]);
@@ -43,10 +43,11 @@ async function reverseSaleStock(tx, sale, items) {
   }
 }
 
-async function reverseSaleLedgerEntries(tx, sale, correctionDate, reason) {
-  const entries = await tx.ledgerEntry.findMany({
-    where: { referenceType: "SaleOrder", referenceId: sale.id },
-    orderBy: { id: "asc" },
+async function reverseSaleLedgerEntries(tx, sale, correctionDate) {
+  const entries = await findActiveOrderLedgerEntries(tx, {
+    orderReferenceType: "SaleOrder",
+    correctionReferenceType: "SaleCorrection",
+    orderId: sale.id,
   });
 
   for (const entry of entries) {
@@ -62,10 +63,6 @@ async function reverseSaleLedgerEntries(tx, sale, correctionDate, reason) {
       debit: entry.credit || 0,
       credit: entry.debit || 0,
     });
-  }
-
-  if (entries.length === 0 && reason) {
-    // No-op marker not required; sale may be walk-in without ledger
   }
 }
 
@@ -158,7 +155,7 @@ export async function correctSaleBill(tx, {
   const correctionDate = body.saleDate ? new Date(body.saleDate) : new Date();
 
   await reverseSaleStock(tx, existing, existing.items);
-  await reverseSaleLedgerEntries(tx, existing, correctionDate, reason);
+  await reverseSaleLedgerEntries(tx, existing, correctionDate);
 
   const companyId =
     body.companyId !== undefined
