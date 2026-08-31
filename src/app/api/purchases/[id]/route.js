@@ -11,6 +11,8 @@ import {
   syncPurchasePaymentLedgerLegs,
 } from "@/lib/order-processing";
 import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
+import { reconcilePurchaseOrderWithReturns } from "@/lib/purchaseReturnServer";
+import { normalizePurchaseReturns } from "@/lib/purchaseReturn";
 
 const purchaseInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
@@ -70,9 +72,12 @@ export async function GET(req, { params }) {
     const purchaseId = parseInt(id, 10);
 
     const purchase = await withDbRetry((db) =>
-      db.purchaseOrder.findUnique({
-        where: { id: purchaseId },
-        include: purchaseInclude,
+      runTransaction(async (tx) => {
+        await reconcilePurchaseOrderWithReturns(tx, purchaseId);
+        return tx.purchaseOrder.findUnique({
+          where: { id: purchaseId },
+          include: { ...purchaseInclude, returns: { orderBy: { returnDate: "desc" } } },
+        });
       })
     );
 
@@ -96,10 +101,18 @@ export async function GET(req, { params }) {
       vendorAccountBalance
     );
 
+    const parsedReturns = normalizePurchaseReturns(purchase.returns || []);
+    const totalReturned = parsedReturns.reduce(
+      (sum, row) => sum + (row.returnAmount || 0),
+      0
+    );
+
     return Response.json({
       success: true,
       purchase: {
         ...purchase,
+        returns: parsedReturns,
+        totalReturned,
         vendorAccountBalance,
         previousBalance,
         currentBalance,

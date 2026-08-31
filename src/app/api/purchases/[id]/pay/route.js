@@ -9,6 +9,7 @@ import {
 } from "@/lib/order-processing";
 import { logActivity } from "@/lib/activityLog";
 import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
+import { reconcilePurchaseOrderWithReturns } from "@/lib/purchaseReturnServer";
 
 function canManagePurchases(user) {
   return user && (user.role === "admin" || user.role === "manager");
@@ -33,8 +34,9 @@ export async function POST(req, { params }) {
       return Response.json({ error: "Enter a cash or bank payment amount" }, { status: 400 });
     }
 
-    const existing = await prisma.purchaseOrder.findUnique({
-      where: { id: purchaseId },
+    const existing = await runTransaction(async (tx) => {
+      await reconcilePurchaseOrderWithReturns(tx, purchaseId);
+      return tx.purchaseOrder.findUnique({ where: { id: purchaseId } });
     });
 
     if (!existing) {

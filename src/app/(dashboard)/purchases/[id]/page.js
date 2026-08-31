@@ -25,9 +25,14 @@ import {
   Wallet,
   FilePenLine,
 } from "lucide-react";
-import { formatCurrency, formatDate, formatDateTime, formatQuantity } from "@/lib/formatters";
+import { formatCurrency, formatDate, formatDateTime, formatQuantity, parseNumber } from "@/lib/formatters";
+import {
+  computeMaxReturnableQuantity,
+  computeMaxReturnRefundBeforeReturn,
+} from "@/lib/purchaseReturn";
 import { PurchaseReceiptPanel } from "@/components/documents/PurchaseReceiptPanel";
 import { PurchasePayModal } from "@/components/purchases/PurchasePayModal";
+import { useDefaultCashAccountId } from "@/hooks/useDefaultCashAccount";
 
 const STATUS_VARIANTS = {
   draft: "neutral",
@@ -58,6 +63,7 @@ export default function PurchaseDetailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { showToast } = useToast();
+  const defaultCashAccountId = useDefaultCashAccountId();
   const [purchase, setPurchase] = useState(null);
   const [loading, setLoading] = useState(true);
   const [companySettings, setCompanySettings] = useState(null);
@@ -68,6 +74,13 @@ export default function PurchaseDetailPage() {
   const [returnModal, setReturnModal] = useState(false);
   const [returnLines, setReturnLines] = useState([]);
   const [returnMeta, setReturnMeta] = useState({ returnDate: "", reason: "", notes: "" });
+  const [returnRefund, setReturnRefund] = useState({
+    cashAmount: "",
+    bankAmount: "",
+    cashAccountId: "",
+    bankAccountId: "",
+  });
+  const [returnAccounts, setReturnAccounts] = useState([]);
   const [submittingReturn, setSubmittingReturn] = useState(false);
   const [correctionMeta, setCorrectionMeta] = useState(null);
 
@@ -184,20 +197,64 @@ export default function PurchaseDetailPage() {
   };
 
   const openReturnModal = () => {
-    setReturnLines(
-      (purchase?.items || []).map((item) => ({
-        productId: item.productId,
-        productName: item.productName,
-        unit: item.unit,
-        rate: item.rate,
-        maxQty: item.quantity,
-        quantity: 0,
-        selected: false,
-      }))
-    );
+    const returnedByProduct = {};
+    for (const record of returns) {
+      for (const item of record.items || []) {
+        returnedByProduct[item.productId] =
+          (returnedByProduct[item.productId] || 0) + (item.quantity || 0);
+      }
+    }
+
+    const lines = (purchase?.items || [])
+      .map((item) => {
+        const alreadyReturned = returnedByProduct[item.productId] || 0;
+        const inStock = item.product?.currentStock ?? 0;
+        const maxQty = computeMaxReturnableQuantity(item.quantity, alreadyReturned, inStock);
+        return {
+          productId: item.productId,
+          productName: item.productName,
+          unit: item.unit,
+          rate: item.rate,
+          purchasedQty: item.quantity,
+          alreadyReturned,
+          inStock,
+          maxQty,
+          quantity: 0,
+          selected: false,
+        };
+      })
+      .filter((line) => line.purchasedQty - line.alreadyReturned > 0);
+
+    if (lines.every((line) => line.maxQty <= 0)) {
+      showToast(
+        "Nothing available to return — items are either fully returned or not in stock",
+        "warning"
+      );
+      return;
+    }
+
+    setReturnLines(lines);
     setReturnMeta({ returnDate: new Date().toISOString().slice(0, 10), reason: "", notes: "" });
+    setReturnRefund({
+      cashAmount: "",
+      bankAmount: "",
+      cashAccountId: purchase?.cashAccountId
+        ? String(purchase.cashAccountId)
+        : defaultCashAccountId || "",
+      bankAccountId: "",
+    });
     setReturnModal(true);
   };
+
+  useEffect(() => {
+    if (!returnModal) return;
+    fetch("/api/accounts")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.accounts) setReturnAccounts(d.accounts.filter((a) => a.isActive));
+      })
+      .catch(() => {});
+  }, [returnModal]);
 
   const updateReturnLine = (idx, field, value) => {
     setReturnLines((prev) => prev.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
@@ -220,17 +277,41 @@ export default function PurchaseDetailPage() {
       return;
     }
 
+    const refundCashAmount = parseNumber(returnRefund.cashAmount);
+    const refundBankAmount = parseNumber(returnRefund.bankAmount);
+    const refundTotal = refundCashAmount + refundBankAmount;
+    const returnValue = items.reduce((sum, item) => sum + item.quantity * item.rate, 0);
+    const maxRefund = computeMaxReturnRefundBeforeReturn(purchase, returnValue);
+    if (refundTotal > maxRefund + 0.01) {
+      showToast(
+        maxRefund <= 0
+          ? "No refund available — nothing overpaid on this bill"
+          : `Refund cannot exceed ${formatCurrency(maxRefund)}`,
+        "warning"
+      );
+      return;
+    }
+
     setSubmittingReturn(true);
     try {
       const res = await fetch(`/api/purchases/${id}/returns`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...returnMeta, items }),
+        body: JSON.stringify({
+          ...returnMeta,
+          items,
+          refundCashAmount,
+          refundBankAmount,
+          refundCashAccountId: returnRefund.cashAccountId || undefined,
+          refundBankAccountId: returnRefund.bankAccountId || undefined,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
         showToast(`Return ${data.return?.returnNumber || ""} recorded!`, "success");
         setReturnModal(false);
+        if (data.purchase) setPurchase((prev) => ({ ...prev, ...data.purchase }));
+        fetchPurchase();
         fetchReturns();
         fetchCorrectionMeta();
       } else {
@@ -278,10 +359,19 @@ export default function PurchaseDetailPage() {
   }
 
   const balanceDue = Math.max((purchase.totalAmount || 0) - (purchase.paidAmount || 0), 0);
+  const totalReturned =
+    purchase.totalReturned ?? returns.reduce((s, r) => s + (r.returnAmount || 0), 0);
   const canReturn = purchase.status === "confirmed" || purchase.status === "received";
   const isDraft = purchase.status === "draft";
   const isConfirmed = purchase.status === "confirmed" || purchase.status === "received";
   const canPay = isConfirmed && balanceDue > 0;
+
+  const selectedReturnAmount = returnLines
+    .filter((line) => line.selected && parseFloat(line.quantity) > 0)
+    .reduce((sum, line) => sum + parseFloat(line.quantity) * parseFloat(line.rate || 0), 0);
+  const maxReturnRefund = computeMaxReturnRefundBeforeReturn(purchase, selectedReturnAmount);
+  const returnCashAccounts = returnAccounts.filter((account) => account.category === "cash");
+  const returnBankAccounts = returnAccounts.filter((account) => account.category === "bank");
 
   return (
     <div className="space-y-5 page-enter pb-10">
@@ -507,11 +597,15 @@ export default function PurchaseDetailPage() {
                         <th className="px-5 py-3">Return No.</th>
                         <th className="px-5 py-3">Date</th>
                         <th className="px-5 py-3">Reason</th>
-                        <th className="px-5 py-3 text-right">Amount</th>
+                        <th className="px-5 py-3 text-right">Return</th>
+                        <th className="px-5 py-3 text-right">Refund</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {returns.map((r) => (
+                      {returns.map((r) => {
+                        const refundTotal =
+                          (r.refundCashAmount || 0) + (r.refundBankAmount || 0);
+                        return (
                         <tr key={r.id} className="text-sm">
                           <td className="px-5 py-3 font-mono font-bold text-slate-900">{r.returnNumber}</td>
                           <td className="px-5 py-3 text-slate-600">{formatDate(r.returnDate)}</td>
@@ -519,8 +613,12 @@ export default function PurchaseDetailPage() {
                           <td className="px-5 py-3 font-mono font-bold text-red-600 text-right">
                             {formatCurrency(r.returnAmount)}
                           </td>
+                          <td className="px-5 py-3 font-mono font-bold text-emerald-700 text-right">
+                            {refundTotal > 0 ? formatCurrency(refundTotal) : "—"}
+                          </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -575,8 +673,13 @@ export default function PurchaseDetailPage() {
               <DetailRow label="Labour" value={formatCurrency(purchase.labourCost)} mono />
               <DetailRow label="Tax" value={formatCurrency(purchase.taxAmount)} mono />
               <DetailRow label="Discount" value={formatCurrency(purchase.discountAmount)} mono />
+              {totalReturned > 0 && (
+                <DetailRow label="Returns" value={`− ${formatCurrency(totalReturned)}`} mono />
+              )}
               <div className="flex justify-between items-center pt-3 mt-2 border-t border-slate-200">
-                <span className="text-sm font-bold text-slate-900">Grand Total</span>
+                <span className="text-sm font-bold text-slate-900">
+                  {totalReturned > 0 ? "Net Total" : "Grand Total"}
+                </span>
                 <span className="font-mono font-black text-acc-purchases text-lg">
                   {formatCurrency(purchase.totalAmount)}
                 </span>
@@ -629,6 +732,7 @@ export default function PurchaseDetailPage() {
           <p className="text-xs text-slate-500">
             Select items being returned to <span className="font-semibold text-slate-900">{purchase.vendorName}</span> for purchase{" "}
             <span className="font-mono font-bold text-slate-900">{purchase.purchaseNumber}</span>.
+            Return quantity is limited by what is still on this bill and current stock on hand.
           </p>
 
           <div className="border border-slate-200 rounded-xl overflow-hidden">
@@ -638,6 +742,8 @@ export default function PurchaseDetailPage() {
                   <th className="px-3 py-2 w-8"></th>
                   <th className="px-3 py-2">Product</th>
                   <th className="px-3 py-2">Purchased</th>
+                  <th className="px-3 py-2">Returned</th>
+                  <th className="px-3 py-2">In Stock</th>
                   <th className="px-3 py-2 w-28">Return Qty</th>
                 </tr>
               </thead>
@@ -648,22 +754,30 @@ export default function PurchaseDetailPage() {
                       <input
                         type="checkbox"
                         checked={line.selected}
+                        disabled={line.maxQty <= 0}
                         onChange={(e) => updateReturnLine(idx, "selected", e.target.checked)}
-                        className="rounded border-slate-300"
+                        className="rounded border-slate-300 disabled:opacity-40"
                       />
                     </td>
                     <td className="px-3 py-2 font-semibold text-slate-900">{line.productName}</td>
-                    <td className="px-3 py-2 text-slate-500">{formatQuantity(line.maxQty, line.unit)}</td>
+                    <td className="px-3 py-2 text-slate-500">{formatQuantity(line.purchasedQty, line.unit)}</td>
+                    <td className="px-3 py-2 text-slate-500">{formatQuantity(line.alreadyReturned, line.unit)}</td>
+                    <td className="px-3 py-2 text-slate-500">{formatQuantity(line.inStock, line.unit)}</td>
                     <td className="px-3 py-2">
                       <input
                         type="number"
                         min="0"
                         max={line.maxQty}
                         step="any"
-                        disabled={!line.selected}
+                        disabled={!line.selected || line.maxQty <= 0}
                         value={line.quantity}
                         onChange={(e) => updateReturnLine(idx, "quantity", e.target.value)}
                         className="input-field py-1 px-2 text-xs disabled:opacity-40"
+                        title={
+                          line.maxQty <= 0
+                            ? "No stock available to return"
+                            : `Max returnable: ${line.maxQty}`
+                        }
                       />
                     </td>
                   </tr>
@@ -701,6 +815,116 @@ export default function PurchaseDetailPage() {
               className="input-field h-16 resize-none"
             />
           </div>
+
+          {(purchase.paidAmount || 0) > 0 && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-emerald-900 flex items-center gap-2">
+                    <Wallet className="w-4 h-4" /> Refund received from supplier
+                  </p>
+                  <p className="text-[11px] text-emerald-800 mt-1">
+                    Optional — record cash/bank received if the supplier pays back money on this return.
+                  </p>
+                </div>
+                {maxReturnRefund > 0 && selectedReturnAmount > 0 && (
+                  <span className="text-[11px] font-semibold text-emerald-800 whitespace-nowrap">
+                    Max refund: {formatCurrency(maxReturnRefund)}
+                  </span>
+                )}
+              </div>
+
+              {selectedReturnAmount > 0 && maxReturnRefund <= 0 ? (
+                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  No refund available for this return — the bill is not overpaid yet.
+                </p>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-semibold uppercase text-emerald-800">Cash received</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={maxReturnRefund}
+                        step="any"
+                        value={returnRefund.cashAmount}
+                        onChange={(e) =>
+                          setReturnRefund({ ...returnRefund, cashAmount: e.target.value })
+                        }
+                        className="input-field w-full"
+                        placeholder="0"
+                        disabled={maxReturnRefund <= 0}
+                      />
+                      {parseNumber(returnRefund.cashAmount) > 0 && returnCashAccounts.length > 0 && (
+                        <select
+                          value={returnRefund.cashAccountId}
+                          onChange={(e) =>
+                            setReturnRefund({ ...returnRefund, cashAccountId: e.target.value })
+                          }
+                          className="input-field w-full text-xs"
+                        >
+                          <option value="">Cash account…</option>
+                          {returnCashAccounts.map((account) => (
+                            <option key={account.id} value={account.id}>
+                              {account.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-semibold uppercase text-emerald-800">Bank received</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={maxReturnRefund}
+                        step="any"
+                        value={returnRefund.bankAmount}
+                        onChange={(e) =>
+                          setReturnRefund({ ...returnRefund, bankAmount: e.target.value })
+                        }
+                        className="input-field w-full"
+                        placeholder="0"
+                        disabled={maxReturnRefund <= 0}
+                      />
+                      {parseNumber(returnRefund.bankAmount) > 0 && returnBankAccounts.length > 0 && (
+                        <select
+                          value={returnRefund.bankAccountId}
+                          onChange={(e) =>
+                            setReturnRefund({ ...returnRefund, bankAccountId: e.target.value })
+                          }
+                          className="input-field w-full text-xs"
+                        >
+                          <option value="">Bank account…</option>
+                          {returnBankAccounts.map((account) => (
+                            <option key={account.id} value={account.id}>
+                              {account.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                  {maxReturnRefund > 0 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setReturnRefund((prev) => ({
+                          ...prev,
+                          cashAmount: String(maxReturnRefund),
+                          bankAmount: "",
+                        }))
+                      }
+                      className="text-xs font-semibold text-emerald-800 hover:text-emerald-950 cursor-pointer"
+                    >
+                      Fill max refund ({formatCurrency(maxReturnRefund)})
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
             <button

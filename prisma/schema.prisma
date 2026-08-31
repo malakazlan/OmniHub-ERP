@@ -321,6 +321,10 @@ model PurchaseReturn {
   returnDate          DateTime
   items               String        @db.LongText // JSON representation of items
   returnAmount        Float         @default(0)
+  refundCashAmount    Float         @default(0)
+  refundBankAmount    Float         @default(0)
+  refundCashAccountId Int?
+  refundBankAccountId Int?
   reason              String?
   notes               String?       @db.Text
   createdAt           DateTime      @default(now())
