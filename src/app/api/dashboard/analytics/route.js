@@ -144,7 +144,7 @@ export async function GET(req) {
         expenses,
         shopReceivables,
         companyReceivables,
-        farmerPayables,
+        farmerReceivables,
         transportPayables,
         generalPayables,
       ] = await Promise.all([
@@ -152,23 +152,23 @@ export async function GET(req) {
         buildExpenseSummary(db, start, end),
         getReceivablesByCategory("shop"),
         getReceivablesByCategory("company"),
-        getPayablesByCategory("farmer"),
+        getReceivablesByCategory("farmer"),
         getPayablesByCategory("transport"),
         getPayablesByCategory("general"),
       ]);
 
       const receivables = {
-        total: shopReceivables + companyReceivables,
+        total: shopReceivables + companyReceivables + farmerReceivables,
         breakdown: [
           { label: "Shops", amount: shopReceivables },
           { label: "Companies", amount: companyReceivables },
+          { label: "Farmers", amount: farmerReceivables },
         ].filter((r) => r.amount > 0),
       };
 
       const payables = {
-        total: farmerPayables + transportPayables + generalPayables,
+        total: transportPayables + generalPayables,
         breakdown: [
-          { label: "Farmers", amount: farmerPayables },
           { label: "Transport", amount: transportPayables },
           { label: "General", amount: generalPayables },
         ].filter((p) => p.amount > 0),

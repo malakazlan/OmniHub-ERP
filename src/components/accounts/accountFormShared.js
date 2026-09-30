@@ -7,7 +7,7 @@ import { VEHICLE_TYPES } from "@/components/fleet/fleetConstants";
 export const CATEGORY_TITLES = {
   cash: "Cash Account",
   bank: "Bank Account",
-  farmer: "Farmer / Supplier",
+  farmer: "Farmer / Customer",
   company: "Company",
   shop: "Shop / Customer",
   salary: "Employee",
@@ -18,7 +18,7 @@ export const CATEGORY_TITLES = {
 export const OPENING_HINT = {
   cash: "Cash in hand at start (optional).",
   bank: "Current bank balance (optional).",
-  farmer: "Amount payable to this farmer (optional).",
+  farmer: "Amount this farmer owes you (optional).",
   company: "Opening balance — payable for suppliers, receivable for buyers (optional).",
   shop: "Amount this customer owes you (optional).",
   salary: "Salary payable opening balance (optional).",

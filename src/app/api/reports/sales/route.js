@@ -64,12 +64,14 @@ export async function GET(req) {
         buildWeekTrend(db),
       ]);
 
-      const [shopReceivables, companyReceivables, payables] = await Promise.all([
+      const [shopReceivables, companyReceivables, farmerReceivables, companyPayables] = await Promise.all([
         getReceivablesByCategory("shop"),
         getReceivablesByCategory("company"),
-        getPayablesByCategory("farmer"),
+        getReceivablesByCategory("farmer"),
+        getPayablesByCategory("company"),
       ]);
-      const receivables = shopReceivables + companyReceivables;
+      const receivables = shopReceivables + companyReceivables + farmerReceivables;
+      const payables = companyPayables;
       const lowStockCount = lowStockProducts.filter((p) => p.currentStock <= p.minimumStock).length;
 
       return {

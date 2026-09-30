@@ -3,6 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
 import { applyOpeningBalance } from "@/lib/accountOpening";
+import { FARMER_ACCOUNT_TYPE } from "@/lib/farmerAccount";
 
 // GET: List all farmers
 export async function GET(req) {
@@ -89,7 +90,7 @@ export async function POST(req) {
       const account = await tx.account.create({
         data: {
           name: farmerName,
-          type: "liability",
+          type: FARMER_ACCOUNT_TYPE,
           category: "farmer",
           city: trimOrNull(city),
           phone: farmerPhone,
@@ -99,7 +100,7 @@ export async function POST(req) {
         },
       });
 
-      await applyOpeningBalance(tx, account.id, "liability", openingBalance, body.openingBalanceDate);
+      await applyOpeningBalance(tx, account.id, FARMER_ACCOUNT_TYPE, openingBalance, body.openingBalanceDate);
 
       const newFarmer = await tx.farmer.create({
         data: {

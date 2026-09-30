@@ -1,4 +1,5 @@
 import { createLedgerEntry, serializeLedgerLineItems } from "./ledger";
+import { FARMER_ACCOUNT_TYPE, ensureFarmerAccountIsCustomerAsset } from "./farmerAccount";
 import { generateAccountCode } from "./receipt";
 import {
   parseNum,
@@ -32,6 +33,7 @@ async function ensureFarmerLedgerAccount(tx, farmerId) {
   if (!farmer) return null;
 
   if (farmer.accountId && (await accountExists(tx, farmer.accountId))) {
+    await ensureFarmerAccountIsCustomerAsset(tx, farmer.accountId);
     return farmer.accountId;
   }
 
@@ -40,7 +42,7 @@ async function ensureFarmerLedgerAccount(tx, farmerId) {
     data: {
       name: farmer.name,
       code,
-      type: "liability",
+      type: FARMER_ACCOUNT_TYPE,
       category: "farmer",
       city: farmer.city,
       phone: farmer.phone,

@@ -193,10 +193,10 @@ function AccountsPageContent() {
   );
 
   const totalReceivable = accounts
-    .filter((a) => a.category === "shop" && a.balance > 0)
+    .filter((a) => (a.category === "shop" || a.category === "farmer") && a.balance > 0)
     .reduce((s, a) => s + a.balance, 0);
   const totalPayable = accounts
-    .filter((a) => ["farmer", "company", "salary", "transport"].includes(a.category) && a.balance > 0)
+    .filter((a) => ["company", "salary", "transport"].includes(a.category) && a.balance > 0)
     .reduce((s, a) => s + a.balance, 0);
   const cashBankTotal = accounts
     .filter((a) => a.category === "cash" || a.category === "bank")

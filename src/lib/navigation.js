@@ -65,6 +65,14 @@ export const NAV_SECTIONS = [
   },
 ];
 
+/** Primary modules — quick links in the app header */
+export const HEADER_QUICK_LINKS = [
+  { slug: "purchases", label: "Purchase", href: "/purchases", tone: "purchases" },
+  { slug: "sales", label: "Sale", href: "/sales", tone: "sales" },
+  { slug: "accounts", label: "Ledger", href: "/accounts/ledger", tone: "ledger" },
+  { slug: "accounts", label: "Accounts", href: "/accounts", tone: "accounts" },
+];
+
 /** Dashboard shortcuts — flat list (no groups) */
 export const DASHBOARD_SHORTCUTS = [
   { slug: "farmers", label: "Farmers", href: "/farmers" },

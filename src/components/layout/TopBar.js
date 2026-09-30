@@ -1,10 +1,44 @@
 "use client";
 
 import { useState, useRef, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import { NAV_SECTIONS, flattenNavItems } from "@/lib/navigation";
+import {
+  NAV_SECTIONS,
+  NAV_THEME,
+  HEADER_QUICK_LINKS,
+  flattenNavItems,
+  isNavItemActive,
+} from "@/lib/navigation";
 import { LogOut, Menu, User, Bell, Search, X, Wheat } from "lucide-react";
+
+function HeaderQuickNav({ hasModuleAccess }) {
+  const pathname = usePathname();
+  const links = HEADER_QUICK_LINKS.filter((link) => hasModuleAccess(link.slug));
+
+  if (links.length === 0) return null;
+
+  return (
+    <nav className="erp-header-module-tabs" aria-label="Quick modules">
+      {links.map((link) => {
+        const active = isNavItemActive(pathname, link.href);
+        const tone = link.tone || link.slug;
+        return (
+          <Link
+            key={link.href}
+            href={link.href}
+            aria-current={active ? "page" : undefined}
+            data-tone={tone}
+            className={`erp-header-module-tab${active ? " is-active" : ""}`}
+          >
+            {link.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
 
 function useModuleSearchItems(hasModuleAccess) {
   return useMemo(() => {
@@ -163,24 +197,24 @@ function DesktopModuleSearch({ hasModuleAccess }) {
   };
 
   return (
-    <div ref={wrapRef} className="hidden md:block relative flex-1 max-w-lg mx-auto min-w-0">
-      <div className={`erp-shell-search flex items-center gap-2 px-3.5 py-2 rounded-full transition-all duration-200 ${open ? "erp-shell-search-focus" : ""}`}>
-        <Search className="w-4 h-4 shrink-0 text-slate-400" />
+    <div ref={wrapRef} className="erp-shell-header-search hidden md:block">
+      <div className={`erp-shell-search erp-shell-search-compact flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 ${open ? "erp-shell-search-focus" : ""}`}>
+        <Search className="w-3.5 h-3.5 shrink-0 text-slate-400" />
         <input
           type="search"
           value={query}
           onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Search modules…"
-          className="erp-shell-search-input flex-1 min-w-0 bg-transparent text-sm outline-none"
+          placeholder="Search…"
+          className="erp-shell-search-input flex-1 min-w-0 bg-transparent text-xs outline-none"
           aria-label="Search modules"
           autoComplete="off"
         />
-        <kbd className="hidden lg:inline text-[9px] font-mono text-slate-400 border border-slate-200 rounded-md px-1.5 py-0.5 bg-white/80">/</kbd>
+        <kbd className="hidden xl:inline text-[9px] font-mono text-slate-400 border border-slate-200 rounded px-1 py-px bg-white/90 leading-none">/</kbd>
       </div>
       {open && results.length > 0 && (
-        <ul className="erp-shell-search-dropdown absolute left-0 right-0 top-[calc(100%+8px)] z-50 rounded-2xl py-2 max-h-72 overflow-y-auto erp-sidebar-scroll">
+        <ul className="erp-shell-search-dropdown absolute left-0 w-[min(100%,280px)] top-[calc(100%+6px)] z-50 rounded-xl py-2 max-h-72 overflow-y-auto erp-sidebar-scroll">
           {results.map((item, idx) => {
             const Icon = item.icon;
             return (
@@ -233,8 +267,9 @@ export default function TopBar({ onMenuClick }) {
 
   return (
     <>
-      <header className="erp-shell-header no-print min-h-[3.25rem] py-2 px-3 sm:px-5 flex flex-wrap items-center gap-2 sm:gap-3 z-20 shrink-0">
-        <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink-0">
+      <header className="erp-shell-header no-print z-20 shrink-0">
+        <div className="erp-shell-header-inner">
+        <div className="erp-shell-header-start">
           <button
             onClick={onMenuClick}
             className="lg:hidden erp-shell-btn-icon -ml-1 shrink-0"
@@ -246,28 +281,25 @@ export default function TopBar({ onMenuClick }) {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0F52BA] to-[#0B3E8F] flex items-center justify-center shrink-0 shadow-sm">
               <Wheat className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-sm text-[var(--text-primary)] truncate max-w-[120px] sm:max-w-none">Warraich Traders</span>
+            <span className="font-semibold text-sm text-[var(--text-primary)] truncate max-w-[100px] sm:max-w-[140px]">Warraich Traders</span>
           </div>
         </div>
 
-        <div className="hidden lg:flex items-center min-w-0 flex-1">
-          <p className="text-sm font-medium text-[var(--text-secondary)] truncate">
-            Welcome{user?.name ? `, ${user.name.split(" ")[0]}` : ""}
-          </p>
+        <div className="erp-shell-header-center">
+          <HeaderQuickNav hasModuleAccess={hasModuleAccess} />
+          <DesktopModuleSearch hasModuleAccess={hasModuleAccess} />
         </div>
-
-        <DesktopModuleSearch hasModuleAccess={hasModuleAccess} />
 
         <button
           type="button"
           onClick={() => setMobileSearch(true)}
-          className="md:hidden ml-auto erp-shell-btn-icon"
+          className="md:hidden erp-shell-btn-icon shrink-0"
           aria-label="Search modules"
         >
           <Search className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-0.5 sm:gap-1 md:ml-auto shrink-0">
+        <div className="erp-shell-header-end">
           <button type="button" className="relative erp-shell-btn-icon" aria-label="Notifications">
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#0F52BA] ring-2 ring-white" />
@@ -288,6 +320,7 @@ export default function TopBar({ onMenuClick }) {
           <button onClick={logout} className="erp-shell-btn-icon hover:!text-rose-500 hover:!bg-rose-50" aria-label="Sign out">
             <LogOut className="w-4 h-4" />
           </button>
+        </div>
         </div>
       </header>
 

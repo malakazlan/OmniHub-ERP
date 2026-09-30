@@ -1,8 +1,8 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
-const RECEIVABLE_CATEGORIES = ["shop", "company"];
-const PAYABLE_CATEGORIES = ["farmer", "company"];
+const RECEIVABLE_CATEGORIES = ["shop", "company", "farmer"];
+const PAYABLE_CATEGORIES = ["company"];
 
 export async function GET(req) {
   try {

@@ -338,7 +338,7 @@ export async function getReceivablesByCategory(category) {
 /**
  * Sum only the negative balances (flipped positive) for a category — i.e.
  * amounts the business owes OUT (vendor/payable-style accounts such as
- * farmers, where a credit on purchase decreases the balance).
+ * supplier companies, where a credit on purchase decreases the balance).
  */
 export async function getPayablesByCategory(category) {
   const accounts = await prisma.account.findMany({

@@ -4,6 +4,7 @@ import { generateAccountCode } from "@/lib/receipt";
 import { cashAccountWhereForUser } from "@/lib/accountAccess";
 import { directoryCreateBlocked } from "@/lib/directoryCreate";
 import { attachPartyMetaToAccounts } from "@/lib/accountRelations";
+import { ensureFarmerAccountIsCustomerAsset } from "@/lib/farmerAccount";
 import { applyOpeningBalance } from "@/lib/accountOpening";
 
 export async function GET(req) {
@@ -34,6 +35,14 @@ export async function GET(req) {
       where,
       orderBy: [{ type: "asc" }, { name: "asc" }],
     });
+
+    const farmerIds = accounts.filter((a) => a.category === "farmer" && a.type === "liability").map((a) => a.id);
+    if (farmerIds.length) {
+      await Promise.all(farmerIds.map((id) => ensureFarmerAccountIsCustomerAsset(prisma, id)));
+      for (const a of accounts) {
+        if (farmerIds.includes(a.id)) a.type = "asset";
+      }
+    }
 
     const withParty = await attachPartyMetaToAccounts(accounts);
 

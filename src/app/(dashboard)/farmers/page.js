@@ -34,7 +34,7 @@ export default function FarmersPage() {
 
   useEffect(() => { fetchFarmers(); }, []);
 
-  const totalOwed = farmers.reduce((s, f) => s + (f.balance || 0), 0);
+  const totalReceivable = farmers.reduce((s, f) => s + Math.max(f.balance || 0, 0), 0);
 
   const columns = [
     {
@@ -88,7 +88,7 @@ export default function FarmersPage() {
       <PageHeader
         module="farmers"
         title="Farmers"
-        description="View suppliers and payables. Register new farmers in All Accounts."
+        description="View customers and receivables. Register new farmers in All Accounts."
         icon={Sprout}
         actions={
           <Link href="/accounts?category=farmer&create=1">
@@ -103,8 +103,8 @@ export default function FarmersPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard module="farmers" label="Total Farmers" value={farmers.length} icon={UserPlus} />
-        <StatCard module="farmers" label="Active Suppliers" value={farmers.filter(f => f.isActive).length} icon={Sprout} />
-        <StatCard module="farmers" label="Total Payables" value={formatCurrency(totalOwed)} icon={DollarSign} valueClassName="text-red-400" />
+        <StatCard module="farmers" label="Active Customers" value={farmers.filter(f => f.isActive).length} icon={Sprout} />
+        <StatCard module="farmers" label="Total Receivables" value={formatCurrency(totalReceivable)} icon={DollarSign} valueClassName="text-emerald-400" />
       </div>
 
       <Card>
