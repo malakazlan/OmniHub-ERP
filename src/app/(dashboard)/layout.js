@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
@@ -33,7 +33,9 @@ export default function DashboardLayout({ children }) {
   if (user) {
     return (
       <div className="erp-app-shell h-screen flex font-sans overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Suspense fallback={null}>
+          <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        </Suspense>
         <div className="relative flex flex-col flex-1 min-w-0 min-h-0">
           <TopBar onMenuClick={() => setSidebarOpen(true)} />
           <main className="erp-main-surface flex-1 overflow-y-auto overflow-x-hidden px-3 py-3 sm:px-5 sm:py-5 lg:p-6 pb-[max(0.75rem,env(safe-area-inset-bottom))]">

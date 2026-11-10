@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { NAV_SECTIONS, isNavItemActive } from "@/lib/navigation";
 import { ordersHomePath, mustScopeOrdersToSelf } from "@/lib/ordersNav";
@@ -56,7 +56,7 @@ function NavItem({ item, isActive, collapsed, onClick }) {
   );
 }
 
-function NavSectionBlock({ section, collapsed, pathname, onClose }) {
+function NavSectionBlock({ section, collapsed, pathname, search, onClose }) {
   if (collapsed) {
     return (
       <div className="px-2 mb-2 space-y-0.5">
@@ -64,7 +64,7 @@ function NavSectionBlock({ section, collapsed, pathname, onClose }) {
           <NavItem
             key={item.href}
             item={item}
-            isActive={isNavItemActive(pathname, item.href)}
+            isActive={isNavItemActive(pathname, item.href, search)}
             collapsed
             onClick={onClose}
           />
@@ -82,7 +82,7 @@ function NavSectionBlock({ section, collapsed, pathname, onClose }) {
           <NavItem
             key={item.href}
             item={item}
-            isActive={isNavItemActive(pathname, item.href)}
+            isActive={isNavItemActive(pathname, item.href, search)}
             collapsed={false}
             onClick={onClose}
           />
@@ -128,6 +128,8 @@ function SidebarBrand({ collapsed }) {
 
 export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const search = searchParams?.toString() ?? "";
   const { hasModuleAccess, user } = useAuth();
   // The sidebar only renders after auth resolves on the client, so reading storage here is hydration-safe.
   const [collapsed, setCollapsed] = useState(() => {
@@ -212,6 +214,7 @@ export default function Sidebar({ isOpen, onClose }) {
               <NavSectionBlock
                 key={section.title}
                 section={section}
+                search={search}
                 collapsed={collapsed}
                 pathname={pathname}
                 onClose={onClose}

@@ -24,7 +24,7 @@ export const NAV_SECTIONS = [
     title: "Purchasing",
     items: [
       { slug: "purchases", label: "Purchase Orders", href: "/purchases", icon: ShoppingCart, keywords: "buy procurement bills payables" },
-      { slug: "purchases", label: "Vendors", href: "/purchases/vendors", icon: Factory, keywords: "supplier vendor items quantity" },
+      { slug: "purchases", label: "Vendor Activity", href: "/purchases/vendors", icon: Factory, keywords: "supplier vendor items quantity" },
       { slug: "companies", label: "Vendors Directory", href: "/companies?type=vendors", icon: Building2, keywords: "vendors suppliers accounts payable" },
       { slug: "accounts", label: "Freight Settlement", href: "/accounts/freight-pay", icon: Truck, keywords: "delivery freight purchase bills deduct settlement" },
     ],
@@ -212,11 +212,13 @@ export const NAV_THEME = {
   },
 };
 
-export function isNavItemActive(pathname, href) {
-  // Query-string views (e.g. /companies?type=customers) match on their path only.
+export function isNavItemActive(pathname, href, search = "") {
+  // Query-string views (e.g. /companies?type=customers) must match path and every query pair.
   if (href.includes("?")) {
-    const base = href.split("?")[0];
-    return pathname === base || pathname.startsWith(`${base}/`);
+    const [base, query] = href.split("?");
+    if (pathname !== base && !pathname.startsWith(`${base}/`)) return false;
+    const current = new URLSearchParams(search || "");
+    return [...new URLSearchParams(query).entries()].every(([k, v]) => current.get(k) === v);
   }
   if (href === "/accounts") {
     return pathname === "/accounts";
