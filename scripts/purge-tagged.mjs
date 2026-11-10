@@ -58,8 +58,8 @@ async function main() {
       const purchaseIds = purchases.map((p) => p.id);
       const saleIds = sales.map((s) => s.id);
 
-      const pReturns = await tx.purchaseReturn.findMany({ where: { purchaseId: { in: purchaseIds.length ? purchaseIds : [-1] } }, select: { id: true, returnNumber: true } });
-      const sReturns = await tx.saleReturn.findMany({ where: { saleId: { in: saleIds.length ? saleIds : [-1] } }, select: { id: true, returnNumber: true } });
+      const pReturns = await tx.purchaseReturn.findMany({ where: { originalPurchaseId: { in: purchaseIds.length ? purchaseIds : [-1] } }, select: { id: true, returnNumber: true } });
+      const sReturns = await tx.saleReturn.findMany({ where: { originalSaleId: { in: saleIds.length ? saleIds : [-1] } }, select: { id: true, returnNumber: true } });
       const payments = await tx.payment.findMany({
         where: { OR: [{ description: like }, { notes: like }, accountIds.length ? { fromAccountId: { in: accountIds } } : { id: -1 }, accountIds.length ? { toAccountId: { in: accountIds } } : { id: -1 }] },
         select: { id: true, paymentNumber: true },
@@ -68,7 +68,7 @@ async function main() {
         where: { OR: [{ description: like }, { notes: like }, { lines: { some: { accountId: { in: accountIds.length ? accountIds : [-1] } } } }] },
         select: { id: true, entryNumber: true },
       });
-      const withdrawals = await tx.ownerWithdrawal.findMany({ where: { OR: [{ notes: like }, { privateNote: like }, { description: like }] }, select: { id: true, withdrawalNumber: true } }).catch(() => []);
+      const withdrawals = await tx.ownerWithdrawal.findMany({ where: { notes: like }, select: { id: true, withdrawalNumber: true } });
       const orders = await tx.customerOrder.findMany({ where: { OR: [{ notes: like }, companyIds.length ? { companyId: { in: companyIds } } : { id: -1 }] }, select: { id: true, orderNumber: true } });
       const trips = await tx.transport.findMany({ where: { OR: [{ loadDescription: like }, { driverName: like }, { vehicleId: { in: vehicles.length ? vehicles.map((v) => v.id) : [-1] } }] }, select: { id: true, transportNumber: true } });
 
@@ -102,7 +102,7 @@ async function main() {
       count("payments", (await tx.payment.deleteMany({ where: { id: { in: ids(payments) } } })).count);
       count("purchaseReturns", (await tx.purchaseReturn.deleteMany({ where: { id: { in: ids(pReturns) } } })).count);
       count("saleReturns", (await tx.saleReturn.deleteMany({ where: { id: { in: ids(sReturns) } } })).count);
-      count("stockMovements", (await tx.stockMovement.deleteMany({ where: { OR: [{ productId: { in: productIds.length ? productIds : [-1] } }, refs.length ? { reference: { in: refs } } : { id: -1 }] } })).count);
+      count("stockMovements", (await tx.stockMovement.deleteMany({ where: { OR: [{ productId: { in: productIds.length ? productIds : [-1] } }, { notes: like }] } })).count);
       count("saleItems", (await tx.saleItem.deleteMany({ where: { saleOrderId: { in: ids(sales) } } })).count);
       count("gatePasses", (await tx.gatePass.deleteMany({ where: { saleOrderId: { in: ids(sales) } } })).count);
       count("customerOrderItems", (await tx.customerOrderItem.deleteMany({ where: { customerOrderId: { in: ids(orders) } } })).count);
