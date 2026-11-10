@@ -22,15 +22,20 @@ fi
 
 echo "Waiting for database..."
 attempt=0
-until node scripts/db-check.mjs >/dev/null 2>&1; do
+until node scripts/db-check.mjs > /tmp/db-check.log 2>&1; do
   attempt=$((attempt + 1))
+  # Surface the real reason every few attempts so deploy logs explain the wait.
+  if [ $((attempt % 5)) -eq 1 ]; then
+    echo "Database not ready (attempt $attempt):"
+    grep -vE "injected env|^$" /tmp/db-check.log | tail -3 | sed 's/^/  /'
+  fi
   if [ "$attempt" -ge 30 ]; then
-    echo "Database not reachable after 30 attempts" >&2
-    node scripts/db-check.mjs || true
+    echo "Database not reachable after 30 attempts, giving up." >&2
     exit 1
   fi
   sleep 2
 done
+grep -E "Database connection OK" /tmp/db-check.log || true
 
 echo "Applying migrations..."
 npx prisma migrate deploy
