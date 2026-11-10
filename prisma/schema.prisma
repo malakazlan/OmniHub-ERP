@@ -901,6 +901,16 @@ model Donation {
   @@map("donations")
 }
 
+/// Atomic per-prefix counters for document numbers (INV-2026, PO-2026, ACC-CAS-, SKU prefixes).
+/// Rows are read with SELECT ... FOR UPDATE so concurrent requests never receive the same number.
+model DocumentSequence {
+  name      String   @id @map("seq_name")
+  nextValue Int      @default(1)
+  updatedAt DateTime @updatedAt
+
+  @@map("document_sequences")
+}
+
 model Setting {
   id        Int      @id @default(autoincrement())
   key       String   @unique

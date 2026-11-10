@@ -1,5 +1,5 @@
 {
-  "name": "warraich-traders",
+  "name": "omnihub-erp",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,12 +9,12 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
-    "db:seed": "node prisma/seed.js",
-    "db:setup": "prisma generate && prisma db push && node prisma/seed.js",
-    "db:check": "node scripts/db-check.js"
+    "db:seed": "node prisma/seed.mjs",
+    "db:setup": "prisma generate && prisma db push && node prisma/seed.mjs",
+    "db:check": "node scripts/db-check.mjs"
   },
   "prisma": {
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.mjs"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.9.0",

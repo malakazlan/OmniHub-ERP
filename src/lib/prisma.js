@@ -1,7 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
-import { parseDatabaseUrl } from "@/lib/dbConfig";
+import { parseDatabaseUrl } from "@/lib/dbConfig.mjs";
 
 function createPrismaClient() {
   const config = parseDatabaseUrl(process.env.DATABASE_URL);
@@ -94,8 +94,8 @@ export function dbUnavailableResponse(error) {
   return Response.json(
     {
       error: remote
-        ? "Database connection lost. Remote MySQL may have timed out — retry in a moment."
-        : "Database connection lost. Check that MySQL is running, then retry.",
+        ? "Database connection lost. The hosted database may have timed out. Retry in a moment."
+        : "Database connection lost. Check that the local MySQL server is running, then retry.",
       code: error?.code || "DB_UNAVAILABLE",
     },
     { status: 503 }
