@@ -67,4 +67,25 @@ Sign in with the `ADMIN_EMAIL` / `ADMIN_PASSWORD` from your `.env`. The seed nev
 
 ## Deployment
 
-The app runs on any Node.js host. For Vercel: import the repository, set the three environment variables above, run `npx prisma db push` and `npm run db:seed` against the production `DATABASE_URL` once from your machine, then deploy.
+### Coolify on your own server (recommended)
+
+The repository ships a production `Dockerfile`. On start, `docker-entrypoint.sh` waits for the database, runs `prisma migrate deploy`, seeds the administrator if `ADMIN_EMAIL` / `ADMIN_PASSWORD` are set (never overwriting an existing password), then starts Next.js on port 3000.
+
+1. **Database.** In Coolify add a *MySQL 8* database resource. Copy its internal connection string.
+2. **Application.** Add a new resource from this GitHub repository, build pack **Dockerfile**, port **3000**, health check path `/api/health`. Attach your domain (for example `omnihub.alphalens.site`) and let Coolify issue the certificate.
+3. **Environment variables** on the application:
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | `mysql://user:password@<mysql-host>:3306/omnihub?ssl=false` (internal Coolify network; use `?sslaccept=strict` for an external TLS database) |
+   | `JWT_SECRET` | a random string of 32+ characters, e.g. `openssl rand -base64 48` |
+   | `ADMIN_EMAIL` | first administrator login |
+   | `ADMIN_PASSWORD` | first administrator password (10+ characters) |
+
+4. Deploy. Watch the logs for `Applying migrations...` and `Starting Omni Hub`. Sign in, then optionally run `node scripts/demo-data.mjs` from the application container's terminal to load demo data.
+
+Schema changes are shipped as files under `prisma/migrations/` and applied automatically on the next deploy. Enable the database backup schedule in Coolify.
+
+### Vercel
+
+Import the repository, set `DATABASE_URL`, `JWT_SECRET`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`, run `npx prisma migrate deploy` and `npm run db:seed` once from your machine against the production database, then deploy. The Hobby plan is limited to non-commercial use.

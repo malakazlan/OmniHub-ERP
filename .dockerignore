@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+screenshots
+design
+.kilo
+*.log
+npm-debug.log*
+coverage
+README.md
+AGENTS.md
+CLAUDE.md

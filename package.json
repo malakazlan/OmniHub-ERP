@@ -10,8 +10,11 @@
     "lint": "eslint",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.mjs",
-    "db:setup": "prisma generate && prisma db push && node prisma/seed.mjs",
-    "db:check": "node scripts/db-check.mjs"
+    "db:setup": "prisma generate && prisma migrate deploy && node prisma/seed.mjs",
+    "db:check": "node scripts/db-check.mjs",
+    "db:migrate": "prisma migrate deploy",
+    "smoke": "node scripts/smoke.mjs",
+    "reconcile": "node scripts/reconcile.mjs"
   },
   "prisma": {
     "seed": "node prisma/seed.mjs"
@@ -41,5 +44,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "tailwindcss": "^4"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
