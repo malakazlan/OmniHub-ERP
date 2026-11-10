@@ -13616,3 +13616,19 @@ label:has(+ input[type="checkbox"]), label:has(+ input[type="radio"]) { display:
 
 /* Search inputs with a leading icon need room for it */
 .erp-ledger-search-input, .erp-ac-search-input { padding-left: 34px; }
+
+/* Vendor activity flow strip: flat light card instead of a dark gradient band */
+.erp-pv-flow-bar { background: var(--surface); box-shadow: var(--shadow); border-radius: var(--radius); }
+.erp-pv-flow-bar .erp-pv-flow-label { color: var(--ink-3); }
+.erp-pv-flow-bar .erp-pv-flow-value { color: var(--ink); }
+.erp-pv-flow-bar .erp-pv-flow-icon { background: var(--brand-soft); color: var(--brand); border: 0; }
+.erp-pv-flow-bar .erp-pv-flow-arrow, .erp-pv-flow-bar .erp-pv-flow-equals { color: var(--line-strong); }
+.erp-pv-flow-bar .erp-pv-flow-ledger { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.erp-pv-flow-bar .erp-pv-flow-ledger * { color: inherit; }
+
+/* Chart of accounts category tabs: active = solid brand with white label and count */
+.erp-ac-tab.is-active, .erp-ac-tab.is-active * { color: #fff; }
+.erp-ac-tab.is-active { background: var(--brand); box-shadow: var(--shadow-brand, 0 6px 14px rgba(47, 111, 237, 0.25)); }
+.erp-ac-tab.is-active .erp-ac-tab-count { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.erp-pv-flow-bar .erp-pv-flow-payable { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
+.erp-pv-flow-bar .erp-pv-flow-payable * { color: inherit; }
