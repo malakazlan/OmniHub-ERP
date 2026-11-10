@@ -141,20 +141,6 @@ async function main() {
   console.log(`Loading demo data into ${BASE_URL} ...`);
   await api("POST", "/api/auth/login", { email: EMAIL, password: PASSWORD });
 
-  const existingPurchases = (await api("GET", "/api/purchases")).purchases || [];
-  const existingSales = (await api("GET", "/api/sales")).sales || [];
-  if ((existingPurchases.length > 0 || existingSales.length > 0) && process.env.DEMO_FORCE !== "1") {
-    console.error("Transactions already exist. Set DEMO_FORCE=1 to add another batch of demo transactions.");
-    process.exit(1);
-  }
-
-  const byName = (list, key = "name") => new Map((list || []).map((x) => [x[key], x]));
-  const existingCompanies = byName((await api("GET", "/api/companies")).companies);
-  const existingProducts = byName((await api("GET", "/api/products")).products);
-  const existingEmployees = byName((await api("GET", "/api/hr/employees")).employees);
-  const existingVehicles = byName((await api("GET", "/api/transport/vehicles")).vehicles, "registrationNumber");
-  const existingExpenseCats = byName((await api("GET", "/api/expenses/categories")).categories);
-
   // Opening capital so cash & bank start positive: Dr Operating Checking / Cr Owner's Equity.
   const generalAccounts = (await api("GET", "/api/accounts?category=general")).accounts || [];
   let equity = generalAccounts.find((a) => a.name === "Owner's Equity");
@@ -174,6 +160,23 @@ async function main() {
     });
     console.log("  opening capital posted");
   }
+
+  // Each transaction phase runs only when that register is still empty (or DEMO_FORCE=1),
+  // so an interrupted load can be resumed without duplicating earlier phases.
+  const force = process.env.DEMO_FORCE === "1";
+  const existingPurchases = (await api("GET", "/api/purchases")).purchases || [];
+  const existingSales = (await api("GET", "/api/sales")).sales || [];
+  const existingPayments = (await api("GET", "/api/payments")).payments || [];
+  const existingExpenses = (await api("GET", "/api/expenses")).expenses || [];
+  const existingTrips = (await api("GET", "/api/transport")).transports || [];
+  const INVOICE_TARGET = 30;
+
+  const byName = (list, key = "name") => new Map((list || []).map((x) => [x[key], x]));
+  const existingCompanies = byName((await api("GET", "/api/companies")).companies);
+  const existingProducts = byName((await api("GET", "/api/products")).products);
+  const existingEmployees = byName((await api("GET", "/api/hr/employees")).employees);
+  const existingVehicles = byName((await api("GET", "/api/transport/vehicles")).vehicles, "registrationNumber");
+  const existingExpenseCats = byName((await api("GET", "/api/expenses/categories")).categories);
 
   const accounts = await api("GET", "/api/accounts?category=bank");
   const bank = (accounts.accounts || []).find((a) => a.code === "ACC-BANK") || (accounts.accounts || [])[0];
@@ -286,7 +289,7 @@ async function main() {
 
   // Purchase orders: 3 months of receiving, oldest first so stock exists before sales
   let poCount = 0;
-  for (let day = 92; day >= 2; day -= between(3, 6)) {
+  for (let day = 92; day >= 2 && (force || existingPurchases.length === 0); day -= between(3, 6)) {
     const vendor = pick(vendors);
     const lines = Array.from({ length: between(2, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
@@ -313,8 +316,8 @@ async function main() {
   console.log(`  ${poCount} purchase orders received`);
 
   // Invoices: more frequent, spread across customers and reps
-  let invCount = 0;
-  for (let day = 88; day >= 0; day -= between(1, 3)) {
+  let invCount = existingSales.length;
+  for (let day = 88; day >= 0 && (force || invCount < INVOICE_TARGET); day -= between(1, 3)) {
     const customer = pick(customers);
     const lines = Array.from({ length: between(1, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
@@ -347,7 +350,7 @@ async function main() {
   // Customer payments against open balances (FIFO settlement happens server-side)
   let payCount = 0;
   const refreshed = await api("GET", "/api/companies");
-  for (const c of refreshed.companies || []) {
+  for (const c of force || existingPayments.length === 0 ? refreshed.companies || [] : []) {
     const balance = Number(c.balance) || 0;
     if (c.companyType === "buyer" && balance > 500 && rnd() < 0.7) {
       const amount = money(rnd() < 0.5 ? balance : balance * (0.3 + rnd() * 0.5));
@@ -381,7 +384,7 @@ async function main() {
 
   // Monthly operating expenses for the last three months
   let expCount = 0;
-  for (const monthOffset of [2, 1, 0]) {
+  for (const monthOffset of force || existingExpenses.length === 0 ? [2, 1, 0] : []) {
     for (const [title, category, amount] of EXPENSES) {
       await api("POST", "/api/expenses", {
         expenseDate: daysAgo(monthOffset * 30 + between(1, 6)),
@@ -399,7 +402,7 @@ async function main() {
   // Deliveries
   const vehicles = (await api("GET", "/api/transport/vehicles")).vehicles || [];
   let tripCount = 0;
-  for (let day = 60; day >= 0; day -= between(2, 5)) {
+  for (let day = 60; day >= 0 && (force || existingTrips.length === 0); day -= between(2, 5)) {
     const v = pick(vehicles);
     const customer = pick(customers);
     await api("POST", "/api/transport", {

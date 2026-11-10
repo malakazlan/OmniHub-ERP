@@ -64,7 +64,11 @@ async function reserveNext(db, name, seed) {
     return first;
   };
 
-  return typeof db.$transaction === "function" ? db.$transaction(run) : run(db);
+  // Root client: short dedicated transaction. Allow a generous wait for a pooled
+  // connection so a busy pool yields a delay, not a failed document number.
+  return typeof db.$transaction === "function"
+    ? db.$transaction(run, { maxWait: 15_000, timeout: 30_000 })
+    : run(db);
 }
 
 /**
