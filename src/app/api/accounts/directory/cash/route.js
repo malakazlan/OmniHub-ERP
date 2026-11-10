@@ -6,9 +6,12 @@ import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccoun
 import { logActivity } from "@/lib/activityLog";
 import { employeesByCashAccountIds } from "@/lib/accountRelations";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const where = await cashAccountWhereForDirectory(prisma, user);
@@ -36,7 +39,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

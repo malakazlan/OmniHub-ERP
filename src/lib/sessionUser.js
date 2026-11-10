@@ -21,8 +21,8 @@ export function serializeAuthUser(user) {
   };
 }
 
-export const AUTH_COOKIE_NAME = "metrofeeds_token";
-export const AUTH_USER_STORAGE_KEY = "metrofeeds_auth_user";
+export const AUTH_COOKIE_NAME = "omnihub_session";
+export const AUTH_USER_STORAGE_KEY = "omnihub_auth_user";
 
 export function readStoredAuthUser() {
   if (typeof window === "undefined") return null;

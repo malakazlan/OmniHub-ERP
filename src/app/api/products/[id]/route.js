@@ -1,9 +1,12 @@
 import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
@@ -17,18 +20,18 @@ export async function GET(req, { params }) {
       },
     });
 
-    if (!product) return Response.json({ error: "Product not found" }, { status: 404 });
+    if (!product) return Response.json({ error: "Item not found" }, { status: 404 });
 
     return Response.json({ success: true, product });
   } catch (error) {
-    console.error("Fetch product error:", error);
+    console.error("Fetch item error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -38,7 +41,7 @@ export async function PUT(req, { params }) {
     const body = await req.json();
 
     const product = await prisma.product.findUnique({ where: { id: productId } });
-    if (!product) return Response.json({ error: "Product not found" }, { status: 404 });
+    if (!product) return Response.json({ error: "Item not found" }, { status: 404 });
 
     const previousStock = product.currentStock;
     const nextStock =
@@ -53,7 +56,7 @@ export async function PUT(req, { params }) {
           name: body.name,
           categoryId: body.categoryId ? parseInt(body.categoryId) : product.categoryId,
           unit: body.unit,
-          bagWeight: body.unit === "bag" ? (parseFloat(body.bagWeight) || 34) : null,
+          bagWeight: body.unit === "case" || body.unit === "bag" ? (parseFloat(body.bagWeight) || 34) : null,
           costPrice: body.costPrice !== undefined ? parseFloat(body.costPrice) : product.costPrice,
           salePrice: body.salePrice !== undefined ? parseFloat(body.salePrice) : product.salePrice,
           minimumStock: body.minimumStock !== undefined ? parseFloat(body.minimumStock) : product.minimumStock,
@@ -72,7 +75,7 @@ export async function PUT(req, { params }) {
             quantity: Math.abs(nextStock - previousStock),
             previousStock,
             newStock: nextStock,
-            notes: "Stock adjusted from product edit",
+            notes: "Stock adjusted from item edit",
           },
         });
       }
@@ -82,14 +85,14 @@ export async function PUT(req, { params }) {
 
     return Response.json({ success: true, product: updated });
   } catch (error) {
-    console.error("Update product error:", error);
+    console.error("Update item error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete records" }, { status: 403 });
     }
@@ -107,13 +110,13 @@ export async function DELETE(req, { params }) {
         where: { id: productId },
         data: { isActive: false },
       });
-      return Response.json({ success: true, message: "Product deactivated (has transaction history)" });
+      return Response.json({ success: true, message: "Item deactivated (has transaction history)" });
     }
 
     await prisma.product.delete({ where: { id: productId } });
-    return Response.json({ success: true, message: "Product deleted successfully" });
+    return Response.json({ success: true, message: "Item deleted successfully" });
   } catch (error) {
-    console.error("Delete product error:", error);
+    console.error("Delete item error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

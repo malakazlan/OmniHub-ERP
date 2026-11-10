@@ -4,13 +4,13 @@ import { canViewOrders } from "@/lib/customerOrderAccess";
 import { mustScopeOrdersToSelf } from "@/lib/ordersNav";
 
 const DEFAULT_SETTINGS = {
-  company_name: "Warraich Traders",
+  company_name: "Omni Hub",
   company_address: "",
   company_phone: "",
   company_email: "",
   ntn: "",
   strn: "",
-  currency: "PKR",
+  currency: "USD",
 };
 
 async function loadCompanySettings() {
@@ -32,7 +32,7 @@ const saleInclude = {
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -9,7 +9,7 @@ function canManage(user) {
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
@@ -69,7 +69,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManage(user)) return Response.json({ error: "Unauthorized" }, { status: 403 });
 
     const { id } = await params;
@@ -102,7 +102,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete dealers" }, { status: 403 });
     }

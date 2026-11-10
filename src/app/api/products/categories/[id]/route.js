@@ -3,7 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -30,7 +30,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -49,11 +49,11 @@ export async function DELETE(req, { params }) {
       });
       const inactiveCount = productCount - activeCount;
       
-      let errorMsg = `Cannot delete category that contains ${productCount} products.`;
+      let errorMsg = `Cannot delete category that contains ${productCount} items.`;
       if (inactiveCount > 0 && activeCount === 0) {
-        errorMsg = `Cannot delete category. It contains ${inactiveCount} inactive (deactivated) products. Turn on "Show Inactive" in the Products page to see and move/delete them.`;
+        errorMsg = `Cannot delete category. It contains ${inactiveCount} inactive (deactivated) items. Turn on "Show Inactive" in the Items page to see and move/delete them.`;
       } else if (inactiveCount > 0) {
-        errorMsg = `Cannot delete category. It contains ${activeCount} active and ${inactiveCount} inactive products.`;
+        errorMsg = `Cannot delete category. It contains ${activeCount} active and ${inactiveCount} inactive items.`;
       }
 
       return Response.json(

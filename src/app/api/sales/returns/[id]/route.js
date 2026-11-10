@@ -4,7 +4,7 @@ import { parseReturnItems } from "@/lib/saleReturn";
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;

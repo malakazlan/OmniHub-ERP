@@ -5,9 +5,12 @@ import { attachCashAccountsToEmployees } from "@/lib/accountRelations";
 import { defaultModulesForRole, loginRoleFromEmployeeRole } from "@/lib/modulePresets";
 import { applyOpeningBalance } from "@/lib/accountOpening";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -35,7 +38,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -80,13 +83,19 @@ export async function POST(req) {
     if (cnic?.trim()) {
       const existing = await prisma.employee.findUnique({ where: { cnic: cnic.trim() } });
       if (existing) {
-        return Response.json({ error: "Employee with this CNIC already exists" }, { status: 400 });
+        return Response.json({ error: "An employee with this SSN / Tax ID already exists" }, { status: 400 });
       }
     }
 
     const employeeCnic = cnic?.trim() || null;
 
     if (createLogin) {
+      if (user.role !== "admin") {
+        return Response.json(
+          { error: "Only administrators can create logins or assign roles and module access" },
+          { status: 403 }
+        );
+      }
       if (!loginEmail || !loginPassword) {
         return Response.json({ error: "Login email and password are required" }, { status: 400 });
       }

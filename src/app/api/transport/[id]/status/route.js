@@ -9,7 +9,7 @@ function canManage(user) {
 
 export async function PATCH(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManage(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

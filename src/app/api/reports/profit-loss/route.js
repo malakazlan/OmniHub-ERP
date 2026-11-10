@@ -3,7 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
@@ -60,7 +60,7 @@ export async function GET(req) {
     // Group sales revenue by month for trend
     const monthMap = {};
     salesByMonth.forEach((s) => {
-      const key = new Date(s.saleDate).toLocaleDateString("en-PK", { month: "short", year: "2-digit" });
+      const key = new Date(s.saleDate).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
       monthMap[key] = (monthMap[key] || 0) + s.totalAmount;
     });
     const monthlyTrend = Object.entries(monthMap).map(([month, total]) => ({ month, total }));

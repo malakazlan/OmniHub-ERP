@@ -4,13 +4,16 @@ import { logActivity } from "@/lib/activityLog";
 import { correctSaleBill, getSaleCorrectionMeta } from "@/lib/saleCorrection";
 import { normalizeSaleReturns } from "@/lib/saleReturn";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function canCorrectSales(user) {
   return user && (user.role === "admin" || user.role === "manager");
 }
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
@@ -46,7 +49,7 @@ export async function GET(req, { params }) {
 
 export async function POST(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canCorrectSales(user)) {
       return Response.json({ error: "Only admin or manager can correct posted bills" }, { status: 403 });
     }

@@ -17,6 +17,9 @@ import {
 } from "@/lib/order-processing";
 import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 const purchaseInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true } } } },
   farmer: { select: { id: true, name: true, phone: true, whatsappNumber: true } },
@@ -67,6 +70,7 @@ function buildPurchaseData(body, userId) {
       bankAmount,
       cashAccountId: body.cashAccountId ? parseInt(body.cashAccountId, 10) : null,
       bankAccountId: body.bankAccountId ? parseInt(body.bankAccountId, 10) : null,
+      paymentStatus: computePaymentStatus(paidAmount, totalAmount),
       vehicleNumber: body.vehicleNumber || null,
       driverName: body.driverName || null,
       status,
@@ -78,7 +82,7 @@ function buildPurchaseData(body, userId) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -129,7 +133,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManagePurchases(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -167,12 +171,12 @@ export async function POST(req) {
 
     if (!vendorName) {
       return Response.json(
-        { error: "Vendor name is required — select a farmer or company" },
+        { error: "Vendor name is required — select a vendor" },
         { status: 400 }
       );
     }
     if (!body.farmerId && !body.companyId) {
-      return Response.json({ error: "Select a farmer or company supplier" }, { status: 400 });
+      return Response.json({ error: "Select a vendor" }, { status: 400 });
     }
     if (!body.items || !Array.isArray(body.items) || body.items.length === 0) {
       return Response.json({ error: "At least one item is required" }, { status: 400 });
@@ -244,7 +248,7 @@ export async function POST(req) {
       return Response.json({ error: "Duplicate purchase number" }, { status: 400 });
     }
     if (error.code === "P2003") {
-      return Response.json({ error: "Invalid reference (product, farmer, or company)" }, { status: 400 });
+      return Response.json({ error: "Invalid reference (item or vendor)" }, { status: 400 });
     }
     if (error.code === "P2028") {
       return Response.json(

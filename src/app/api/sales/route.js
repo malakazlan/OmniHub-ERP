@@ -17,6 +17,9 @@ import {
 import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 import { validateWalkInFullPayment } from "@/lib/saleCustomer";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true } } } },
   company: { select: { id: true, name: true, phone: true, whatsappNumber: true } },
@@ -90,7 +93,7 @@ function buildSaleData(body, userId) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -134,7 +137,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManageSales(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

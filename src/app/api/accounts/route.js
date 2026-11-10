@@ -9,7 +9,7 @@ import { applyOpeningBalance } from "@/lib/accountOpening";
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
@@ -62,7 +62,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can create accounts" }, { status: 403 });
     }

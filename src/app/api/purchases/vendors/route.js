@@ -4,7 +4,7 @@ import { listPurchaseVendorAccounts } from "@/lib/purchaseVendorSummary";
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { vendors, summary } = await listPurchaseVendorAccounts(prisma);

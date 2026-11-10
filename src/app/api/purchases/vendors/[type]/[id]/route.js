@@ -4,7 +4,7 @@ import { getPurchaseVendorDetail } from "@/lib/purchaseVendorSummary";
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { type, id } = await params;

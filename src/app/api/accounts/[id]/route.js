@@ -6,9 +6,12 @@ import { LEDGER_ENTRY_ORDER, applyRunningBalances } from "@/lib/ledger";
 import { trimOrNull } from "@/lib/stringUtils";
 import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
@@ -45,7 +48,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can update accounts" }, { status: 403 });
     }
@@ -124,7 +127,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete accounts" }, { status: 403 });
     }

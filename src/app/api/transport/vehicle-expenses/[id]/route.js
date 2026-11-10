@@ -3,9 +3,12 @@ import { getUserFromRequest } from "@/lib/auth";
 import { createLedgerEntry } from "@/lib/ledger";
 import { logActivity } from "@/lib/activityLog";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete records" }, { status: 403 });
     }

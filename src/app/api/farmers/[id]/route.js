@@ -5,10 +5,13 @@ import { LEDGER_ENTRY_ORDER } from "@/lib/ledger";
 import { trimOrNull } from "@/lib/stringUtils";
 import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 // GET: Fetch a single farmer's details and transaction logs
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -60,7 +63,7 @@ export async function GET(req, { params }) {
 // PUT: Update farmer details
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -151,7 +154,7 @@ export async function PUT(req, { params }) {
 // DELETE: Remove farmer
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete records" }, { status: 403 });
     }

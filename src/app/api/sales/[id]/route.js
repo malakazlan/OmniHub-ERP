@@ -13,6 +13,9 @@ import { validateWalkInFullPayment } from "@/lib/saleCustomer";
 import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 import { reconcileSaleOrderWithReturns, normalizeSaleReturns } from "@/lib/saleReturn";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 const saleInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
   company: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
@@ -61,7 +64,7 @@ function buildSaleUpdate(body) {
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -125,7 +128,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManageSales(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -268,7 +271,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManageSales(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

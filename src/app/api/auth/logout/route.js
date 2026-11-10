@@ -1,27 +1,14 @@
 import { NextResponse } from "next/server";
-import { getUserFromRequest, AUTH_COOKIE_NAME } from "@/lib/auth";
+import { getUserFromRequest, sessionCookieOptions } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 
 export async function POST(request) {
-  const user = getUserFromRequest(request);
+  const user = await getUserFromRequest(request).catch(() => null);
   if (user) {
-    logActivity({ userId: user.userId, action: "LOGOUT", module: "auth", req: request });
+    await logActivity({ userId: user.userId, action: "LOGOUT", module: "auth", req: request }).catch(() => {});
   }
 
-  const response = NextResponse.json({
-    message: "Logged out successfully.",
-  });
-
-  // Clear the cookie by setting maxAge to 0
-  response.cookies.set({
-    name: AUTH_COOKIE_NAME,
-    value: "",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-    path: "/",
-  });
-
+  const response = NextResponse.json({ message: "Logged out successfully." });
+  response.cookies.set({ ...sessionCookieOptions(0), value: "" });
   return response;
 }

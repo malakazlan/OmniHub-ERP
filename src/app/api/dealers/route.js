@@ -9,7 +9,7 @@ function canManage(user) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const dealers = await prisma.dealer.findMany({
@@ -43,7 +43,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManage(user)) return Response.json({ error: "Unauthorized" }, { status: 403 });
 
     const body = await req.json();

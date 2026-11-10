@@ -3,9 +3,12 @@ import { getUserFromRequest } from "@/lib/auth";
 import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 import { trimOrNull } from "@/lib/stringUtils";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -32,7 +35,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -105,7 +108,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete vehicles" }, { status: 403 });
     }

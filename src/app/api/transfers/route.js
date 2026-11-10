@@ -18,6 +18,9 @@ import {
   validateTransferPayload,
 } from "@/lib/moneyTransfer";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function canManage(user) {
   return user && (user.role === "admin" || user.role === "manager" || user.role === "accountant");
 }
@@ -44,7 +47,7 @@ async function assertUserCanTransferFromCash(user, accountId) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
@@ -91,7 +94,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManage(user)) return Response.json({ error: "Unauthorized" }, { status: 403 });
 
     const body = await req.json();

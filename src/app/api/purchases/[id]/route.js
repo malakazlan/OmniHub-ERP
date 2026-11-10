@@ -14,6 +14,9 @@ import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
 import { reconcilePurchaseOrderWithReturns } from "@/lib/purchaseReturnServer";
 import { normalizePurchaseReturns } from "@/lib/purchaseReturn";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 const purchaseInclude = {
   items: { include: { product: { select: { id: true, name: true, sku: true, currentStock: true } } } },
   farmer: { select: { id: true, name: true, phone: true, whatsappNumber: true, accountId: true } },
@@ -63,7 +66,7 @@ function buildPurchaseUpdate(body) {
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -127,7 +130,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManagePurchases(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -240,7 +243,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManagePurchases(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

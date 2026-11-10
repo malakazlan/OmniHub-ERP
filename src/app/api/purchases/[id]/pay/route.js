@@ -11,13 +11,16 @@ import { logActivity } from "@/lib/activityLog";
 import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 import { reconcilePurchaseOrderWithReturns } from "@/lib/purchaseReturnServer";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function canManagePurchases(user) {
   return user && (user.role === "admin" || user.role === "manager");
 }
 
 export async function POST(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManagePurchases(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

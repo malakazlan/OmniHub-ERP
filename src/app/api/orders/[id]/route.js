@@ -15,6 +15,9 @@ import {
 import { mustScopeOrdersToSelf } from "@/lib/ordersNav";
 import { sanitizeCustomerOrder } from "@/lib/customerOrderSerialize";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 async function loadOrder(id) {
   return prisma.customerOrder.findUnique({
     where: { id: parseInt(id, 10) },
@@ -24,7 +27,7 @@ async function loadOrder(id) {
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     const { id } = await params;
     const order = await loadOrder(id);
     if (!order) {
@@ -45,7 +48,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     const { id } = await params;
     const existing = await loadOrder(id);
     if (!existing) {
@@ -112,7 +115,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     const { id } = await params;
     const existing = await loadOrder(id);
     if (!existing) {
@@ -143,7 +146,7 @@ export async function DELETE(req, { params }) {
 
 export async function POST(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     const { id } = await params;
     const body = await req.json();
     const action = body.action;

@@ -5,10 +5,13 @@ import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/direc
 import { applyOpeningBalance } from "@/lib/accountOpening";
 import { FARMER_ACCOUNT_TYPE } from "@/lib/farmerAccount";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 // GET: List all farmers
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -50,7 +53,7 @@ export async function GET(req) {
 // POST: Register a new farmer
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

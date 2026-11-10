@@ -6,9 +6,12 @@ import { applyOpeningBalance } from "@/lib/accountOpening";
 import { logActivity } from "@/lib/activityLog";
 import { trimOrNull } from "@/lib/stringUtils";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

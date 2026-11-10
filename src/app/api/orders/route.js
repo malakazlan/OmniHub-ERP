@@ -15,7 +15,7 @@ import { sanitizeCustomerOrders } from "@/lib/customerOrderSerialize";
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !canViewOrders(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -63,7 +63,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || !canCreateOrder(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

@@ -8,7 +8,7 @@ import {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -28,7 +28,7 @@ export async function GET(req) {
     }
     if (account.category !== "farmer" && account.category !== "company") {
       return Response.json(
-        { error: "Freight deductions apply to farmer or company accounts only" },
+        { error: "Freight settlement applies to vendor accounts only" },
         { status: 400 }
       );
     }

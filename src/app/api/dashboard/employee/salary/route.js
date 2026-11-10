@@ -13,7 +13,7 @@ const MONTH_NAMES = [
 
 export async function GET(req) {
   try {
-    const auth = getUserFromRequest(req);
+    const auth = await getUserFromRequest(req);
     if (!auth?.userId) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }

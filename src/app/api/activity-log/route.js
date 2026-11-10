@@ -3,7 +3,7 @@ import { getUserFromRequest } from "@/lib/auth";
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can view activity logs" }, { status: 403 });
     }

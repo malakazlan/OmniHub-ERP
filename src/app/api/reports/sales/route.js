@@ -44,7 +44,7 @@ async function buildWeekTrend(db) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const summary = await withDbRetry(async (db) => {

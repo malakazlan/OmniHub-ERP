@@ -4,6 +4,9 @@ import { logActivity } from "@/lib/activityLog";
 import { directoryCreateBlocked, requireProjectAccountsAdmin } from "@/lib/directoryCreate";
 import { applyOpeningBalance } from "@/lib/accountOpening";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function getAccountType(companyType) {
   if (companyType === "supplier") return "liability";
   return "asset";
@@ -11,7 +14,7 @@ function getAccountType(companyType) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const companies = await prisma.company.findMany({
@@ -42,7 +45,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

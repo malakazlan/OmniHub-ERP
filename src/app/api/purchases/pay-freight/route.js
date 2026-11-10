@@ -12,13 +12,16 @@ import {
 } from "@/lib/purchaseFreightPayment";
 import { logActivity } from "@/lib/activityLog";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function canManage(user) {
   return user && (user.role === "admin" || user.role === "manager" || user.role === "accountant");
 }
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManage(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -28,7 +31,7 @@ export async function POST(req) {
     const amount = parseNum(body.amount);
 
     if (!vendorAccountId) {
-      return Response.json({ error: "Select a farmer or company account" }, { status: 400 });
+      return Response.json({ error: "Select a vendor account" }, { status: 400 });
     }
     if (amount <= 0) {
       return Response.json({ error: "Enter an amount to deduct from the account" }, { status: 400 });
@@ -43,7 +46,7 @@ export async function POST(req) {
     }
     if (vendorAccount.category !== "farmer" && vendorAccount.category !== "company") {
       return Response.json(
-        { error: "Freight deductions apply to farmer or company accounts only" },
+        { error: "Freight settlement applies to vendor accounts only" },
         { status: 400 }
       );
     }

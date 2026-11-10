@@ -133,7 +133,7 @@ async function buildExpenseSummary(db, start, end) {
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { start, end } = weekRange();
@@ -157,19 +157,20 @@ export async function GET(req) {
         getPayablesByCategory("general"),
       ]);
 
+      // Shop / farmer parties are hidden modules; any remaining balances roll up as legacy.
+      const legacyReceivables = shopReceivables + farmerReceivables;
       const receivables = {
-        total: shopReceivables + companyReceivables + farmerReceivables,
+        total: companyReceivables + legacyReceivables,
         breakdown: [
-          { label: "Shops", amount: shopReceivables },
-          { label: "Companies", amount: companyReceivables },
-          { label: "Farmers", amount: farmerReceivables },
+          { label: "Customers", amount: companyReceivables },
+          { label: "Legacy accounts", amount: legacyReceivables },
         ].filter((r) => r.amount > 0),
       };
 
       const payables = {
         total: transportPayables + generalPayables,
         breakdown: [
-          { label: "Transport", amount: transportPayables },
+          { label: "Drivers & freight", amount: transportPayables },
           { label: "General", amount: generalPayables },
         ].filter((p) => p.amount > 0),
       };

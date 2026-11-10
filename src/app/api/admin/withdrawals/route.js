@@ -9,13 +9,16 @@ import {
   assertWithdrawalSourceAccount,
 } from "@/lib/ownerWithdrawal";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function isAdmin(user) {
   return user?.role === "admin";
 }
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!isAdmin(user)) {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }
@@ -59,7 +62,7 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!isAdmin(user)) {
       return Response.json({ error: "Admin access required" }, { status: 403 });
     }

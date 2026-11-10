@@ -6,6 +6,9 @@ import { createCashLedgerAccount, assignUserPrimaryCash } from "@/lib/cashAccoun
 import { trimOrNull } from "@/lib/stringUtils";
 import { syncAccountBalanceFromForm, updateOpeningBalanceDate } from "@/lib/accountOpening";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 async function fetchLoginUser(userId) {
   if (!userId) return null;
   const u = await prisma.user.findUnique({
@@ -29,7 +32,7 @@ async function fetchLoginUser(userId) {
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -135,7 +138,7 @@ async function upsertEmployeeLogin(tx, { existing, body, employeeName, phone, ad
 
 export async function PUT(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -225,7 +228,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || user.role !== "admin") {
       return Response.json({ error: "Only admin can delete employees" }, { status: 403 });
     }

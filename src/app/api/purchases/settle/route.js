@@ -13,13 +13,16 @@ import {
 import { logActivity } from "@/lib/activityLog";
 import { resolveUserCashAccountId, assertUserCanUseCashAccount } from "@/lib/userCashAccount";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function canManagePurchases(user) {
   return user && (user.role === "admin" || user.role === "manager");
 }
 
 export async function POST(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManagePurchases(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -31,7 +34,7 @@ export async function POST(req) {
     const totalPay = cashAmount + bankAmount;
 
     if (!vendorAccountId) {
-      return Response.json({ error: "Supplier account is required" }, { status: 400 });
+      return Response.json({ error: "Vendor account is required" }, { status: 400 });
     }
     if (totalPay <= 0) {
       return Response.json({ error: "Enter a cash or bank payment amount" }, { status: 400 });
@@ -42,7 +45,7 @@ export async function POST(req) {
       select: { id: true, name: true, category: true },
     });
     if (!vendorAccount) {
-      return Response.json({ error: "Supplier account not found" }, { status: 404 });
+      return Response.json({ error: "Vendor account not found" }, { status: 404 });
     }
 
     const outstanding = await prisma.purchaseOrder.findMany({

@@ -2,21 +2,25 @@ import prisma from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
 const DEFAULT_SETTINGS = {
-  company_name: "Warraich Traders",
-  company_address: "",
-  company_phone: "",
+  company_name: "Omni Hub",
+  company_address: "100 Commerce Way, Suite 200",
+  company_city: "Columbus",
+  company_state: "OH",
+  company_zip: "43215",
+  company_phone: "(555) 555-0100",
   company_email: "",
   ntn: "",
   strn: "",
-  currency: "PKR",
+  currency: "USD",
   tax_rate: "0",
+  units_per_case: "34",
   bag_weight: "34",
-  fiscal_year_start: "7",
+  fiscal_year_start: "1",
 };
 
 export async function GET(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -39,7 +43,7 @@ export async function GET(req) {
 
 export async function PUT(req) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user || (user.role !== "admin" && user.role !== "manager")) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }

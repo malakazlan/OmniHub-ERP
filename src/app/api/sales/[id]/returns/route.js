@@ -11,13 +11,16 @@ import {
   reconcileSaleOrderWithReturns,
 } from "@/lib/saleReturn";
 
+/** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
+export const maxDuration = 60;
+
 function canManageSales(user) {
   return user && (user.role === "admin" || user.role === "manager" || user.role === "salesperson");
 }
 
 export async function GET(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const { id } = await params;
@@ -40,7 +43,7 @@ export async function GET(req, { params }) {
 
 export async function POST(req, { params }) {
   try {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequest(req);
     if (!canManageSales(user)) {
       return Response.json({ error: "Unauthorized" }, { status: 403 });
     }
@@ -101,7 +104,7 @@ export async function POST(req, { params }) {
 
       for (const item of items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } });
-        if (!product) throw new Error(`Product ${item.productId} not found`);
+        if (!product) throw new Error(`Item ${item.productId} not found`);
 
         const previousStock = product.currentStock;
         const newStock = previousStock + item.quantity;
