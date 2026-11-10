@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { createJournalEntry } from "@/lib/ledger";
@@ -63,7 +63,7 @@ export async function POST(req) {
     const date = entryDate ? new Date(entryDate) : new Date();
     const entryNumber = await generateDocumentNumber("journal", date);
 
-    const journal = await prisma.$transaction(async (tx) => {
+    const journal = await runTransaction(async (tx) => {
       return createJournalEntry(tx, {
         entryNumber,
         entryDate: date,

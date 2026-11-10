@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import {
   parseNum,
@@ -72,7 +72,7 @@ export async function GET(req, { params }) {
     const { id } = await params;
     const saleId = parseInt(id, 10);
 
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       await reconcileSaleOrderWithReturns(tx, saleId);
     });
 
@@ -194,7 +194,7 @@ export async function PUT(req, { params }) {
       }
     }
 
-    const sale = await prisma.$transaction(async (tx) => {
+    const sale = await runTransaction(async (tx) => {
       let updateData = {};
 
       if (existing.status === "draft") {

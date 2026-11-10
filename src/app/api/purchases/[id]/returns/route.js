@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { createLedgerEntry } from "@/lib/ledger";
@@ -145,7 +145,7 @@ export async function POST(req, { params }) {
     const returnDate = body.returnDate ? new Date(body.returnDate) : new Date();
     const returnNumber = await generateDocumentNumber("purchaseReturn", returnDate);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await runTransaction(async (tx) => {
       for (const item of items) {
         const product = await tx.product.findUnique({ where: { id: item.productId } });
         if (!product) throw new Error(`Item ${item.productId} not found`);

@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { logActivity } from "@/lib/activityLog";
 import { correctPurchaseBill, getPurchaseCorrectionMeta } from "@/lib/purchaseCorrection";
@@ -59,7 +59,7 @@ export async function POST(req, { params }) {
       select: { purchaseNumber: true, totalAmount: true, paidAmount: true },
     });
 
-    const purchase = await prisma.$transaction((tx) =>
+    const purchase = await runTransaction((tx) =>
       correctPurchaseBill(tx, {
         purchaseId,
         body,

@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { shouldApplyPurchaseEffects, syncPurchasePaymentLedgerLegs } from "@/lib/order-processing";
 
@@ -29,7 +29,7 @@ export async function POST(req, { params }) {
       return Response.json({ error: "Purchase is not confirmed" }, { status: 400 });
     }
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await runTransaction(async (tx) => {
       const ledgerAccounts = await syncPurchasePaymentLedgerLegs(tx, purchase);
       return tx.purchaseOrder.update({
         where: { id: purchaseId },

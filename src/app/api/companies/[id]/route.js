@@ -131,7 +131,7 @@ export async function DELETE(req, { params }) {
       }, { status: 400 });
     }
 
-    await prisma.$transaction(async (tx) => {
+    await runTransaction(async (tx) => {
       await tx.company.delete({ where: { id: companyId } });
       if (company.accountId) {
         await tx.account.delete({ where: { id: company.accountId } });

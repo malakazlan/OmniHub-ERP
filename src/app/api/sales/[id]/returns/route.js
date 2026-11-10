@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 import { generateDocumentNumber } from "@/lib/receipt";
 import { createLedgerEntry } from "@/lib/ledger";
@@ -89,7 +89,7 @@ export async function POST(req, { params }) {
     const returnDate = body.returnDate ? new Date(body.returnDate) : new Date();
     const returnNumber = await generateDocumentNumber("saleReturn", returnDate);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await runTransaction(async (tx) => {
       const saleReturn = await tx.saleReturn.create({
         data: {
           returnNumber,

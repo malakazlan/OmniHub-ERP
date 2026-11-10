@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma, { runTransaction } from "@/lib/prisma";
 import { getUserFromRequest } from "@/lib/auth";
 
 /** Stock and ledger flows run long interactive transactions; allow up to 60s on serverless hosts. */
@@ -49,7 +49,7 @@ export async function PUT(req, { params }) {
         ? parseFloat(body.currentStock)
         : previousStock;
 
-    const updated = await prisma.$transaction(async (tx) => {
+    const updated = await runTransaction(async (tx) => {
       const result = await tx.product.update({
         where: { id: productId },
         data: {
