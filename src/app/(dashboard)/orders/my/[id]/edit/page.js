@@ -104,7 +104,7 @@ export default function MyEditOrderPage() {
               productId: parseInt(item.productId, 10),
               productName: product?.name || "",
               quantity: parseNumber(item.quantity),
-              unit: product?.unit || "kg",
+              unit: product?.unit || "ea",
               rate: parseNumber(item.rate),
               amount: parseNumber(item.amount),
             };
@@ -157,7 +157,7 @@ export default function MyEditOrderPage() {
               value={item.productId}
               onChange={(e) => updateItem(index, "productId", e.target.value)}
             >
-              <option value="">Product</option>
+              <option value="">Item</option>
               {products.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}

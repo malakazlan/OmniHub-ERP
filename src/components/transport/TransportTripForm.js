@@ -145,11 +145,11 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
       const data = await res.json();
       if (res.ok) {
         showToast(
-          editId ? "Trip updated" : `Trip ${data.transport?.transportNumber} created`,
+          editId ? "Delivery updated" : `Delivery ${data.transport?.transportNumber} created`,
           "success"
         );
         router.push("/transport");
-      } else showToast(data.error || "Failed to save trip", "error");
+      } else showToast(data.error || "Failed to save delivery", "error");
     } catch {
       showToast("Error processing request", "error");
     } finally {
@@ -174,12 +174,12 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
           <div>
             <div className="erp-fleet-page-badge">
               <Truck className="w-3.5 h-3.5" />
-              {editId ? "Edit trip" : "New trip"}
+              {editId ? "Edit delivery" : "New delivery"}
             </div>
             <h1 className="erp-fleet-page-title">
               {editId
-                ? transportMeta?.transportNumber || "Edit transport trip"
-                : "Create transport trip"}
+                ? transportMeta?.transportNumber || "Edit delivery"
+                : "Create delivery"}
             </h1>
             <p className="erp-fleet-page-desc">
               Assign vehicle and driver, define the route, enter load details and freight charges.
@@ -188,7 +188,7 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
           <div className="erp-fleet-header-actions">
             <Link href="/transport">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <ChevronLeft className="w-4 h-4" /> Back to trips
+                <ChevronLeft className="w-4 h-4" /> Back to deliveries
               </Button>
             </Link>
           </div>
@@ -256,13 +256,13 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
                       value={form.driverPhone}
                       onChange={handleChange("driverPhone")}
                       className="erp-finance-input"
-                      placeholder="03xx-xxxxxxx"
+                      placeholder="(555) 555-0100"
                     />
                   </Field>
                   {selectedVehicle && (
                     <div className="erp-finance-field-span2 erp-trip-vehicle-hint">
                       Fleet vehicle <strong>{selectedVehicle.registrationNumber}</strong>
-                      {selectedVehicle.capacity ? ` · ${selectedVehicle.capacity} ton capacity` : ""}
+                      {selectedVehicle.capacity ? ` · ${selectedVehicle.capacity} lb capacity` : ""}
                     </div>
                   )}
                 </div>
@@ -333,7 +333,7 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
                 <section className="erp-finance-form-section">
                   <div className="erp-finance-section-label erp-trip-section-label">Load details</div>
                   <div className="erp-finance-form-grid">
-                    <Field label="Load weight (tons)">
+                    <Field label="Load weight (lb)">
                       <input
                         type="number"
                         step="0.01"
@@ -342,7 +342,7 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
                         className="erp-finance-input"
                       />
                     </Field>
-                    <Field label="Trip status">
+                    <Field label="Delivery status">
                       <select value={form.status} onChange={handleChange("status")} className="erp-finance-input">
                         {TRANSPORT_STATUSES.map((s) => (
                           <option key={s} value={s}>
@@ -357,7 +357,7 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
                         value={form.loadDescription}
                         onChange={handleChange("loadDescription")}
                         className="erp-finance-input"
-                        placeholder="Feed bags, raw material, etc."
+                        placeholder="Pallets, cases, equipment, etc."
                       />
                     </Field>
                   </div>
@@ -447,7 +447,7 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
                   <div className="erp-trip-review-block">
                     <p className="erp-trip-review-heading">Load</p>
                     <p className="erp-trip-review-line">
-                      {form.loadWeight ? `${form.loadWeight} tons` : "—"}
+                      {form.loadWeight ? `${form.loadWeight} lb` : "—"}
                       {form.loadDescription ? ` · ${form.loadDescription}` : ""}
                     </p>
                     <p className="erp-trip-review-line mt-1">
@@ -517,7 +517,7 @@ export default function TransportTripForm({ editId = null, initialTransport = nu
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        {editId ? "Update trip" : "Create trip"}
+                        {editId ? "Update delivery" : "Create delivery"}
                       </>
                     )}
                   </Button>

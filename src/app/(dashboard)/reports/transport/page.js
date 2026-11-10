@@ -75,8 +75,8 @@ export default function TransportReportPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: "Transport Report",
-    subtitle: `${filtered.length} trips`,
+    title: "Delivery Report",
+    subtitle: `${filtered.length} deliveries`,
     company: companySettings,
     columns: TRIP_PRINT_COLS,
     rows: filtered,
@@ -88,8 +88,8 @@ export default function TransportReportPage() {
     <ReportShell
       badge="Transport"
       badgeIcon={Truck}
-      title="Transport report"
-      description="Delivery trips, freight charges, and fleet utilization."
+      title="Delivery report"
+      description="Deliveries, freight charges, and fleet utilization."
       accentClass="text-acc-transport"
       filterBar={
         <ReportDateFilter
@@ -103,15 +103,15 @@ export default function TransportReportPage() {
         />
       }
       stats={[
-        { label: "Total trips", value: summary.count || 0, icon: Package },
+        { label: "Total deliveries", value: summary.count || 0, icon: Package },
         { label: "Total charges", value: formatCurrency(summary.totalCharges || 0), icon: DollarSign },
         { label: "Outstanding", value: formatCurrency(summary.outstanding || 0), icon: Wallet, valueClass: "text-red-600" },
         { label: "Active fleet", value: `${summary.activeVehicles || 0}/${summary.totalVehicles || 0}`, icon: Car },
       ]}
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
-      searchPlaceholder="Search trip, route, vehicle..."
-      registerTitle="Trip register"
+      searchPlaceholder="Search delivery, route, vehicle..."
+      registerTitle="Delivery register"
       registerMeta={`${filtered.length} trips`}
       onPrint={onPrint}
       onExportPdf={onExportPdf}
@@ -129,7 +129,7 @@ export default function TransportReportPage() {
           {vehicleUtilization.slice(0, 5).map((v) => (
             <div key={v.registrationNumber} className="erp-reports-category-chip is-transport">
               <span>{v.registrationNumber}</span>
-              <strong>{v.trips} trips</strong>
+              <strong>{v.trips} deliveries</strong>
               <em>{formatCurrency(v.totalCharges)}</em>
             </div>
           ))}
@@ -138,7 +138,7 @@ export default function TransportReportPage() {
       {loading ? (
         <div className="h-48 flex items-center justify-center text-slate-400">Loading...</div>
       ) : filtered.length === 0 ? (
-        <p className="text-sm text-slate-500 py-12 text-center">No trips found for the selected period.</p>
+        <p className="text-sm text-slate-500 py-12 text-center">No deliveries found for the selected period.</p>
       ) : (
         <div className="erp-accounts-grid-wrap">
           <div className="erp-accounts-grid-scroll">
@@ -164,7 +164,7 @@ export default function TransportReportPage() {
                     <td className="erp-lg-td text-xs">{row.originCity} → {row.destinationCity}</td>
                     <td className="erp-lg-td font-mono text-xs">{row.vehicle?.registrationNumber || row.vehicleNumber || "—"}</td>
                     <td className="erp-lg-td erp-lg-td-money font-bold">{formatCurrency(row.totalCharges)}</td>
-                    <td className="erp-lg-td text-xs">{formatQuantity(row.loadWeight, "ton")}</td>
+                    <td className="erp-lg-td text-xs">{formatQuantity(row.loadWeight, "lb")}</td>
                     <td className="erp-lg-td">
                       <span className={`erp-reports-status is-${row.status === "cancelled" ? "cancelled" : "ok"}`}>
                         {STATUS_LABELS[row.status] || row.status}

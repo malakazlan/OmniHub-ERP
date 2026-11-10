@@ -12,7 +12,7 @@ import { Tag, Plus, Loader2, ArrowLeft, Edit2, Trash2, Search, Boxes, AlertTrian
 
 const PRINT_COLS = [
   { key: "name", label: "Category", get: (r) => r.name, pdfWidth: 80 },
-  { key: "count", label: "Products", align: "right", pdfWidth: 40, get: (r) => String(r._count?.products || 0) },
+  { key: "count", label: "Items", align: "right", pdfWidth: 40, get: (r) => String(r._count?.products || 0) },
   { key: "id", label: "ID", align: "center", pdfWidth: 20, get: (r) => `#${r.id}` },
 ];
 
@@ -54,7 +54,7 @@ export default function CategoriesPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: "Product Categories",
+    title: "Item Categories",
     subtitle: `${filtered.length} categories`,
     company: companySettings,
     columns: PRINT_COLS,
@@ -113,12 +113,12 @@ export default function CategoriesPage() {
       <div className="erp-products-page space-y-5">
         <header className="erp-prod-page-header">
           <div>
-            <div className="erp-prod-page-badge"><Tag className="w-3.5 h-3.5" /> Product categories</div>
+            <div className="erp-prod-page-badge"><Tag className="w-3.5 h-3.5" /> Item categories</div>
             <h1 className="erp-prod-page-title">Category directory</h1>
-            <p className="erp-prod-page-desc">Organize feed types and product groups for your inventory register.</p>
+            <p className="erp-prod-page-desc">Organize item groups for your inventory register.</p>
           </div>
           <div className="erp-fin-header-actions">
-            <Link href="/products"><Button variant="outline" className="border-slate-200 text-slate-600"><ArrowLeft className="w-4 h-4" /> Products</Button></Link>
+            <Link href="/products"><Button variant="outline" className="border-slate-200 text-slate-600"><ArrowLeft className="w-4 h-4" /> Items</Button></Link>
             <Button onClick={openAddModal} className="bg-acc-products border-0"><Plus className="w-4 h-4" /> Add category</Button>
           </div>
         </header>
@@ -155,7 +155,7 @@ export default function CategoriesPage() {
                   <Boxes className="w-3.5 h-3.5" />
                   {cat._count?.products || 0} products
                 </div>
-                <Link href={`/products?category=${cat.id}`} className="erp-prod-category-link">View products →</Link>
+                <Link href={`/products?category=${cat.id}`} className="erp-prod-category-link">View items →</Link>
               </div>
             ))}
           </div>
@@ -166,7 +166,7 @@ export default function CategoriesPage() {
         <form onSubmit={handleSubmit} className="erp-finance-form">
           <div className="erp-finance-field">
             <label className="erp-finance-label">Category name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required autoFocus className="erp-finance-input" placeholder="e.g. Poultry feed" />
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required autoFocus className="erp-finance-input" placeholder="e.g. Beverages" />
           </div>
           <div className="erp-finance-form-actions">
             <button type="button" onClick={() => setModalOpen(false)} className="erp-finance-btn-ghost">Cancel</button>
@@ -196,7 +196,7 @@ export default function CategoriesPage() {
       </Modal>
 
       <div className="erp-register-print-host" aria-hidden>
-        <RegisterPrintView ref={printRef} title="Product Categories" company={companySettings} columns={PRINT_COLS} rows={filtered} />
+        <RegisterPrintView ref={printRef} title="Item Categories" company={companySettings} columns={PRINT_COLS} rows={filtered} />
       </div>
     </div>
   );

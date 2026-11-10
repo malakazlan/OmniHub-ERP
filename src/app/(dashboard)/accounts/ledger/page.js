@@ -41,9 +41,9 @@ import {
 const CATEGORY_LABELS = {
   cash: "Cash",
   bank: "Bank",
-  farmer: "Farmer",
-  company: "Company",
-  shop: "Shop",
+  farmer: "Farmer (legacy)",
+  company: "Customer / Vendor",
+  shop: "Shop (legacy)",
   salary: "Employee",
   transport: "Driver Accounts",
   vehicle: "Vehicle Accounts",
@@ -506,7 +506,7 @@ export default function GeneralLedgerPage() {
         company={companySettings}
         open={receiptOpen}
         onClose={() => { setReceiptOpen(false); setPurchaseDoc(null); }}
-        title="Purchase bill"
+        title="Vendor bill"
         whatsappPhone={
           getPurchaseWhatsAppPhone(purchaseDoc) ||
           account?.whatsappNumber ||

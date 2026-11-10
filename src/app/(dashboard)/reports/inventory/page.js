@@ -127,7 +127,7 @@ export default function InventoryReportPage() {
       labelColumn: "cost",
     }],
     filename: `inventory-report-${new Date().toISOString().slice(0, 10)}.pdf`,
-    emptyMessage: "No products to export",
+    emptyMessage: "No items to export",
   });
 
   if (loading && products.length === 0) {
@@ -148,12 +148,12 @@ export default function InventoryReportPage() {
               Inventory report
             </div>
             <h1 className="erp-prod-page-title">Stock & valuation</h1>
-            <p className="erp-prod-page-desc">Live stock levels, cost valuation, and low-stock alerts across all active products.</p>
+            <p className="erp-prod-page-desc">Live stock levels, cost valuation, and low-stock alerts across all active items.</p>
           </div>
           <div className="erp-fin-header-actions">
             <Link href="/products">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <Package className="w-4 h-4" /> Products
+                <Package className="w-4 h-4" /> Items
               </Button>
             </Link>
             <Link href="/reports">
@@ -168,7 +168,7 @@ export default function InventoryReportPage() {
           <div className="erp-prod-stat">
             <div className="erp-prod-stat-icon"><Boxes className="w-4 h-4" /></div>
             <div>
-              <p className="erp-prod-stat-label">Active products</p>
+              <p className="erp-prod-stat-label">Active items</p>
               <p className="erp-prod-stat-value">{summary.count}</p>
             </div>
           </div>
@@ -193,7 +193,7 @@ export default function InventoryReportPage() {
             <Search className="erp-fin-search-icon" />
             <input
               type="text"
-              placeholder="Search product, SKU, category..."
+              placeholder="Search item, SKU, category..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -221,7 +221,7 @@ export default function InventoryReportPage() {
             loading={loading}
             mode="inventory"
             onRowClick={(row) => router.push(`/products/${row.id}`)}
-            footerLabel={`${filtered.length} products`}
+            footerLabel={`${filtered.length} items`}
             footerValue={formatCurrency(filteredTotal)}
           />
         </div>

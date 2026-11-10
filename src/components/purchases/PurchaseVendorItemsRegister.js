@@ -41,7 +41,7 @@ export default function PurchaseVendorItemsRegister({ items = [], loading = fals
               <thead>
                 <tr>
                   <th className="erp-pv-g-th col-num">#</th>
-                  <th className="erp-pv-g-th col-product">Product</th>
+                  <th className="erp-pv-g-th col-product">Item</th>
                   <th className="erp-pv-g-th col-sku">SKU</th>
                   <th className="erp-pv-g-th col-num-sm">Times</th>
                   <th className="erp-pv-g-th col-num">Qty</th>
@@ -79,7 +79,7 @@ export default function PurchaseVendorItemsRegister({ items = [], loading = fals
               <tfoot>
                 <tr className="erp-pv-g-foot">
                   <td className="erp-pv-g-td" colSpan={4}>
-                    <strong>{items.length}</strong> products
+                    <strong>{items.length}</strong> items
                   </td>
                   <td className="erp-pv-g-td col-num is-qty">
                     {totalQty.toLocaleString(undefined, { maximumFractionDigits: 2 })}

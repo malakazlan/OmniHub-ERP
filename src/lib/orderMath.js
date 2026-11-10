@@ -25,7 +25,7 @@ export function normalizeItems(items) {
       productId: parseInt(item.productId, 10),
       productName: item.productName || "",
       quantity,
-      unit: item.unit || "bag",
+      unit: item.unit || "ea",
       rate,
       amount,
     };

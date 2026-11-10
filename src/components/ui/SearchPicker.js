@@ -20,7 +20,7 @@ export default function SearchPicker({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(() => typeof document !== "undefined");
   const [menuRect, setMenuRect] = useState(null);
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
@@ -34,15 +34,14 @@ export default function SearchPicker({
     return match ? getOptionLabel(match) : "";
   }, [valueId, options, getOptionValue, getOptionLabel]);
 
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!valueId) {
-      setQuery("");
-    } else if (selectedLabel) {
-      setQuery(selectedLabel);
-    }
-  }, [valueId, selectedLabel]);
+  // Keep the typed query in step with the selected value (adjust-state-on-prop-change pattern).
+  const syncKey = `${valueId}|${selectedLabel}`;
+  const [syncedKey, setSyncedKey] = useState(syncKey);
+  if (syncedKey !== syncKey) {
+    setSyncedKey(syncKey);
+    if (!valueId) setQuery("");
+    else if (selectedLabel) setQuery(selectedLabel);
+  }
 
   const updateMenuRect = useCallback(() => {
     const el = inputRef.current;
@@ -110,10 +109,10 @@ export default function SearchPicker({
               maxHeight: menuRect.maxHeight,
               zIndex: 9999,
             }}
-            className="overflow-auto rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-300/40 text-sm ring-1 ring-slate-100"
+            className="erp-shell-search-dropdown overflow-auto text-[13px] py-1"
           >
             {filtered.length === 0 ? (
-              <li className="px-3 py-3 text-slate-400 text-xs text-center">{emptyMessage}</li>
+              <li className="px-3 py-3 text-[var(--ink-3)] text-xs text-center">{emptyMessage}</li>
             ) : (
               filtered.map((o) => {
                 const id = getOptionValue(o);
@@ -128,11 +127,9 @@ export default function SearchPicker({
                         setQuery(getOptionLabel(o));
                         setOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-2.5 hover:bg-sky-50 cursor-pointer border-b border-slate-50 last:border-0 transition-colors ${
-                        active ? "bg-sky-50 font-semibold text-sky-900" : "text-slate-800"
-                      }`}
+                      className={`oh-search-row ${active ? "is-active font-medium" : ""}`}
                     >
-                      {renderOption ? renderOption(o) : getOptionLabel(o)}
+                      <span className="flex-1 min-w-0">{renderOption ? renderOption(o) : getOptionLabel(o)}</span>
                     </button>
                   </li>
                 );
@@ -146,18 +143,16 @@ export default function SearchPicker({
   return (
     <div ref={wrapRef} className="relative">
       {label && !hideLabel && (
-        <p className={`text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-1.5 ${labelClassName}`}>
+        <p className={`text-[12px] font-medium text-[var(--ink-2)] mb-1.5 ${labelClassName}`}>
           {label}
         </p>
       )}
-      <div
-        className={`search-picker-field flex items-stretch w-full min-h-[38px] rounded-lg border border-[#e2e8f0] bg-white transition-[border-color,box-shadow] focus-within:border-[#059669] focus-within:shadow-[0_0_0_2px_rgba(5,150,105,0.12)] ${fieldClassName}`}
-      >
+      <div className={`search-picker-field flex items-stretch w-full ${fieldClassName}`}>
         <span
-          className="flex shrink-0 items-center justify-center w-10 text-slate-400 pointer-events-none"
+          className="flex shrink-0 items-center justify-center w-9 text-[var(--ink-3)] pointer-events-none"
           aria-hidden
         >
-          <Search className="w-4 h-4" strokeWidth={2} />
+          <Search className="w-3.5 h-3.5" strokeWidth={2} />
         </span>
         <input
           ref={inputRef}
@@ -173,7 +168,7 @@ export default function SearchPicker({
             updateMenuRect();
           }}
           placeholder={placeholder}
-          className="flex-1 min-w-0 border-0 bg-transparent py-2.5 pr-3 pl-0 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+          className="flex-1 min-w-0 border-0 bg-transparent py-0 pr-3 pl-0 text-[13px] text-[var(--ink)] outline-none placeholder:text-[var(--ink-3)]"
           autoComplete="off"
         />
       </div>

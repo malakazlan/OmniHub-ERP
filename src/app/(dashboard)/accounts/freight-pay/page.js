@@ -12,7 +12,8 @@ import {
 } from "@/lib/purchaseFreightSettlement";
 import { Truck, Loader2, BookOpen, ArrowLeft, Sprout, Building2, MinusCircle } from "lucide-react";
 
-const VENDOR_CATEGORIES = new Set(["farmer", "company"]);
+// Vendor ledger accounts live under the "company" category (farmer accounts are legacy and hidden).
+const VENDOR_CATEGORIES = new Set(["company"]);
 
 export default function FreightPayPage() {
   const { showToast } = useToast();
@@ -94,7 +95,7 @@ export default function FreightPayPage() {
     e.preventDefault();
     const deduct = parseNumber(amount);
     if (!vendorAccountId) {
-      showToast("Select a farmer or company account", "warning");
+      showToast("Select a vendor account", "warning");
       return;
     }
     if (deduct <= 0) {
@@ -143,15 +144,15 @@ export default function FreightPayPage() {
         <header className="erp-ac-page-header">
           <div className="erp-ac-page-header-main">
             <Link href="/accounts" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-teal-700 mb-2">
-              <ArrowLeft className="w-3.5 h-3.5" /> All Accounts
+              <ArrowLeft className="w-3.5 h-3.5" /> Chart of Accounts
             </Link>
             <div className="erp-ac-page-badge">
               <Truck className="w-3.5 h-3.5" />
-              Freight deduction
+              Freight settlement
             </div>
-            <h1 className="erp-ac-page-title">Deduct purchase freight</h1>
+            <h1 className="erp-ac-page-title">Freight settlement</h1>
             <p className="erp-ac-page-desc">
-              Select a farmer or company account, review purchase bills with transport charges (oldest first), and deduct freight from the supplier account — no cash or bank payment.
+              Select a vendor account, review bills with delivery charges (oldest first), and settle freight against the vendor account — no cash or bank payment.
             </p>
           </div>
         </header>
@@ -160,7 +161,7 @@ export default function FreightPayPage() {
           <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-4">
             <div>
               <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block">
-                Supplier account (farmer or company)
+                Vendor account
               </label>
               {loadingAccounts ? (
                 <div className="flex items-center gap-2 text-slate-400 py-2">
@@ -176,7 +177,7 @@ export default function FreightPayPage() {
                   {vendorAccounts.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.name}
-                      {a.code ? ` · ${a.code}` : ""} · {a.category}
+                      {a.code ? ` · ${a.code}` : ""} · {a.category === "company" ? "vendor" : a.category}
                     </option>
                   ))}
                 </select>
@@ -202,7 +203,7 @@ export default function FreightPayPage() {
           <section className="rounded-xl border border-amber-200/80 bg-gradient-to-br from-amber-50/60 via-white to-white p-4 sm:p-5 shadow-sm">
             <div className="flex items-start justify-between gap-3 mb-4">
               <div>
-                <h2 className="text-sm font-bold text-slate-900">Purchase bills — freight due</h2>
+                <h2 className="text-sm font-bold text-slate-900">Vendor bills — freight due</h2>
                 <p className="text-xs text-slate-500 mt-0.5">Oldest first — deduction clears freight FIFO</p>
               </div>
               {bills.length > 0 && (
@@ -321,7 +322,7 @@ export default function FreightPayPage() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 className="input-field w-full text-sm"
-                placeholder="e.g. Lahore trip freight"
+                placeholder="e.g. Chicago delivery freight"
               />
             </div>
 

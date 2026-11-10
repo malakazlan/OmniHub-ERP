@@ -2,9 +2,7 @@ import { formatCurrency, formatDate } from "@/lib/formatters";
 
 export const LEDGER_CATEGORY_OPTIONS = [
   { value: "", label: "All categories" },
-  { value: "farmer", label: "Farmers" },
-  { value: "company", label: "Companies" },
-  { value: "shop", label: "Shops" },
+  { value: "company", label: "Customers & Vendors" },
   { value: "cash", label: "Cash" },
   { value: "bank", label: "Bank" },
   { value: "transport", label: "Drivers" },
@@ -14,8 +12,8 @@ export const LEDGER_CATEGORY_OPTIONS = [
 
 export const LEDGER_ENTRY_TYPE_OPTIONS = [
   { value: "", label: "All types" },
-  { value: "purchase", label: "Purchases" },
-  { value: "sale", label: "Sales" },
+  { value: "purchase", label: "Bills" },
+  { value: "sale", label: "Invoices" },
   { value: "payment", label: "Payments" },
   { value: "other", label: "Other" },
 ];
@@ -201,7 +199,7 @@ export function downloadLedgerCsv({
 }
 
 export function ledgerPrintTitle(account, companyName) {
-  const parts = [companyName || "Warraich Traders", "General Ledger"];
+  const parts = [companyName || "Omni Hub", "General Ledger"];
   if (account?.name) parts.push(account.name);
   return parts.join(" — ");
 }

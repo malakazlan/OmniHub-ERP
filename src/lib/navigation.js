@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Package,
   ShoppingCart, DollarSign, Truck, BookOpen, Users,
   BarChart3, Settings, Receipt, Wallet2, BookText,
-  Car, ArrowRightLeft, Heart, Handshake,
+  Car, ArrowRightLeft, Building2, Factory,
 } from "lucide-react";
 
 export const NAV_SECTIONS = [
@@ -13,20 +13,26 @@ export const NAV_SECTIONS = [
     ],
   },
   {
-    title: "Purchase & Sales",
+    title: "Sales",
     items: [
-      { slug: "purchases", label: "Purchases", href: "/purchases", icon: ShoppingCart, keywords: "buy procurement" },
-      { slug: "purchases", label: "Purchase Vendors", href: "/purchases/vendors", icon: Users, keywords: "supplier farmer items quantity vendor" },
-      { slug: "sales", label: "Sales", href: "/sales", icon: DollarSign, keywords: "sell invoices" },
-      { slug: "orders", label: "Orders", href: "/orders", icon: Receipt, keywords: "customer orders quotes" },
-      { slug: "dealers", label: "Dealers", href: "/dealers", icon: Handshake, keywords: "dealer distributor shops pending receivable" },
-      { slug: "accounts", label: "Freight Pay", href: "/accounts/freight-pay", icon: Truck, keywords: "transport freight purchase bills deduct" },
+      { slug: "orders", label: "Sales Orders", href: "/orders", icon: Receipt, keywords: "customer orders quotes sales order" },
+      { slug: "sales", label: "Invoices", href: "/sales", icon: DollarSign, keywords: "sell invoices billing receivables" },
+      { slug: "companies", label: "Customers", href: "/companies?type=customers", icon: Building2, keywords: "customers buyers accounts receivable" },
     ],
   },
   {
-    title: "Accounts",
+    title: "Purchasing",
     items: [
-      { slug: "accounts", label: "All Accounts", href: "/accounts", icon: BookOpen, keywords: "coa ledger balances register parties" },
+      { slug: "purchases", label: "Purchase Orders", href: "/purchases", icon: ShoppingCart, keywords: "buy procurement bills payables" },
+      { slug: "purchases", label: "Vendors", href: "/purchases/vendors", icon: Factory, keywords: "supplier vendor items quantity" },
+      { slug: "companies", label: "Vendors Directory", href: "/companies?type=vendors", icon: Building2, keywords: "vendors suppliers accounts payable" },
+      { slug: "accounts", label: "Freight Settlement", href: "/accounts/freight-pay", icon: Truck, keywords: "delivery freight purchase bills deduct settlement" },
+    ],
+  },
+  {
+    title: "Accounting",
+    items: [
+      { slug: "accounts", label: "Chart of Accounts", href: "/accounts", icon: BookOpen, keywords: "coa ledger balances register parties accounts" },
       { slug: "accounts", label: "General Ledger", href: "/accounts/ledger", icon: BookOpen, keywords: "transactions pay receive" },
     ],
   },
@@ -34,32 +40,31 @@ export const NAV_SECTIONS = [
     title: "Finance",
     items: [
       { slug: "accounts", label: "Payments", href: "/accounts/payments", icon: Receipt, keywords: "cash bank transfer" },
-      { slug: "accounts", label: "Money Transfer", href: "/accounts/transfers", icon: ArrowRightLeft, keywords: "cash bank internal transfer deposit" },
-      { slug: "accounts", label: "Donations", href: "/accounts/donations", icon: Heart, keywords: "charity zakat sadqa cash donation" },
+      { slug: "accounts", label: "Transfers", href: "/accounts/transfers", icon: ArrowRightLeft, keywords: "cash bank internal transfer deposit" },
       { slug: "accounts", label: "Expenses", href: "/accounts/expenses", icon: Wallet2, keywords: "business expenses" },
       { slug: "accounts", label: "Journal Entries", href: "/accounts/journal", icon: BookText, keywords: "double entry adjustments" },
     ],
   },
   {
-    title: "Vehicle Management",
+    title: "Logistics",
     items: [
-      { slug: "transport", label: "Fleet & Vehicles", href: "/transport/vehicles", icon: Car, keywords: "fleet trucks registration expenses" },
-      { slug: "transport", label: "Transport Trips", href: "/transport", icon: Truck, keywords: "delivery freight logistics" },
+      { slug: "transport", label: "Fleet", href: "/transport/vehicles", icon: Car, keywords: "fleet trucks vehicles registration expenses" },
+      { slug: "transport", label: "Deliveries", href: "/transport", icon: Truck, keywords: "delivery freight logistics trips" },
     ],
   },
   {
     title: "Inventory",
     items: [
-      { slug: "products", label: "Products", href: "/products", icon: Package, keywords: "stock feed inventory" },
+      { slug: "products", label: "Items", href: "/products", icon: Package, keywords: "stock items items sku inventory" },
       { slug: "products", label: "Inventory Report", href: "/reports/inventory", icon: BarChart3, keywords: "stock levels valuation movements report" },
     ],
   },
   {
     title: "Administration",
     items: [
-      { slug: "hr", label: "HR", href: "/hr", icon: Users, keywords: "employees payroll attendance" },
+      { slug: "hr", label: "Employees & Payroll", href: "/hr", icon: Users, keywords: "employees payroll attendance hr" },
       { slug: "reports", label: "Reports", href: "/reports", icon: BarChart3, keywords: "analytics profit loss" },
-      { slug: "settings", label: "Owner Withdrawals", href: "/admin/withdrawals", icon: Wallet2, keywords: "owner personal drawings admin" },
+      { slug: "settings", label: "Owner Draws", href: "/admin/withdrawals", icon: Wallet2, keywords: "owner personal draws withdrawals admin" },
       { slug: "settings", label: "Settings", href: "/settings", icon: Settings, keywords: "users cities company profile" },
     ],
   },
@@ -67,37 +72,34 @@ export const NAV_SECTIONS = [
 
 /** Primary modules — quick links in the app header */
 export const HEADER_QUICK_LINKS = [
-  { slug: "purchases", label: "Purchase", href: "/purchases", tone: "purchases" },
-  { slug: "sales", label: "Sale", href: "/sales", tone: "sales" },
+  { slug: "purchases", label: "Purchase Orders", href: "/purchases", tone: "purchases" },
+  { slug: "sales", label: "Invoices", href: "/sales", tone: "sales" },
   { slug: "accounts", label: "Ledger", href: "/accounts/ledger", tone: "ledger" },
   { slug: "accounts", label: "Accounts", href: "/accounts", tone: "accounts" },
 ];
 
 /** Dashboard shortcuts — flat list (no groups) */
 export const DASHBOARD_SHORTCUTS = [
-  { slug: "farmers", label: "Farmers", href: "/farmers" },
-  { slug: "companies", label: "Companies", href: "/companies" },
-  { slug: "shops", label: "Shops", href: "/shops" },
-  { slug: "dealers", label: "Dealers", href: "/dealers" },
-  { slug: "products", label: "Products", href: "/products" },
+  { slug: "companies", label: "Customers", href: "/companies?type=customers" },
+  { slug: "companies", label: "Vendors", href: "/companies?type=vendors" },
+  { slug: "products", label: "Items", href: "/products" },
   { slug: "products", label: "Inventory Report", href: "/reports/inventory" },
-  { slug: "purchases", label: "Purchases", href: "/purchases" },
-  { slug: "purchases", label: "Purchase Vendors", href: "/purchases/vendors" },
-  { slug: "sales", label: "Sales", href: "/sales" },
-  { slug: "orders", label: "Orders", href: "/orders" },
-  { slug: "accounts", label: "Freight Pay", href: "/accounts/freight-pay" },
-  { slug: "transport", label: "Transport Trips", href: "/transport" },
-  { slug: "transport", label: "Fleet & Vehicles", href: "/transport/vehicles" },
-  { slug: "accounts", label: "All Accounts", href: "/accounts" },
+  { slug: "purchases", label: "Purchase Orders", href: "/purchases" },
+  { slug: "purchases", label: "Vendor Activity", href: "/purchases/vendors" },
+  { slug: "sales", label: "Invoices", href: "/sales" },
+  { slug: "orders", label: "Sales Orders", href: "/orders" },
+  { slug: "accounts", label: "Freight Settlement", href: "/accounts/freight-pay" },
+  { slug: "transport", label: "Deliveries", href: "/transport" },
+  { slug: "transport", label: "Fleet", href: "/transport/vehicles" },
+  { slug: "accounts", label: "Chart of Accounts", href: "/accounts" },
   { slug: "accounts", label: "General Ledger", href: "/accounts/ledger" },
   { slug: "accounts", label: "Payments", href: "/accounts/payments" },
-  { slug: "accounts", label: "Money Transfer", href: "/accounts/transfers" },
-  { slug: "accounts", label: "Donations", href: "/accounts/donations" },
+  { slug: "accounts", label: "Transfers", href: "/accounts/transfers" },
   { slug: "accounts", label: "Expenses", href: "/accounts/expenses" },
   { slug: "accounts", label: "Journal", href: "/accounts/journal" },
-  { slug: "hr", label: "HR", href: "/hr" },
+  { slug: "hr", label: "Employees & Payroll", href: "/hr" },
   { slug: "reports", label: "Reports", href: "/reports" },
-  { slug: "settings", label: "Owner Withdrawals", href: "/admin/withdrawals" },
+  { slug: "settings", label: "Owner Draws", href: "/admin/withdrawals" },
   { slug: "settings", label: "Settings", href: "/settings" },
 ];
 
@@ -211,6 +213,11 @@ export const NAV_THEME = {
 };
 
 export function isNavItemActive(pathname, href) {
+  // Query-string views (e.g. /companies?type=customers) match on their path only.
+  if (href.includes("?")) {
+    const base = href.split("?")[0];
+    return pathname === base || pathname.startsWith(`${base}/`);
+  }
   if (href === "/accounts") {
     return pathname === "/accounts";
   }

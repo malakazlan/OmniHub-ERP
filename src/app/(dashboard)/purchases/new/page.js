@@ -21,6 +21,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { formatCurrency, parseNumber } from "@/lib/formatters";
+import { isVendorCompany } from "@/lib/saleCustomer";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
 import SearchPicker from "@/components/ui/SearchPicker";
 import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
@@ -49,8 +50,8 @@ function Money({ value, className = "", muted = false, strong = false, placehold
   if (emptyIfZero && num === 0) {
     return <span className={`text-sm text-slate-400 tabular-nums ${className}`}>{placeholder}</span>;
   }
-  const formatted = num.toLocaleString("en-PK", {
-    minimumFractionDigits: 0,
+  const formatted = num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
   return (
@@ -100,7 +101,7 @@ export default function NewPurchasePage() {
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [vendorType, setVendorType] = useState("farmer");
+  const [vendorType, setVendorType] = useState("company");
   const [farmers, setFarmers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
@@ -248,7 +249,9 @@ export default function NewPurchasePage() {
     setForm((f) => applyDefaultCashAccount(f, defaultCashAccountId));
   }, [defaultCashAccountId, editId, isCorrection]);
 
-  const vendorOptions = vendorType === "farmer" ? farmers : companies;
+  const vendorOptions = vendorType === "farmer" ? farmers : companies.filter(isVendorCompany);
+  // Farmer vendors are legacy; the tab only appears when editing an old bill that used one.
+  const legacyVendorType = vendorType === "farmer";
 
   const selectedVendor = useMemo(
     () => vendorOptions.find((v) => String(v.id) === String(form.vendorId)),
@@ -314,7 +317,7 @@ export default function NewPurchasePage() {
 
   const addToCart = () => {
     if (!lineEntry.productId) {
-      showToast("Select a product", "warning");
+      showToast("Select a item", "warning");
       return;
     }
     if (lineQty <= 0) {
@@ -327,7 +330,7 @@ export default function NewPurchasePage() {
       {
         productId: lineEntry.productId,
         productName: product?.name || "",
-        unit: product?.unit || "kg",
+        unit: product?.unit || "ea",
         quantity: lineEntry.quantity,
         rate: lineEntry.rate,
         amount: lineTotal,
@@ -365,7 +368,7 @@ export default function NewPurchasePage() {
       return;
     }
     if (!form.vendorId) {
-      showToast(`Please select a ${vendorType}`, "warning");
+      showToast(`Please select a ${vendorType === "company" ? "vendor" : vendorType}`, "warning");
       return;
     }
     const vendorName = selectedVendor?.name?.trim();
@@ -430,7 +433,7 @@ export default function NewPurchasePage() {
 
   const handleSubmit = async (status) => {
     if (!form.vendorId) {
-      showToast(`Please select a ${vendorType}`, "warning");
+      showToast(`Please select a ${vendorType === "company" ? "vendor" : vendorType}`, "warning");
       return;
     }
     const vendorName = selectedVendor?.name?.trim();
@@ -445,7 +448,7 @@ export default function NewPurchasePage() {
 
     const notesParts = [];
     if (form.supplierInvoiceRef.trim()) {
-      notesParts.push(`Supplier invoice: ${form.supplierInvoiceRef.trim()}`);
+      notesParts.push(`Vendor invoice: ${form.supplierInvoiceRef.trim()}`);
     }
     if (form.notes.trim()) notesParts.push(form.notes.trim());
     const notes = notesParts.join("\n") || null;
@@ -533,17 +536,17 @@ export default function NewPurchasePage() {
         description={
           isCorrection
             ? "Update line items, charges, or payment. Stock and ledger will be re-posted."
-            : "Supplier, items, settlement, and payment."
+            : "Vendor, items, settlement, and payment."
         }
         icon={ShoppingCart}
         breadcrumbs={
           isCorrection
             ? [
-                { label: "Purchases", href: "/purchases" },
+                { label: "Purchase Orders", href: "/purchases" },
                 { label: correctionBillNumber || "Bill", href: correctId ? `/purchases/${correctId}` : "/purchases" },
                 { label: "Correct" },
               ]
-            : [{ label: "Purchases", href: "/purchases" }, { label: isEdit ? "Edit" : "New bill" }]
+            : [{ label: "Purchase Orders", href: "/purchases" }, { label: isEdit ? "Edit" : "New bill" }]
         }
         actions={
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-2 w-full sm:w-auto">
@@ -584,7 +587,7 @@ export default function NewPurchasePage() {
                   value={correctionReason}
                   onChange={(e) => setCorrectionReason(e.target.value)}
                   rows={2}
-                  placeholder="e.g. Wrong quantity entered for Product X"
+                  placeholder="e.g. Wrong quantity entered for Item X"
                   className="input-field w-full text-sm bg-white/90 border-amber-200/80 focus:border-amber-400"
                 />
               </div>
@@ -593,15 +596,16 @@ export default function NewPurchasePage() {
         </div>
       )}
 
-      {/* Supplier */}
+      {/* Vendor */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <DocSection title="Supplier" className="overflow-visible">
+        <DocSection title="Vendor" className="overflow-visible">
           <div className="erp-doc-body space-y-4 overflow-visible">
             <div
-              className="erp-vendor-switch grid grid-cols-2 gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60"
+              className={`erp-vendor-switch grid ${legacyVendorType ? "grid-cols-2" : "grid-cols-1"} gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60`}
               role="tablist"
-              aria-label="Supplier type"
+              aria-label="Vendor type"
             >
+              {legacyVendorType && (
               <button
                 type="button"
                 role="tab"
@@ -622,8 +626,9 @@ export default function NewPurchasePage() {
                   }`}
                   strokeWidth={2.25}
                 />
-                Farmer
+                Farmer (legacy)
               </button>
+              )}
               <button
                 type="button"
                 role="tab"
@@ -644,12 +649,12 @@ export default function NewPurchasePage() {
                   }`}
                   strokeWidth={2.25}
                 />
-                Company
+                Vendor
               </button>
             </div>
             <SearchPicker
-              label="Supplier / vendor *"
-              placeholder={`Search ${vendorType === "farmer" ? "farmers" : "companies"}…`}
+              label="Vendor *"
+              placeholder={`Search ${vendorType === "farmer" ? "farmers" : "vendors"}…`}
               options={vendorOptions}
               value={form.vendorId}
               onChange={(id) => setForm({ ...form, vendorId: id })}
@@ -697,10 +702,10 @@ export default function NewPurchasePage() {
           </div>
         </DocSection>
 
-        <DocSection title="Reference & transport">
+        <DocSection title="Reference & delivery">
           <div className="erp-doc-body space-y-3.5">
             <div>
-              <FieldLabel>Supplier invoice / reference</FieldLabel>
+              <FieldLabel>Vendor invoice / reference</FieldLabel>
               <input
                 type="text"
                 value={form.supplierInvoiceRef}
@@ -734,7 +739,7 @@ export default function NewPurchasePage() {
           <table className="erp-line-table w-full min-w-[760px]">
             <thead>
               <tr>
-                <th className="text-left pl-4">Product</th>
+                <th className="text-left pl-4">Item</th>
                 <th className="text-right w-[120px]">Qty</th>
                 <th className="text-right w-[110px]">Rate</th>
                 <th className="text-right w-[110px]">Cost rate</th>
@@ -748,7 +753,7 @@ export default function NewPurchasePage() {
                   <SearchPicker
                     hideLabel
                     label="Product"
-                    placeholder="Search product or SKU…"
+                    placeholder="Search item or SKU…"
                     options={products}
                     value={lineEntry.productId}
                     onChange={onLineProductChange}
@@ -877,7 +882,7 @@ export default function NewPurchasePage() {
         </div>
         {cartItems.length === 0 ? (
           <p className="text-center py-8 text-sm text-slate-400 border-t border-blue-100">
-            Add products using the row above. Cost rate includes shared charges ÷ total quantity.
+            Add items using the row above. Cost rate includes shared charges ÷ total quantity.
           </p>
         ) : null}
       </DocSection>

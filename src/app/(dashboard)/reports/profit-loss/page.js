@@ -97,14 +97,14 @@ export default function ProfitLossReportPage() {
             <div className="h-72 w-full px-4 pb-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} tickLine={false} />
-                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--line)" />
+                  <XAxis dataKey="month" stroke="var(--ink-3)" fontSize={12} tickLine={false} />
+                  <YAxis stroke="var(--ink-3)" fontSize={12} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#0f172a" }}
+                    contentStyle={{ backgroundColor: "var(--surface)", border: "1px solid var(--line)", borderRadius: "10px", color: "var(--ink)" }}
                     formatter={(value) => formatCurrency(value)}
                   />
-                  <Bar dataKey="total" fill="#4338CA" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="total" fill="var(--brand)" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

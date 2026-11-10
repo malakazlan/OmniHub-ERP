@@ -173,7 +173,7 @@ export default function SalaryClearancePanel({
           Pay clearance
         </button>
         <button type="button" className={`erp-sc-view-tab${view === "slip" ? " is-active" : ""}`} onClick={() => setView("slip")}>
-          Salary slip preview
+          Pay stub preview
         </button>
       </div>
 
@@ -207,7 +207,7 @@ export default function SalaryClearancePanel({
                 <thead>
                   <tr>
                     <th>Description</th>
-                    <th className="is-right">Amount (Rs.)</th>
+                    <th className="is-right">Amount ($)</th>
                   </tr>
                 </thead>
                 <tbody>

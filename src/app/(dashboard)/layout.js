@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
-import { Loader2, Wheat } from "lucide-react";
+import { Loader2, Boxes } from "lucide-react";
 
-function AuthLoadingScreen({ message = "Loading Warraich Traders…" }) {
+function AuthLoadingScreen({ message = "Loading Omni Hub…" }) {
   return (
     <div className="min-h-screen bg-[var(--bg-app)] flex flex-col items-center justify-center">
-      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0F52BA] to-[#0B3E8F] flex items-center justify-center mb-4 shadow-lg shadow-blue-900/15">
-        <Wheat className="w-6 h-6 text-white" />
+      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br bg-[var(--brand)] flex items-center justify-center mb-4 shadow-lg shadow-blue-900/15">
+        <Boxes className="w-6 h-6 text-white" />
       </div>
       <Loader2 className="w-6 h-6 animate-spin text-[var(--brand-primary)] mb-2" />
       <p className="text-sm text-[var(--text-secondary)] font-medium">{message}</p>

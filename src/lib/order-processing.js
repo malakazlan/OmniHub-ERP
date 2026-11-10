@@ -186,7 +186,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
   if (cashAmt > 0) {
     cashAccountId = await resolveDefaultCashAccountId(tx, cashAccountId);
     if (!cashAccountId) {
-      throw new Error("No active cash account — register one under All Accounts → Cash");
+      throw new Error("No active cash account — register one under Chart of Accounts → Cash");
     }
     const posted = await tx.ledgerEntry.aggregate({
       where: {
@@ -214,7 +214,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
   if (bankAmt > 0) {
     bankAccountId = await resolveDefaultBankAccountId(tx, bankAccountId);
     if (!bankAccountId) {
-      throw new Error("No active bank account — register one under All Accounts → Bank");
+      throw new Error("No active bank account — register one under Chart of Accounts → Bank");
     }
     const posted = await tx.ledgerEntry.aggregate({
       where: {
@@ -245,7 +245,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
 export async function applyPurchaseStockAndLedger(tx, purchase, items) {
   for (const item of items) {
     const product = await tx.product.findUnique({ where: { id: item.productId } });
-    if (!product) throw new Error(`Product ${item.productId} not found`);
+    if (!product) throw new Error(`Item ${item.productId} not found`);
 
     const previousStock = product.currentStock;
     const newStock = previousStock + item.quantity;
@@ -370,7 +370,7 @@ export async function applyPurchaseAdditionalPayment(tx, purchase, { cashDelta =
 export async function applySaleStockAndLedger(tx, sale, items) {
   for (const item of items) {
     const product = await tx.product.findUnique({ where: { id: item.productId } });
-    if (!product) throw new Error(`Product ${item.productId} not found`);
+    if (!product) throw new Error(`Item ${item.productId} not found`);
 
     if (product.currentStock < item.quantity) {
       throw new Error(

@@ -194,7 +194,7 @@ export default function CitiesSettingsPage() {
               onChange={(e) => setName(e.target.value)}
               required
               className="input-field"
-              placeholder="e.g. Lahore"
+              placeholder="e.g. Columbus"
             />
           </div>
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">

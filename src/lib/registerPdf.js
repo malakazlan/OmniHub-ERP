@@ -54,7 +54,7 @@ export function downloadRegisterPdf({
   showRowNum = true,
 }) {
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const companyName = company?.company_name || "Warraich Traders";
+  const companyName = company?.company_name || "Omni Hub";
   const companyLines = formatPrintCompanyMeta(company);
   const tableW = PAGE_W - MARGIN * 2;
   const layout = layoutRegisterColumns(columns, tableW);

@@ -73,7 +73,7 @@ export default function SalesReportPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: "Sales Report",
+    title: "Invoice Report",
     subtitle: `${filtered.length} invoices · ${from || to ? `${from || "…"} to ${to || "…"}` : "All dates"}`,
     company: companySettings,
     columns: PRINT_COLS,
@@ -86,7 +86,7 @@ export default function SalesReportPage() {
     <ReportShell
       badge="Sales"
       badgeIcon={TrendingUp}
-      title="Sales report"
+      title="Invoice report"
       description="Invoice register with revenue, collections, and outstanding balances."
       accentClass="text-acc-sales"
       filterBar={

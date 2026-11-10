@@ -65,7 +65,7 @@ export default function RegisterVehicleModal({ isOpen, onClose, onSuccess, vehic
       <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-semibold text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer">
         Cancel
       </button>
-      <Button type="submit" form="fleet-register-form" disabled={submitting} className="bg-[#2563EB] hover:bg-blue-700 border-0 min-w-[120px]">
+      <Button type="submit" form="fleet-register-form" disabled={submitting} className="min-w-[120px]">
         {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : isEdit ? "Save changes" : "Register vehicle"}
       </Button>
     </div>
@@ -95,7 +95,7 @@ export default function RegisterVehicleModal({ isOpen, onClose, onSuccess, vehic
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Capacity (tons)</label>
+            <label className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Capacity (lb)</label>
             <input type="number" step="any" className="input-field w-full" value={form.capacity} onChange={(e) => set("capacity", e.target.value)} />
           </div>
           {[

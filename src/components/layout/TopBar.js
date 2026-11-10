@@ -4,14 +4,76 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
+import { useTheme } from "@/context/ThemeContext";
 import {
   NAV_SECTIONS,
-  NAV_THEME,
   HEADER_QUICK_LINKS,
   flattenNavItems,
   isNavItemActive,
 } from "@/lib/navigation";
-import { LogOut, Menu, User, Bell, Search, X, Wheat } from "lucide-react";
+import { LogOut, Menu, Bell, Search, X, Sun, Moon } from "lucide-react";
+import { BrandMark } from "@/components/layout/Sidebar";
+
+function initials(name = "") {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
+}
+
+function titleCase(segment = "") {
+  return segment
+    .replace(/[-_]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Breadcrumb derived from the nav tree: Section / Item / (tail segment) */
+function useBreadcrumb(pathname) {
+  return useMemo(() => {
+    const items = flattenNavItems(NAV_SECTIONS);
+    let best = null;
+    for (const item of items) {
+      if (isNavItemActive(pathname, item.href) && (!best || item.href.length > best.href.length)) best = item;
+    }
+    if (!best) {
+      const segs = pathname.split("/").filter(Boolean);
+      if (segs.length === 0) return [{ label: "Dashboard" }];
+      return segs.map((s, i) => ({ label: titleCase(s), href: i < segs.length - 1 ? "/" + segs.slice(0, i + 1).join("/") : undefined }));
+    }
+    const crumbs = [];
+    if (best.section && best.section !== "Overview") crumbs.push({ label: best.section });
+    crumbs.push({ label: best.label, href: pathname !== best.href ? best.href : undefined });
+    const rest = pathname.slice(best.href.length).split("/").filter(Boolean);
+    if (rest.length > 0) {
+      const tail = rest[rest.length - 1];
+      const isId = /^\d+$/.test(tail) || /^[0-9a-f-]{16,}$/i.test(tail);
+      crumbs.push({ label: isId ? "Detail" : titleCase(tail) });
+    }
+    return crumbs;
+  }, [pathname]);
+}
+
+function Breadcrumb({ pathname }) {
+  const crumbs = useBreadcrumb(pathname);
+  return (
+    <nav className="oh-crumb" aria-label="Breadcrumb">
+      {crumbs.map((c, i) => {
+        const last = i === crumbs.length - 1;
+        return (
+          <span key={`${c.label}-${i}`} className="flex items-center gap-1.5 min-w-0">
+            {i > 0 && <span className="sep">/</span>}
+            {last ? (
+              <b className="truncate">{c.label}</b>
+            ) : c.href ? (
+              <Link href={c.href} className="truncate">{c.label}</Link>
+            ) : (
+              <span className="truncate">{c.label}</span>
+            )}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
 
 function HeaderQuickNav({ hasModuleAccess }) {
   const pathname = usePathname();
@@ -20,16 +82,15 @@ function HeaderQuickNav({ hasModuleAccess }) {
   if (links.length === 0) return null;
 
   return (
-    <nav className="erp-header-module-tabs" aria-label="Quick modules">
+    <nav className="erp-header-module-tabs hidden xl:inline-flex" aria-label="Quick modules">
       {links.map((link) => {
         const active = isNavItemActive(pathname, link.href);
-        const tone = link.tone || link.slug;
         return (
           <Link
             key={link.href}
             href={link.href}
             aria-current={active ? "page" : undefined}
-            data-tone={tone}
+            data-tone={link.tone || link.slug}
             className={`erp-header-module-tab${active ? " is-active" : ""}`}
           >
             {link.label}
@@ -50,7 +111,35 @@ function useModuleSearchItems(hasModuleAccess) {
   }, [hasModuleAccess]);
 }
 
-function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus, className = "" }) {
+function SearchResults({ results, highlight, onPick, onHover, className = "" }) {
+  return (
+    <ul className={`erp-shell-search-dropdown ${className}`} role="listbox">
+      {results.map((item, idx) => {
+        const Icon = item.icon;
+        return (
+          <li key={item.href} role="option" aria-selected={idx === highlight}>
+            <button
+              type="button"
+              onMouseEnter={() => onHover?.(idx)}
+              onClick={() => onPick(item.href)}
+              className={`oh-search-row ${idx === highlight ? "is-active" : ""}`}
+            >
+              <span className="erp-nav-icon">
+                <Icon className="w-3.5 h-3.5" strokeWidth={1.75} />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block font-medium truncate">{item.label}</span>
+                <small className="truncate">{item.section}</small>
+              </span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
@@ -65,10 +154,6 @@ function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus, className =
       return hay.includes(q);
     }).slice(0, 12);
   }, [query, allItems]);
-
-  useEffect(() => {
-    setHighlight(0);
-  }, [query]);
 
   useEffect(() => {
     if (autoFocus) inputRef.current?.focus();
@@ -96,53 +181,30 @@ function ModuleSearchPanel({ hasModuleAccess, onNavigate, autoFocus, className =
   };
 
   return (
-    <div className={className}>
-      <div className="erp-shell-search flex items-center gap-2 px-3.5 py-2.5 rounded-xl erp-shell-search-focus">
-        <Search className="w-4 h-4 shrink-0 text-[var(--brand-primary)]/80" />
+    <div>
+      <div className="oh-search max-w-none h-[38px]">
+        <Search className="w-4 h-4 shrink-0" />
         <input
           ref={inputRef}
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => { setQuery(e.target.value); setHighlight(0); }}
           onKeyDown={onKeyDown}
           placeholder="Search modules…"
-          className="erp-shell-search-input flex-1 min-w-0 bg-transparent text-sm outline-none"
           aria-label="Search modules"
           autoComplete="off"
         />
         {query && (
-          <button type="button" onClick={() => setQuery("")} className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer" aria-label="Clear">
+          <button type="button" onClick={() => { setQuery(""); setHighlight(0); }} className="text-[var(--ink-3)] hover:text-[var(--ink)] p-0.5 cursor-pointer" aria-label="Clear">
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
-      <ul className="erp-shell-search-dropdown mt-2 max-h-[min(50vh,320px)] overflow-y-auto erp-sidebar-scroll rounded-xl py-1">
-        {results.map((item, idx) => {
-          const Icon = item.icon;
-          return (
-            <li key={item.href}>
-              <button
-                type="button"
-                onClick={() => go(item.href)}
-                className={`w-full flex items-center gap-3 px-3 py-3 text-left text-sm transition-colors cursor-pointer ${
-                  idx === highlight ? "bg-blue-50 text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-slate-50"
-                }`}
-              >
-                <span className="w-9 h-9 rounded-lg bg-blue-50 text-[var(--brand-primary)] ring-1 ring-blue-100 flex items-center justify-center shrink-0">
-                  <Icon className="w-4 h-4" />
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block font-semibold truncate">{item.label}</span>
-                  <span className="block text-[10px] text-slate-500 truncate">{item.section}</span>
-                </span>
-              </button>
-            </li>
-          );
-        })}
-        {query && results.length === 0 && (
-          <li className="px-4 py-3 text-xs text-slate-500">No modules match.</li>
-        )}
-      </ul>
+      {results.length > 0 ? (
+        <SearchResults results={results} highlight={highlight} onPick={go} className="mt-2 max-h-[min(50vh,320px)] overflow-y-auto erp-sidebar-scroll py-1" />
+      ) : (
+        query && <p className="px-1 py-3 text-xs text-[var(--ink-3)]">No modules match.</p>
+      )}
     </div>
   );
 }
@@ -152,6 +214,13 @@ function DesktopModuleSearch({ hasModuleAccess }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const [isMac] = useState(() => {
+    try {
+      return typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+    } catch {
+      return false;
+    }
+  });
   const wrapRef = useRef(null);
   const allItems = useModuleSearchItems(hasModuleAccess);
 
@@ -171,10 +240,6 @@ function DesktopModuleSearch({ hasModuleAccess }) {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
-
-  useEffect(() => {
-    setHighlight(0);
-  }, [query, open]);
 
   const go = (href) => {
     setOpen(false);
@@ -197,48 +262,29 @@ function DesktopModuleSearch({ hasModuleAccess }) {
   };
 
   return (
-    <div ref={wrapRef} className="erp-shell-header-search hidden md:block">
-      <div className={`erp-shell-search erp-shell-search-compact flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 ${open ? "erp-shell-search-focus" : ""}`}>
-        <Search className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+    <div ref={wrapRef} className="relative hidden md:block flex-1 max-w-[320px] min-w-[160px]">
+      <div className="oh-search">
+        <Search className="w-3.5 h-3.5 shrink-0" />
         <input
           type="search"
           value={query}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
+          onChange={(e) => { setQuery(e.target.value); setHighlight(0); setOpen(true); }}
+          onFocus={() => { setHighlight(0); setOpen(true); }}
           onKeyDown={onKeyDown}
-          placeholder="Search…"
-          className="erp-shell-search-input flex-1 min-w-0 bg-transparent text-xs outline-none"
+          placeholder="Search customers, invoices, items…"
           aria-label="Search modules"
           autoComplete="off"
         />
-        <kbd className="hidden xl:inline text-[9px] font-mono text-slate-400 border border-slate-200 rounded px-1 py-px bg-white/90 leading-none">/</kbd>
+        <kbd className="hidden lg:inline-block">{isMac ? "⌘K" : "Ctrl K"}</kbd>
       </div>
       {open && results.length > 0 && (
-        <ul className="erp-shell-search-dropdown absolute left-0 w-[min(100%,280px)] top-[calc(100%+6px)] z-50 rounded-xl py-2 max-h-72 overflow-y-auto erp-sidebar-scroll">
-          {results.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <li key={item.href}>
-                <button
-                  type="button"
-                  onMouseEnter={() => setHighlight(idx)}
-                  onClick={() => go(item.href)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left text-xs transition-colors cursor-pointer ${
-                    idx === highlight ? "bg-blue-50 text-[var(--text-primary)]" : "text-[var(--text-secondary)] hover:bg-slate-50"
-                  }`}
-                >
-                  <span className="w-8 h-8 rounded-lg bg-blue-50 text-[var(--brand-primary)] ring-1 ring-blue-100 flex items-center justify-center shrink-0">
-                    <Icon className="w-4 h-4" />
-                  </span>
-                  <span className="flex-1 min-w-0">
-                    <span className="block font-semibold truncate">{item.label}</span>
-                    <span className="block text-[10px] text-slate-500 truncate">{item.section}</span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <SearchResults
+          results={results}
+          highlight={highlight}
+          onPick={go}
+          onHover={setHighlight}
+          className="absolute left-0 w-full min-w-[280px] top-[calc(100%+6px)] z-50 py-1.5 max-h-72 overflow-y-auto erp-sidebar-scroll"
+        />
       )}
     </div>
   );
@@ -246,21 +292,25 @@ function DesktopModuleSearch({ hasModuleAccess }) {
 
 export default function TopBar({ onMenuClick }) {
   const { user, logout, hasModuleAccess } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
   const [mobileSearch, setMobileSearch] = useState(false);
 
   useEffect(() => {
-    const onSlash = (e) => {
-      if (e.key === "/" && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName)) {
-        e.preventDefault();
-        if (window.matchMedia("(min-width: 768px)").matches) {
-          document.querySelector('input[aria-label="Search modules"]')?.focus();
-        } else {
-          setMobileSearch(true);
-        }
+    const onKey = (e) => {
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+      const cmdK = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      const slash = e.key === "/" && !typing;
+      if (!cmdK && !slash) return;
+      e.preventDefault();
+      if (window.matchMedia("(min-width: 768px)").matches) {
+        document.querySelector('input[aria-label="Search modules"]')?.focus();
+      } else {
+        setMobileSearch(true);
       }
     };
-    window.addEventListener("keydown", onSlash);
-    return () => window.removeEventListener("keydown", onSlash);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   const roleLabel = user?.role ? user.role.replace(/_/g, " ") : "";
@@ -269,67 +319,70 @@ export default function TopBar({ onMenuClick }) {
     <>
       <header className="erp-shell-header no-print z-20 shrink-0">
         <div className="erp-shell-header-inner">
-        <div className="erp-shell-header-start">
           <button
             onClick={onMenuClick}
-            className="lg:hidden erp-shell-btn-icon -ml-1 shrink-0"
+            className="lg:hidden oh-icon-btn -ml-1"
             aria-label="Open menu"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2 lg:hidden min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#0F52BA] to-[#0B3E8F] flex items-center justify-center shrink-0 shadow-sm">
-              <Wheat className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-semibold text-sm text-[var(--text-primary)] truncate max-w-[100px] sm:max-w-[140px]">Warraich Traders</span>
-          </div>
-        </div>
+          <Link href="/dashboard" className="flex items-center gap-2 lg:hidden min-w-0" aria-label="Omni Hub">
+            <BrandMark />
+          </Link>
 
-        <div className="erp-shell-header-center">
+          <div className="hidden sm:flex min-w-0 flex-1 items-center gap-3">
+            <Breadcrumb pathname={pathname} />
+          </div>
+
           <HeaderQuickNav hasModuleAccess={hasModuleAccess} />
           <DesktopModuleSearch hasModuleAccess={hasModuleAccess} />
-        </div>
 
-        <button
-          type="button"
-          onClick={() => setMobileSearch(true)}
-          className="md:hidden erp-shell-btn-icon shrink-0"
-          aria-label="Search modules"
-        >
-          <Search className="w-5 h-5" />
-        </button>
-
-        <div className="erp-shell-header-end">
-          <button type="button" className="relative erp-shell-btn-icon" aria-label="Notifications">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#0F52BA] ring-2 ring-white" />
+          <button
+            type="button"
+            onClick={() => setMobileSearch(true)}
+            className="md:hidden oh-icon-btn ml-auto"
+            aria-label="Search modules"
+          >
+            <Search className="w-4 h-4" />
           </button>
 
-          <div className="h-6 w-px bg-[var(--border-clean)] hidden sm:block mx-0.5" />
+          <div className="flex items-center gap-2 shrink-0">
+            <button type="button" className="relative oh-icon-btn" aria-label="Notifications" title="Notifications">
+              <Bell className="w-[15px] h-[15px]" strokeWidth={1.75} />
+              <span className="oh-badge-dot" />
+            </button>
 
-          <div className="flex items-center gap-1.5 sm:gap-2 pl-0.5">
-            <div className="flex flex-col text-right hidden sm:flex">
-              <span className="text-sm font-semibold text-[var(--text-primary)] leading-tight truncate max-w-[120px] lg:max-w-[140px]">{user?.name}</span>
-              <span className="text-[10px] text-[var(--brand-primary)] font-medium uppercase tracking-wide">{roleLabel}</span>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="oh-icon-btn"
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              title="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-[15px] h-[15px]" strokeWidth={1.75} /> : <Moon className="w-[15px] h-[15px]" strokeWidth={1.75} />}
+            </button>
+
+            <div className="oh-me">
+              <span className="oh-avatar" aria-hidden>{initials(user?.name)}</span>
+              <span className="hidden sm:block min-w-0 leading-tight">
+                <span className="block truncate max-w-[140px] font-medium">{user?.name}</span>
+                <small className="truncate">{roleLabel}</small>
+              </span>
             </div>
-            <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[var(--brand-primary)] shrink-0">
-              <User className="w-4 h-4" />
-            </div>
+
+            <button onClick={logout} className="oh-icon-btn is-danger" aria-label="Sign out" title="Sign out">
+              <LogOut className="w-[15px] h-[15px]" strokeWidth={1.75} />
+            </button>
           </div>
-
-          <button onClick={logout} className="erp-shell-btn-icon hover:!text-rose-500 hover:!bg-rose-50" aria-label="Sign out">
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
         </div>
       </header>
 
       {mobileSearch && (
-        <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-[var(--bg-surface)]/98 backdrop-blur-md p-4 pt-3 safe-area-pb border-t border-[var(--border-clean)]">
+        <div className="md:hidden fixed inset-0 z-50 flex flex-col bg-[var(--surface)] p-4 pt-3 safe-area-pb">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-semibold text-[var(--text-primary)]">Search modules</span>
-            <button type="button" onClick={() => setMobileSearch(false)} className="erp-shell-btn-icon" aria-label="Close search">
-              <X className="w-5 h-5" />
+            <span className="text-sm font-semibold text-[var(--ink)]">Search modules</span>
+            <button type="button" onClick={() => setMobileSearch(false)} className="oh-icon-btn" aria-label="Close search">
+              <X className="w-4 h-4" />
             </button>
           </div>
           <ModuleSearchPanel hasModuleAccess={hasModuleAccess} onNavigate={() => setMobileSearch(false)} autoFocus />

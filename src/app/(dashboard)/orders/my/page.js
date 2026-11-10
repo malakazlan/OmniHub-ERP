@@ -193,7 +193,7 @@ export default function MyOrdersPage() {
             <ClipboardList className="w-12 h-12 text-orange-300 mx-auto mb-3" strokeWidth={1.5} />
             <p className="font-semibold text-slate-800">No orders in this tab</p>
             <p className="text-sm text-slate-500 mt-1 px-6">
-              Tap the button below to capture a customer order.
+              Tap the button below to capture a sales order.
             </p>
           </div>
         ) : (

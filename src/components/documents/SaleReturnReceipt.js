@@ -105,7 +105,7 @@ export default function SaleReturnReceipt({ saleReturn, sale, company = DEFAULT_
           <p className="erp-inv-payment-title">Return summary</p>
           <div className="erp-inv-pay-grid">
             <div className="erp-inv-pay-head">Particulars</div>
-            <div className="erp-inv-pay-head is-amt">Amount (Rs.)</div>
+            <div className="erp-inv-pay-head is-amt">Amount ($)</div>
             <div className="erp-inv-pay-label is-grand">Total returned</div>
             <div className="erp-inv-pay-value is-grand erp-return-total">
               {moneyPlain(saleReturn.returnAmount)}

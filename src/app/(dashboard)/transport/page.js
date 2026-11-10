@@ -43,7 +43,7 @@ export default function TransportPage() {
         setTransports((prev) =>
           prev.map((t) => (t.id === data.transport.id ? { ...t, ...data.transport } : t))
         );
-        showToast("Trip status updated", "success");
+        showToast("Delivery status updated", "success");
       } else {
         showToast(data.error || "Failed to update status", "error");
       }

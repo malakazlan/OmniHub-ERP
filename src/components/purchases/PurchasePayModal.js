@@ -108,7 +108,7 @@ export function PurchasePayModal({ purchase, open, onClose, onPaid }) {
   if (!purchase) return null;
 
   return (
-    <Modal isOpen={open} onClose={onClose} title="Pay supplier" size="md">
+    <Modal isOpen={open} onClose={onClose} title="Pay vendor" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-sm space-y-1">
           <p className="font-mono font-bold text-slate-900">{purchase.purchaseNumber}</p>

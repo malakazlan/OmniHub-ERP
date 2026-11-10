@@ -188,7 +188,7 @@ export default function MoneyTransfersPage() {
               <ArrowRightLeft className="w-3.5 h-3.5" />
               Finance · Internal Transfers
             </div>
-            <h1 className="erp-xfer-page-title">Money transfer</h1>
+            <h1 className="erp-xfer-page-title">Transfers</h1>
             <p className="erp-xfer-page-desc">
               Securely move funds between cash and bank accounts. Every transfer posts to the general ledger automatically.
             </p>
@@ -297,7 +297,7 @@ export default function MoneyTransfersPage() {
 
         <TransferRegisterExports
           printRef={printRef}
-          title="Money Transfer Register"
+          title="Transfers Register"
           subtitle={`${filteredTransfers.length} transfers`}
           company={companySettings}
           columns={TRANSFER_PRINT_COLS}
@@ -326,7 +326,7 @@ export default function MoneyTransfersPage() {
         />
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Post money transfer" size="xl">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Post transfer" size="xl">
         {modalOpen && (
           <MoneyTransferForm
             form={form}

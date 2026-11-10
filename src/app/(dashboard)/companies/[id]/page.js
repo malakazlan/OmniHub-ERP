@@ -17,8 +17,7 @@ import {
   Wallet, ShoppingCart, DollarSign, Landmark, StickyNote,
 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
-
-const COMPANY_TYPE_LABELS = { supplier: "Supplier", buyer: "Buyer", both: "Both" };
+import { COMPANY_TYPE_LABELS } from "@/lib/constants";
 
 function DetailRow({ label, value, mono = false }) {
   return (
@@ -51,7 +50,7 @@ export default function CompanyDetailPage() {
         setBalance(data.balance || 0);
         setLedgerEntries(data.ledgerEntries || []);
       } else {
-        showToast(data.error || "Failed to load company", "error");
+        showToast(data.error || "Failed to load account", "error");
       }
     } catch {
       showToast("Error connecting to server", "error");
@@ -83,7 +82,7 @@ export default function CompanyDetailPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name) { showToast("Company name is required", "warning"); return; }
+    if (!form.name) { showToast("Name is required", "warning"); return; }
     setSubmitting(true);
     try {
       const res = await fetch(`/api/companies/${id}`, {
@@ -93,10 +92,10 @@ export default function CompanyDetailPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast("Company updated!", "success");
+        showToast("Account updated!", "success");
         setModalOpen(false);
         fetchCompany();
-      } else showToast(data.error || "Failed to update company", "error");
+      } else showToast(data.error || "Failed to update account", "error");
     } catch {
       showToast("Error processing request", "error");
     } finally {
@@ -105,14 +104,14 @@ export default function CompanyDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete company "${company.name}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Delete "${company.name}"? This cannot be undone.`)) return;
     try {
       const res = await fetch(`/api/companies/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        showToast("Company deleted", "success");
+        showToast("Account deleted", "success");
         router.push("/companies");
-      } else showToast(data.error || "Failed to delete company", "error");
+      } else showToast(data.error || "Failed to delete account", "error");
     } catch {
       showToast("Error processing request", "error");
     }
@@ -129,17 +128,17 @@ export default function CompanyDetailPage() {
   if (!company) {
     return (
       <div className="page-enter space-y-6">
-        <PageHeader module="companies" title="Company Not Found" icon={Building2} breadcrumbs={[{ label: "Companies", href: "/companies" }, { label: "Not Found" }]} />
+        <PageHeader module="companies" title="Account Not Found" icon={Building2} breadcrumbs={[{ label: "Customers & Vendors", href: "/companies" }, { label: "Not Found" }]} />
         <Card><CardContent className="py-12 text-center">
-          <p className="text-slate-500 mb-4">This company could not be found.</p>
-          <Link href="/companies"><Button variant="outline" className="border-slate-200 text-slate-700"><ArrowLeft className="w-4 h-4" /> Back to Companies</Button></Link>
+          <p className="text-slate-500 mb-4">This customer or vendor could not be found.</p>
+          <Link href="/companies"><Button variant="outline" className="border-slate-200 text-slate-700"><ArrowLeft className="w-4 h-4" /> Back to Customers & Vendors</Button></Link>
         </CardContent></Card>
       </div>
     );
   }
 
   const orderColumns = (numberKey, dateKey) => [
-    { header: "Order #", accessor: numberKey, cell: (row) => <span className="font-mono text-xs font-semibold text-acc-companies">{row[numberKey]}</span> },
+    { header: "Doc #", accessor: numberKey, cell: (row) => <span className="font-mono text-xs font-semibold text-acc-companies">{row[numberKey]}</span> },
     { header: "Date", accessor: dateKey, cell: (row) => <span className="text-xs text-slate-500">{formatDate(row[dateKey])}</span> },
     { header: "Total", accessor: "totalAmount", cell: (row) => <span className="font-mono text-xs font-bold text-slate-900">{formatCurrency(row.totalAmount)}</span> },
     { header: "Paid", accessor: "paidAmount", cell: (row) => <span className="font-mono text-xs text-emerald-600">{formatCurrency(row.paidAmount)}</span> },
@@ -159,9 +158,9 @@ export default function CompanyDetailPage() {
       <PageHeader
         module="companies"
         title={company.name}
-        description={company.contactPerson || company.city || "Company profile & ledger"}
+        description={company.contactPerson || company.city || "Account profile & ledger"}
         icon={Building2}
-        breadcrumbs={[{ label: "Companies", href: "/companies" }, { label: company.name }]}
+        breadcrumbs={[{ label: "Customers & Vendors", href: "/companies" }, { label: company.name }]}
         actions={
           <div className="flex items-center gap-2">
             <Badge variant={company.companyType === "both" ? "info" : company.companyType === "supplier" ? "warning" : "success"}>
@@ -179,18 +178,18 @@ export default function CompanyDetailPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard module="companies" label="Net Balance" value={formatCurrency(balance)} icon={Wallet} />
-        <StatCard module="companies" label="Purchase Orders" value={(company.purchaseOrders || []).length} icon={ShoppingCart} />
-        <StatCard module="companies" label="Sale Orders" value={(company.saleOrders || []).length} icon={DollarSign} />
+        <StatCard module="companies" label="Bills" value={(company.purchaseOrders || []).length} icon={ShoppingCart} />
+        <StatCard module="companies" label="Invoices" value={(company.saleOrders || []).length} icon={DollarSign} />
         <StatCard module="companies" label="Credit Limit" value={formatCurrency(company.creditLimit)} icon={Landmark} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <div className="xl:col-span-2 space-y-6">
           <Card>
-            <CardHeader><h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-acc-companies" /> Recent Purchases</h2></CardHeader>
+            <CardHeader><h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-acc-companies" /> Recent Bills</h2></CardHeader>
             <CardContent>
               {(company.purchaseOrders || []).length === 0 ? (
-                <p className="text-sm text-slate-500 py-6 text-center">No purchases recorded yet.</p>
+                <p className="text-sm text-slate-500 py-6 text-center">No bills recorded yet.</p>
               ) : (
                 <DataTable columns={orderColumns("purchaseNumber", "purchaseDate")} data={company.purchaseOrders} />
               )}
@@ -198,10 +197,10 @@ export default function CompanyDetailPage() {
           </Card>
 
           <Card>
-            <CardHeader><h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><DollarSign className="w-4 h-4 text-acc-companies" /> Recent Sales</h2></CardHeader>
+            <CardHeader><h2 className="text-sm font-bold text-slate-900 flex items-center gap-2"><DollarSign className="w-4 h-4 text-acc-companies" /> Recent Invoices</h2></CardHeader>
             <CardContent>
               {(company.saleOrders || []).length === 0 ? (
-                <p className="text-sm text-slate-500 py-6 text-center">No sales recorded yet.</p>
+                <p className="text-sm text-slate-500 py-6 text-center">No invoices recorded yet.</p>
               ) : (
                 <DataTable columns={orderColumns("saleNumber", "saleDate")} data={company.saleOrders} />
               )}
@@ -229,8 +228,8 @@ export default function CompanyDetailPage() {
               <DetailRow label="WhatsApp" value={company.whatsappNumber} />
               <DetailRow label="Email" value={company.email} />
               <DetailRow label="City" value={company.city} />
-              <DetailRow label="NTN" value={company.ntn} mono />
-              <DetailRow label="STRN" value={company.strn} mono />
+              <DetailRow label="EIN / Tax ID" value={company.ntn} mono />
+              <DetailRow label="State Tax ID" value={company.strn} mono />
             </CardContent>
           </Card>
 
@@ -253,11 +252,11 @@ export default function CompanyDetailPage() {
       </div>
 
       {form && (
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Edit Company" size="lg">
+        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Edit Account" size="lg">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1 md:col-span-2">
-                <label className="text-xs font-semibold text-slate-500">Company Name *</label>
+                <label className="text-xs font-semibold text-slate-500">Name *</label>
                 <input type="text" value={form.name} onChange={handleChange("name")} required className="input-field text-xs" />
               </div>
               <div className="space-y-1">
@@ -265,11 +264,11 @@ export default function CompanyDetailPage() {
                 <input type="text" value={form.contactPerson} onChange={handleChange("contactPerson")} className="input-field text-xs" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Company Type</label>
+                <label className="text-xs font-semibold text-slate-500">Relationship</label>
                 <select value={form.companyType} onChange={handleChange("companyType")} className="input-field text-xs">
-                  <option value="both">Both (Supplier & Buyer)</option>
-                  <option value="supplier">Supplier Only</option>
-                  <option value="buyer">Buyer Only</option>
+                  <option value="both">Customer & Vendor</option>
+                  <option value="supplier">Vendor</option>
+                  <option value="buyer">Customer</option>
                 </select>
               </div>
               <div className="space-y-1">
@@ -289,11 +288,11 @@ export default function CompanyDetailPage() {
                 <input type="text" value={form.city} onChange={handleChange("city")} className="input-field text-xs" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">NTN</label>
+                <label className="text-xs font-semibold text-slate-500">EIN / Tax ID</label>
                 <input type="text" value={form.ntn} onChange={handleChange("ntn")} className="input-field text-xs" />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-slate-500">Credit Limit (₨)</label>
+                <label className="text-xs font-semibold text-slate-500">Credit Limit ($)</label>
                 <input type="number" value={form.creditLimit} onChange={handleChange("creditLimit")} className="input-field text-xs" />
               </div>
               <div className="space-y-1 md:col-span-2">

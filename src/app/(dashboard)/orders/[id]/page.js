@@ -137,7 +137,7 @@ export default function OrderDetailPage() {
         title={order.orderNumber}
         description={`${order.customerName} · ${formatDate(order.orderDate)}`}
         icon={ClipboardList}
-        breadcrumbs={[{ label: "Orders", href: "/orders" }, { label: order.orderNumber }]}
+        breadcrumbs={[{ label: "Sales Orders", href: "/orders" }, { label: order.orderNumber }]}
         actions={
           <Link href="/orders">
             <Button variant="outline">
@@ -224,7 +224,7 @@ export default function OrderDetailPage() {
             <table className="erp-line-table w-full min-w-[480px]">
               <thead>
                 <tr>
-                  <th className="text-left">Product</th>
+                  <th className="text-left">Item</th>
                   <th className="text-right">Qty</th>
                   <th className="text-right">Rate</th>
                   <th className="text-right">Amount</th>

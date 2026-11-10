@@ -81,7 +81,7 @@ export default function TripPayModal({ trip, isOpen, onClose, onSuccess }) {
       return;
     }
     if (balanceDue <= 0) {
-      showToast("This trip has no balance due", "warning");
+      showToast("This delivery has no balance due", "warning");
       return;
     }
     setSubmitting(true);
@@ -98,7 +98,7 @@ export default function TripPayModal({ trip, isOpen, onClose, onSuccess }) {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast("Trip payment recorded", "success");
+        showToast("Delivery freight payment recorded", "success");
         onSuccess?.(data.transport);
         onClose();
       } else {
@@ -114,7 +114,7 @@ export default function TripPayModal({ trip, isOpen, onClose, onSuccess }) {
   if (!trip) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Pay trip freight" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Pay delivery freight" size="md">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-xl border border-cyan-100 bg-cyan-50/60 p-3 space-y-2">
           <div className="flex items-center justify-between gap-2">

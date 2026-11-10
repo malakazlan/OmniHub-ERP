@@ -246,7 +246,7 @@ export async function getPurchaseVendorDetail(db, type, entityId) {
         productId: pid,
         productName: item.productName,
         sku: item.product?.sku || null,
-        unit: item.unit || item.product?.unit || "kg",
+        unit: item.unit || item.product?.unit || "ea",
         totalQuantity: 0,
         totalAmount: 0,
         purchaseCount: 0,

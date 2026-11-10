@@ -55,9 +55,9 @@ export default function TransportListView({
               <Truck className="w-3.5 h-3.5" />
               Logistics
             </div>
-            <h1 className="erp-fleet-page-title">Transport trips</h1>
+            <h1 className="erp-fleet-page-title">Deliveries</h1>
             <p className="erp-fleet-page-desc">
-              Change trip status from the list, pay freight from cash or bank, and open a row to edit full details.
+              Change delivery status from the list, pay freight from cash or bank, and open a row to edit full details.
             </p>
           </div>
           <div className="erp-fleet-header-actions">
@@ -68,11 +68,11 @@ export default function TransportListView({
             </Link>
             <Link href="/reports/transport">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <FileText className="w-4 h-4" /> Trip report
+                <FileText className="w-4 h-4" /> Delivery report
               </Button>
             </Link>
             <Button onClick={onNewTrip} className="bg-acc-transport border-0">
-              <Plus className="w-4 h-4" /> New trip
+              <Plus className="w-4 h-4" /> New delivery
             </Button>
           </div>
         </header>
@@ -81,7 +81,7 @@ export default function TransportListView({
           <div className="erp-fleet-stat">
             <div className="erp-fleet-stat-icon"><Truck className="w-4 h-4" /></div>
             <div>
-              <p className="erp-fleet-stat-label">Total trips</p>
+              <p className="erp-fleet-stat-label">Total deliveries</p>
               <p className="erp-fleet-stat-value">{summary.total}</p>
             </div>
           </div>
@@ -135,7 +135,7 @@ export default function TransportListView({
         <div className="erp-fleet-register">
           <div className="erp-fleet-register-head">
             <div>
-              <p className="erp-fleet-register-title">Trip register</p>
+              <p className="erp-fleet-register-title">Delivery register</p>
               <p className="erp-fleet-register-meta">
                 {filtered.length} trips · change status inline · wallet icon to pay freight
               </p>

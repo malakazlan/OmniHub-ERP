@@ -1,17 +1,18 @@
 import { jsPDF } from "jspdf";
-import { formatDate, formatQuantity } from "@/lib/formatters";
+import { formatDate, formatQuantity, formatCurrency } from "@/lib/formatters";
 import { saleCustomerDisplayName, saleCustomerTypeLabel, saleCustomerPhone } from "@/lib/saleCustomer";
 import { resolveSalePayment, salePaymentStatusLabel } from "@/lib/salePayment";
 import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 import { amountInWords } from "@/lib/amountInWords";
 import { buildInvoiceLineItems } from "@/lib/saleReturn";
+import { companyAddressLine } from "@/lib/companyProfile";
 
 const DEFAULT_COMPANY = {
-  company_name: "Warraich Traders",
+  company_name: "Omni Hub",
   company_address: "",
   company_phone: "",
   company_email: "",
-  tagline: "Feed · Trade · Accounts",
+  tagline: "Wholesale Distribution · Operations · Finance",
   ntn: "",
   strn: "",
 };
@@ -68,12 +69,7 @@ function setText(pdf, rgb) {
 }
 
 function fmtMoney(amount, withPrefix = true) {
-  const num = Number(amount) || 0;
-  const formatted = num.toLocaleString("en-PK", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-  return withPrefix ? `Rs. ${formatted}` : formatted;
+  return formatCurrency(amount, withPrefix);
 }
 
 function textAt(pdf, str, x, y, { align, size, color, font = "helvetica", style = "normal" } = {}) {
@@ -140,7 +136,7 @@ function drawHeader(pdf, c, sale, grid, y) {
   setFill(pdf, COLORS.teal700);
   pdf.rect(left, y + h - 2.5, w, 2.5, "F");
 
-  textAt(pdf, c.company_name || "Warraich Traders", left + LAYOUT.pad, y + 11, {
+  textAt(pdf, c.company_name || "Omni Hub", left + LAYOUT.pad, y + 11, {
     size: TYPE.company,
     color: COLORS.white,
     style: "bold",
@@ -153,7 +149,7 @@ function drawHeader(pdf, c, sale, grid, y) {
     });
   }
 
-  const contact = [c.company_address, c.company_phone, c.company_email].filter(Boolean).join("  ·  ");
+  const contact = [companyAddressLine(c), c.company_phone, c.company_email].filter(Boolean).join("  ·  ");
   if (contact) {
     const lines = pdf.splitTextToSize(contact, w * 0.52);
     textAt(pdf, lines[0], left + LAYOUT.pad, y + 22, { size: 6.5, color: COLORS.slate400 });
@@ -279,13 +275,13 @@ function drawTableHeader(pdf, grid, y) {
   textAt(pdf, "#", idxLeft, ty, { size: TYPE.label, color: COLORS.slate500, style: "bold" });
   textAt(pdf, "Product", productLeft, ty, { size: TYPE.label, color: COLORS.slate500, style: "bold" });
   textAt(pdf, "Qty", qtyRight, ty, { align: "right", size: TYPE.label, color: COLORS.slate500, style: "bold" });
-  textAt(pdf, "Rate (Rs.)", rateRight, ty, {
+  textAt(pdf, "Rate ($)", rateRight, ty, {
     align: "right",
     size: TYPE.label,
     color: COLORS.slate500,
     style: "bold",
   });
-  textAt(pdf, "Amount (Rs.)", amountRight, ty, {
+  textAt(pdf, "Amount ($)", amountRight, ty, {
     align: "right",
     size: TYPE.label,
     color: COLORS.slate500,
@@ -557,7 +553,7 @@ export function downloadSaleInvoicePdf(sale, company = {}, filename = "invoice.p
     style: "bold",
   });
 
-  textAt(pdf, "Warraich Traders ERP · Computer-generated tax invoice", pageW / 2, pageH - margin + 1, {
+  textAt(pdf, "Omni Hub · Computer-generated tax invoice", pageW / 2, pageH - margin + 1, {
     align: "center",
     size: TYPE.footer,
     color: COLORS.slate400,

@@ -42,7 +42,7 @@ export function useSalarySlipExport({ printRef, company = {}, onPrepareSlip }) {
           company,
           filename: `salary-slip-${record.employee?.name?.replace(/\s+/g, "-") || record.id}-${record.month}-${record.year}.pdf`,
         });
-        showToast("Salary slip PDF downloaded", "success");
+        showToast("Pay stub PDF downloaded", "success");
       } catch (err) {
         console.error(err);
         showToast(err.message || "Failed to generate PDF", "error");

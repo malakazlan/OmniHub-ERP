@@ -127,11 +127,11 @@ export default function PurchaseListView({
           <div>
             <div className="erp-purchases-hub-badge">
               <ShoppingCart className="w-3.5 h-3.5" />
-              Purchases desk
+              Purchasing desk
             </div>
-            <h1 className="erp-purchases-hub-title">Purchases</h1>
+            <h1 className="erp-purchases-hub-title">Purchase Orders & Bills</h1>
             <p className="erp-purchases-hub-desc">
-              Spreadsheet-style supplier bills — filter, pay balances, and print invoices.
+              Spreadsheet-style vendor bills — filter, pay balances, and print bills.
             </p>
           </div>
           <div className="erp-purchases-hub-actions">

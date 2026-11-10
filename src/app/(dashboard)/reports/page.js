@@ -10,9 +10,9 @@ const SECTIONS = [
   {
     title: "Sales & Operations",
     reports: [
-      { href: "/reports/sales", title: "Sales Report", desc: "Invoices, revenue, collections & outstanding", icon: TrendingUp, color: "is-sales" },
-      { href: "/reports/purchases", title: "Purchase Report", desc: "Vendor bills, spend & payables", icon: ShoppingCart, color: "is-purchases" },
-      { href: "/reports/orders", title: "Order Pipeline", desc: "Pending, accepted & converted orders", icon: BarChart3, color: "is-orders" },
+      { href: "/reports/sales", title: "Invoice Report", desc: "Invoices, revenue, collections & outstanding", icon: TrendingUp, color: "is-sales" },
+      { href: "/reports/purchases", title: "Purchasing Report", desc: "Vendor bills, spend & payables", icon: ShoppingCart, color: "is-purchases" },
+      { href: "/reports/orders", title: "Sales Order Pipeline", desc: "Pending, accepted & converted sales orders", icon: BarChart3, color: "is-orders" },
       { href: "/reports/inventory", title: "Inventory Report", desc: "Stock levels, valuation & low-stock alerts", icon: Package, color: "is-products" },
     ],
   },
@@ -28,11 +28,11 @@ const SECTIONS = [
     ],
   },
   {
-    title: "HR & Logistics",
+    title: "Payroll & Logistics",
     reports: [
       { href: "/reports/attendance", title: "Attendance Report", desc: "Monthly presence, absence & attendance rate", icon: CalendarCheck, color: "is-hr" },
-      { href: "/hr/salary", title: "Salary Register", desc: "Payroll processing & salary slips", icon: Users, color: "is-hr" },
-      { href: "/reports/transport", title: "Transport Report", desc: "Trips, freight costs & fleet utilization", icon: Truck, color: "is-transport" },
+      { href: "/hr/salary", title: "Payroll Register", desc: "Payroll processing & pay stubs", icon: Users, color: "is-hr" },
+      { href: "/reports/transport", title: "Delivery Report", desc: "Deliveries, freight costs & fleet utilization", icon: Truck, color: "is-transport" },
     ],
   },
 ];
@@ -49,7 +49,7 @@ export default function ReportsPage() {
             </div>
             <h1 className="erp-reports-page-title">Reports & analytics</h1>
             <p className="erp-reports-page-desc">
-              Operational registers, financial statements, HR summaries, and logistics — all with print and PDF export.
+              Operational registers, financial statements, payroll summaries, and logistics — all with print and PDF export.
             </p>
           </div>
         </header>

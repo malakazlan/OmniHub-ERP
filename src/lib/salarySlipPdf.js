@@ -207,7 +207,7 @@ export function downloadSalarySlipPdf({ record, employee, company = {}, clearanc
   cell(pdf, M + hThird, y, hThird, headerH, {
     texts: [
       { text: "OFFICIAL DOCUMENT", align: "center", fontSize: 6, color: C.muted },
-      { text: "MONTHLY SALARY RECEIPT", align: "center", bold: true, fontSize: 9, color: C.navy },
+      { text: "MONTHLY PAY STUB", align: "center", bold: true, fontSize: 9, color: C.navy },
       { text: data.periodLabel.toUpperCase(), align: "center", bold: true, fontSize: 8, color: C.navy },
     ],
   });
@@ -230,7 +230,7 @@ export function downloadSalarySlipPdf({ record, employee, company = {}, clearanc
     ["Employee ID", String(data.employee.id || "-")],
     ["Name", data.employee.name || "-"],
     ["Father name", data.employee.fatherName || "-"],
-    ["CNIC", data.employee.cnic || "-"],
+    ["SSN / Tax ID", data.employee.cnic || "-"],
     ["Phone", data.employee.phone || "-"],
     ["Designation", data.employee.designation || data.employee.department || "-"],
     ["Monthly contract", money(data.employee.contractSalary), { bold: true, color: C.navy }],

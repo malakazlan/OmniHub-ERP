@@ -173,7 +173,7 @@ export function DocumentReceiptPanel({
             ) : (
               <MessageCircle className="w-4 h-4" />
             )}
-            WhatsApp
+            Share via WhatsApp
           </Button>
         </div>
 

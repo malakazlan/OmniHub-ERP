@@ -1,16 +1,16 @@
-import { MODULES } from "./constants";
+import { VISIBLE_MODULES } from "./constants";
 
 /** Default module access when creating a login by system role */
 export function defaultModulesForRole(role) {
   switch (role) {
     case "admin":
-      return [...MODULES];
+      return [...VISIBLE_MODULES];
     case "manager":
-      return MODULES.filter((m) => m !== "settings");
+      return VISIBLE_MODULES.filter((m) => m !== "settings");
     case "salesperson":
-      return ["dashboard", "shops", "dealers", "products", "orders", "sales", "transport"];
+      return ["dashboard", "companies", "products", "orders", "sales", "transport"];
     case "accountant":
-      return ["dashboard", "accounts", "reports", "purchases", "sales", "dealers", "shops"];
+      return ["dashboard", "accounts", "reports", "purchases", "sales", "companies"];
     case "driver":
       return ["dashboard", "transport"];
     case "viewer":

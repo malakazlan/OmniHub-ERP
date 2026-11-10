@@ -6,7 +6,7 @@ import { Landmark, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 import DashboardChartTooltip from "@/components/dashboard/DashboardChartTooltip";
 
-const SLICE_COLORS = ["#16a34a", "#2563eb"];
+const SLICE_COLORS = ["var(--ok)", "var(--brand)"];
 
 export default function LiquidBalancesPanel({ balances = {} }) {
   const cash = balances.cash || 0;
@@ -29,16 +29,16 @@ export default function LiquidBalancesPanel({ balances = {} }) {
       <div className="erp-dash-finance-head">
         <div className="flex items-start gap-2.5">
           <span className="erp-dash-finance-icon is-liquid">
-            <Wallet className="w-4 h-4" />
+            <Wallet className="w-4 h-4" strokeWidth={1.75} />
           </span>
           <div>
             <h2 className="erp-dash-finance-title">Liquid balances</h2>
             <p className="erp-dash-finance-sub">Cash vs bank split · current</p>
           </div>
         </div>
-        <div>
+        <div className="text-right">
           <p className="erp-dash-finance-total-label">Total liquid</p>
-          <p className="erp-dash-finance-total is-neutral">{formatCurrency(total)}</p>
+          <p className="erp-dash-finance-total is-neutral num">{formatCurrency(total)}</p>
         </div>
       </div>
 
@@ -72,17 +72,17 @@ export default function LiquidBalancesPanel({ balances = {} }) {
 
             <ul className="erp-dash-liquid-stats">
               <li className="erp-dash-liquid-stat is-cash">
-                <Wallet className="w-4 h-4 shrink-0" />
+                <Wallet className="w-4 h-4 shrink-0" strokeWidth={1.75} />
                 <div>
                   <p className="erp-dash-liquid-stat-label">Cash · {cashPct}%</p>
-                  <p className="erp-dash-liquid-stat-value">{formatCurrency(cash)}</p>
+                  <p className="erp-dash-liquid-stat-value num">{formatCurrency(cash)}</p>
                 </div>
               </li>
               <li className="erp-dash-liquid-stat is-bank">
-                <Landmark className="w-4 h-4 shrink-0" />
+                <Landmark className="w-4 h-4 shrink-0" strokeWidth={1.75} />
                 <div>
                   <p className="erp-dash-liquid-stat-label">Bank · {bankPct}%</p>
-                  <p className="erp-dash-liquid-stat-value">{formatCurrency(bank)}</p>
+                  <p className="erp-dash-liquid-stat-value num">{formatCurrency(bank)}</p>
                 </div>
               </li>
             </ul>

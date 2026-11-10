@@ -1,5 +1,5 @@
 export const SALES_STATUS_FILTERS = [
-  { key: "all", label: "All orders" },
+  { key: "all", label: "All invoices" },
   { key: "draft", label: "Drafts" },
   { key: "confirmed", label: "Confirmed" },
   { key: "dispatched", label: "Dispatched" },
@@ -23,9 +23,7 @@ export const SALES_PERIOD_FILTERS = [
 
 export const SALES_CUSTOMER_FILTERS = [
   { key: "all", label: "All customers" },
-  { key: "shop", label: "Shops" },
-  { key: "company", label: "Companies" },
-  { key: "farmer", label: "Farmers" },
+  { key: "company", label: "Customers" },
   { key: "walkin", label: "Walk-in" },
 ];
 

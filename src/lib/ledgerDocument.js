@@ -6,9 +6,9 @@ export function resolveLedgerDocument(entry) {
 
   switch (entry.referenceType) {
     case "PurchaseOrder":
-      return { type: "purchase", id: entry.referenceId, label: "Purchase bill" };
+      return { type: "purchase", id: entry.referenceId, label: "Vendor bill" };
     case "SaleOrder":
-      return { type: "sale", id: entry.referenceId, label: "Sales invoice" };
+      return { type: "sale", id: entry.referenceId, label: "Invoice" };
     case "SaleReturn":
       return { type: "sale_return", id: entry.referenceId, label: "Sale return receipt" };
     case "PurchaseReturn":

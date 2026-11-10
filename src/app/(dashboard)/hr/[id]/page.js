@@ -144,7 +144,7 @@ export default function EmployeeDetailPage() {
   return (
     <div className="erp-hr-surface page-enter pb-8">
       <div className="erp-hr-page space-y-5">
-        <Link href="/hr" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> HR</Link>
+        <Link href="/hr" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll</Link>
 
         <div className="erp-hr-detail-panel">
           <div className="erp-hr-detail-head">
@@ -256,7 +256,7 @@ export default function EmployeeDetailPage() {
               <h2><Phone className="w-4 h-4 text-pink-600" /> Personal</h2>
               <dl>
                 <div><dt>Father&apos;s name</dt><dd>{employee.fatherName || "—"}</dd></div>
-                <div><dt>CNIC</dt><dd className="font-mono">{employee.cnic || "—"}</dd></div>
+                <div><dt>SSN / Tax ID</dt><dd className="font-mono">{employee.cnic || "—"}</dd></div>
                 <div><dt>Phone</dt><dd>{employee.phone || "—"}</dd></div>
                 <div><dt>Address</dt><dd>{employee.address || "—"}</dd></div>
               </dl>

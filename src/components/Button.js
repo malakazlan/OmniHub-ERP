@@ -2,24 +2,47 @@
 
 import React from "react";
 
-export function Button({ 
-  children, 
-  onClick, 
-  type = "button", 
-  variant = "primary", 
-  className = "", 
+/**
+ * Omni Hub button — 34px tall, 8px radius, brand shadow on primary.
+ * Variants: primary | brand (alias) | secondary | outline | ghost | danger | glass (legacy → secondary).
+ */
+export function Button({
+  children,
+  onClick,
+  type = "button",
+  variant = "primary",
+  size = "md",
+  className = "",
   disabled = false,
-  ...props 
+  ...props
 }) {
-  const baseStyles = "px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 transform active:scale-95 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer flex items-center justify-center gap-2";
-  
+  const base =
+    "inline-flex items-center justify-center gap-[7px] rounded-lg font-medium text-[13px] leading-none whitespace-nowrap " +
+    "transition-[background-color,border-color,color,box-shadow] duration-150 cursor-pointer select-none " +
+    "focus:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--brand-soft)] " +
+    "disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none";
+
+  const sizes = {
+    sm: "h-7 px-2.5 text-[12px]",
+    md: "h-[34px] px-3.5",
+    lg: "h-10 px-5 text-sm",
+  };
+
   const variants = {
-    primary: "bg-[#0F52BA] hover:bg-[#0B3E8F] text-white shadow-md hover:shadow-blue-900/20 focus:ring-[#0F52BA]",
-    brand: "bg-[#0F52BA] hover:bg-[#0B3E8F] text-white shadow-md shadow-blue-900/15 focus:ring-[#0F52BA] focus:ring-offset-white border-0",
-    secondary: "bg-neutral-100 hover:bg-neutral-200 text-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 dark:text-neutral-200 focus:ring-neutral-500",
-    danger: "bg-red-600 hover:bg-red-500 text-white shadow-sm focus:ring-red-500",
-    outline: "border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 focus:ring-neutral-500",
-    glass: "backdrop-blur-md bg-white/10 dark:bg-black/10 border border-white/20 dark:border-white/10 hover:bg-white/20 dark:hover:bg-black/20 text-neutral-800 dark:text-white focus:ring-white",
+    primary:
+      "bg-[var(--brand)] border border-[var(--brand)] text-white shadow-[var(--shadow-brand)] hover:bg-[var(--brand-ink)] hover:border-[var(--brand-ink)]",
+    brand:
+      "bg-[var(--brand)] border border-[var(--brand)] text-white shadow-[var(--shadow-brand)] hover:bg-[var(--brand-ink)] hover:border-[var(--brand-ink)]",
+    secondary:
+      "bg-[var(--surface)] border border-[var(--line-strong)] text-[var(--ink)] hover:bg-[var(--surface-2)]",
+    outline:
+      "bg-transparent border border-[var(--line-strong)] text-[var(--ink)] hover:bg-[var(--surface-2)]",
+    ghost:
+      "bg-transparent border border-transparent text-[var(--ink-2)] hover:bg-[var(--surface-2)] hover:text-[var(--ink)]",
+    danger:
+      "bg-[var(--bad)] border border-[var(--bad)] text-white hover:brightness-95",
+    glass:
+      "bg-[var(--surface)] border border-[var(--line-strong)] text-[var(--ink)] hover:bg-[var(--surface-2)]",
   };
 
   return (
@@ -27,7 +50,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`${baseStyles} ${variants[variant] || variants.primary} ${className}`}
+      className={`${base} ${sizes[size] || sizes.md} ${variants[variant] || variants.primary} ${className}`}
       {...props}
     >
       {children}

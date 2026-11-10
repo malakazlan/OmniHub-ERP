@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { Users, Plus, Loader2, ArrowLeft, Shield, Pencil, Trash2 } from "lucide-react";
-import { MODULES } from "@/lib/constants";
+import { VISIBLE_MODULES } from "@/lib/constants";
 import { formatDate } from "@/lib/formatters";
 import ModuleAccessTabs from "@/components/settings/ModuleAccessTabs";
 import { defaultModulesForRole } from "@/lib/modulePresets";
@@ -73,7 +73,7 @@ export default function UsersSettingsPage() {
       setForm((prev) => ({
         ...prev,
         role: val,
-        allowedModules: val === "admin" ? [...MODULES] : defaultModulesForRole(val),
+        allowedModules: val === "admin" ? [...VISIBLE_MODULES] : defaultModulesForRole(val),
       }));
       return;
     }
@@ -131,7 +131,7 @@ export default function UsersSettingsPage() {
     try {
       const modules =
         form.role === "admin"
-          ? MODULES
+          ? VISIBLE_MODULES
           : form.allowedModules?.length
             ? form.allowedModules
             : defaultModulesForRole(form.role);
@@ -368,7 +368,7 @@ export default function UsersSettingsPage() {
             </div>
             <div className="md:col-span-2">
               <ModuleAccessTabs
-                selected={form.role === "admin" ? MODULES : form.allowedModules || []}
+                selected={form.role === "admin" ? VISIBLE_MODULES : form.allowedModules || []}
                 onChange={(mods) => setForm({ ...form, allowedModules: mods })}
                 disabled={form.role === "admin"}
               />

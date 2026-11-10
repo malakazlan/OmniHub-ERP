@@ -57,7 +57,7 @@ export default function FleetDetailView({
               <p className="erp-fleet-detail-sub capitalize">{vehicleLabel(vehicle)}</p>
               {(vehicle.driverName || vehicle.capacity) && (
                 <p className="erp-fleet-detail-meta">
-                  {[vehicle.driverName, vehicle.capacity ? `${vehicle.capacity} ton` : null].filter(Boolean).join(" · ")}
+                  {[vehicle.driverName, vehicle.capacity ? `${vehicle.capacity} lb` : null].filter(Boolean).join(" · ")}
                 </p>
               )}
             </div>

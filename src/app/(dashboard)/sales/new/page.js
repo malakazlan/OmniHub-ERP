@@ -24,7 +24,8 @@ import {
   Receipt,
   AlertTriangle,
 } from "lucide-react";
-import { parseNumber } from "@/lib/formatters";
+import { parseNumber, formatCurrency } from "@/lib/formatters";
+import { isCustomerCompany } from "@/lib/saleCustomer";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
 import { useDefaultCashAccountId, applyDefaultCashAccount } from "@/hooks/useDefaultCashAccount";
 
@@ -51,8 +52,8 @@ function Money({ value, className = "", muted = false, strong = false, placehold
   if (emptyIfZero && num === 0) {
     return <span className={`text-sm text-slate-400 tabular-nums ${className}`}>{placeholder}</span>;
   }
-  const formatted = num.toLocaleString("en-PK", {
-    minimumFractionDigits: 0,
+  const formatted = num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
   return (
@@ -115,7 +116,7 @@ function NewSalePageInner() {
   const defaultCashAccountId = useDefaultCashAccountId();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [customerType, setCustomerType] = useState("shop");
+  const [customerType, setCustomerType] = useState("company");
   const [shops, setShops] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [farmers, setFarmers] = useState([]);
@@ -265,9 +266,12 @@ function NewSalePageInner() {
   const customerOptions = useMemo(() => {
     if (customerType === "farmer") return farmers;
     if (customerType === "shop") return shops;
-    if (customerType === "company") return companies;
+    if (customerType === "company") return companies.filter(isCustomerCompany);
     return [];
   }, [customerType, farmers, shops, companies]);
+
+  // Farmer / shop parties are legacy; their tabs only appear when correcting an old invoice.
+  const legacyCustomerType = customerType === "farmer" || customerType === "shop";
 
   const switchCustomerType = (type) => {
     setCustomerType(type);
@@ -347,7 +351,7 @@ function NewSalePageInner() {
           productId: parseInt(item.productId, 10),
           productName: product?.name || "",
           quantity: parseNumber(item.quantity),
-          unit: product?.unit || "kg",
+          unit: product?.unit || "ea",
           rate: parseNumber(item.rate),
           amount: parseNumber(item.amount),
         };
@@ -366,13 +370,13 @@ function NewSalePageInner() {
 
   const validateSaleForm = (status) => {
     if (customerType !== "walkin" && !form.customerId) {
-      showToast(`Please select a ${customerType}`, "warning");
+      showToast(`Please select a ${customerType === "company" ? "customer" : customerType}`, "warning");
       return null;
     }
 
     const validItems = items.filter((item) => item.productId && parseNumber(item.quantity) > 0);
     if (validItems.length === 0) {
-      showToast("Add at least one product line", "warning");
+      showToast("Add at least one item line", "warning");
       return null;
     }
 
@@ -493,11 +497,11 @@ function NewSalePageInner() {
         breadcrumbs={
           isCorrection
             ? [
-                { label: "Sales", href: "/sales" },
+                { label: "Invoices", href: "/sales" },
                 { label: correctionInvoice || "Bill", href: correctId ? `/sales/${correctId}` : "/sales" },
                 { label: "Correct" },
               ]
-            : [{ label: "Sales", href: "/sales" }, { label: "New invoice" }]
+            : [{ label: "Invoices", href: "/sales" }, { label: "New invoice" }]
         }
         actions={
           <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-end gap-2 w-full sm:w-auto">
@@ -539,7 +543,7 @@ function NewSalePageInner() {
                   value={correctionReason}
                   onChange={(e) => setCorrectionReason(e.target.value)}
                   rows={2}
-                  placeholder="e.g. Wrong quantity entered for Product X"
+                  placeholder="e.g. Wrong quantity entered for Item X"
                   className="input-field w-full text-sm bg-white/90 border-amber-200/80 focus:border-amber-400"
                 />
               </div>
@@ -569,7 +573,7 @@ function NewSalePageInner() {
             <option value="">Select an accepted order…</option>
             {acceptedOrders.map((o) => (
               <option key={o.id} value={o.id}>
-                {o.orderNumber} — {o.customerName} ({o.totalAmount?.toLocaleString()} PKR)
+                {o.orderNumber} — {o.customerName} ({formatCurrency(o.totalAmount)})
               </option>
             ))}
           </select>
@@ -580,10 +584,11 @@ function NewSalePageInner() {
         <DocSection title="Customer" className="overflow-visible">
           <div className="erp-doc-body space-y-4 overflow-visible">
             <div
-              className="erp-vendor-switch grid grid-cols-2 sm:grid-cols-4 gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60"
+              className={`erp-vendor-switch grid ${legacyCustomerType ? "grid-cols-3" : "grid-cols-2"} gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60`}
               role="tablist"
               aria-label="Customer type"
             >
+              {customerType === "farmer" && (
               <button
                 type="button"
                 role="tab"
@@ -596,8 +601,10 @@ function NewSalePageInner() {
                 }`}
               >
                 <Wheat className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                Farmer
+                Farmer (legacy)
               </button>
+              )}
+              {customerType === "shop" && (
               <button
                 type="button"
                 role="tab"
@@ -610,8 +617,9 @@ function NewSalePageInner() {
                 }`}
               >
                 <Store className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                Shop
+                Shop (legacy)
               </button>
+              )}
               <button
                 type="button"
                 role="tab"
@@ -624,7 +632,7 @@ function NewSalePageInner() {
                 }`}
               >
                 <Building2 className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                Company
+                Customer
               </button>
               <button
                 type="button"
@@ -653,10 +661,10 @@ function NewSalePageInner() {
                   value={form.walkInName}
                   onChange={handleChange("walkInName")}
                   className="input-field w-full min-h-[42px] text-sm"
-                  placeholder="Cash sale — leave blank and receipt shows —"
+                  placeholder="Cash sale — leave blank and invoice shows —"
                 />
                 <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200/80 rounded-lg px-2.5 py-2">
-                  No ledger account. Full cash/bank payment is required to confirm a walk-in sale.
+                  No ledger account. Full cash/bank payment is required to confirm a walk-in invoice.
                 </p>
               </div>
             ) : (
@@ -666,9 +674,9 @@ function NewSalePageInner() {
                     ? "Farmer *"
                     : customerType === "shop"
                       ? "Shop *"
-                      : "Company *"
+                      : "Customer *"
                 }
-                placeholder={`Search ${customerType === "farmer" ? "farmers" : customerType === "shop" ? "shops" : "companies"}…`}
+                placeholder={`Search ${customerType === "farmer" ? "farmers" : customerType === "shop" ? "shops" : "customers"}…`}
                 options={customerOptions}
                 value={form.customerId}
                 onChange={(id) => setForm({ ...form, customerId: id })}
@@ -725,7 +733,7 @@ function NewSalePageInner() {
           <table className="erp-line-table w-full min-w-[720px]">
             <thead>
               <tr>
-                <th className="text-left pl-4">Product</th>
+                <th className="text-left pl-4">Item</th>
                 <th className="text-right w-[100px]">Qty</th>
                 <th className="text-right w-[110px]">Rate</th>
                 <th className="text-right w-[110px]">Amount</th>
@@ -742,7 +750,7 @@ function NewSalePageInner() {
                         className="input-field-compact w-full text-sm"
                         aria-label="Product"
                       >
-                        <option value="">Select product…</option>
+                        <option value="">Select item…</option>
                         {products.map((p) => (
                           <option key={p.id} value={p.id}>
                             {p.name} · Stock {p.currentStock} {p.unit}
@@ -827,7 +835,7 @@ function NewSalePageInner() {
             <div className="erp-settlement-charges erp-doc-body space-y-3">
               <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">Additional charges</p>
               {[
-                { field: "transportCost", label: "Transport" },
+                { field: "transportCost", label: "Freight" },
                 { field: "loadingCost", label: "Loading" },
                 { field: "taxAmount", label: "Tax / GST" },
               ].map(({ field, label }) => (

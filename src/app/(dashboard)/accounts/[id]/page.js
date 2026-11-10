@@ -19,9 +19,9 @@ import { formatCurrency } from "@/lib/formatters";
 const CATEGORY_LABELS = {
   cash: "Cash",
   bank: "Bank",
-  farmer: "Farmer",
-  company: "Company",
-  shop: "Shop",
+  farmer: "Farmer (legacy)",
+  company: "Customer / Vendor",
+  shop: "Shop (legacy)",
   salary: "Employee",
   transport: "Driver",
   vehicle: "Vehicle",

@@ -50,11 +50,11 @@ export default function CommissionPage() {
         <header className="erp-hr-page-header">
           <div>
             <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-pink-700 mb-2">
-              <ArrowLeft className="w-3.5 h-3.5" /> HR home
+              <ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll
             </Link>
             <div className="erp-hr-page-badge"><Percent className="w-3.5 h-3.5" /> Commission</div>
             <h1 className="erp-hr-page-title">Commission list</h1>
-            <p className="erp-hr-page-desc">Sales se commission — auto list from linked salesperson accounts.</p>
+            <p className="erp-hr-page-desc">Commission on invoices — auto list from linked sales rep accounts.</p>
           </div>
           <Button
             variant="outline"

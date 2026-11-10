@@ -19,7 +19,7 @@ const RegisterPrintView = forwardRef(function RegisterPrintView(
   },
   ref
 ) {
-  const companyName = company?.company_name || "Warraich Traders";
+  const companyName = company?.company_name || "Omni Hub";
   const companyLines = formatPrintCompanyMeta(company);
   const printedAt = new Date().toLocaleString();
   const layout = useMemo(() => layoutRegisterColumns(columns), [columns]);

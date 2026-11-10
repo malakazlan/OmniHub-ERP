@@ -9,13 +9,8 @@ import { formatCurrency } from "@/lib/formatters";
 import DashboardChartTooltip from "@/components/dashboard/DashboardChartTooltip";
 
 const COLORS = {
-  receivable: "#16a34a",
-  payable: "#dc2626",
-  shop: "#22c55e",
-  company: "#059669",
-  farmer: "#ef4444",
-  transport: "#f97316",
-  general: "#64748b",
+  receivable: "var(--brand)",
+  payable: "var(--bad)",
 };
 
 export default function ReceivablesPayablesPanel({ receivables = {}, payables = {} }) {
@@ -51,7 +46,7 @@ export default function ReceivablesPayablesPanel({ receivables = {}, payables = 
       <div className="erp-dash-finance-head">
         <div className="flex items-start gap-2.5">
           <span className="erp-dash-finance-icon is-balance">
-            <Scale className="w-4 h-4" />
+            <Scale className="w-4 h-4" strokeWidth={1.75} />
           </span>
           <div>
             <h2 className="erp-dash-finance-title">Receivables vs payables</h2>
@@ -60,12 +55,12 @@ export default function ReceivablesPayablesPanel({ receivables = {}, payables = 
         </div>
         <div className="erp-dash-finance-totals">
           <div>
-            <p className="erp-dash-finance-total-label is-in">Receivables</p>
-            <p className="erp-dash-finance-total is-in">{formatCurrency(receivables.total || 0)}</p>
+            <p className="erp-dash-finance-total-label">Receivables</p>
+            <p className="erp-dash-finance-total is-in num">{formatCurrency(receivables.total || 0)}</p>
           </div>
           <div>
-            <p className="erp-dash-finance-total-label is-out">Payables</p>
-            <p className="erp-dash-finance-total is-out">{formatCurrency(payables.total || 0)}</p>
+            <p className="erp-dash-finance-total-label">Payables</p>
+            <p className="erp-dash-finance-total is-out num">{formatCurrency(payables.total || 0)}</p>
           </div>
         </div>
       </div>
@@ -75,14 +70,14 @@ export default function ReceivablesPayablesPanel({ receivables = {}, payables = 
           <p className="erp-dash-finance-empty">No outstanding receivables or payables.</p>
         ) : (
           <>
-            <div className="h-40 w-full min-w-0 mb-3">
+            <div className="h-40 w-full min-w-0 mb-3 font-mono">
               <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                 <BarChart data={chartData} layout="vertical" margin={{ top: 4, right: 8, left: 4, bottom: 4 }}>
-                  <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="2 3" horizontal={false} stroke="var(--line)" />
                   <XAxis type="number" hide domain={[0, yMax]} />
-                  <YAxis type="category" dataKey="name" width={88} tick={{ fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<DashboardChartTooltip />} cursor={{ fill: "rgba(148,163,184,0.08)" }} />
-                  <Bar dataKey="amount" name="Amount" radius={[0, 6, 6, 0]} maxBarSize={22}>
+                  <YAxis type="category" dataKey="name" width={88} tick={{ fontSize: 11, fill: "var(--ink-2)" }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<DashboardChartTooltip />} cursor={{ fill: "var(--surface-2)" }} />
+                  <Bar dataKey="amount" name="Amount" radius={[0, 4, 4, 0]} maxBarSize={20}>
                     {chartData.map((entry) => (
                       <Cell key={entry.name} fill={COLORS[entry.type]} />
                     ))}
@@ -97,7 +92,7 @@ export default function ReceivablesPayablesPanel({ receivables = {}, payables = 
                   <li key={row.name} className="erp-dash-finance-breakdown-row">
                     <span className={`erp-dash-finance-breakdown-dot is-${row.type}`} />
                     <span className="erp-dash-finance-breakdown-name">{row.name}</span>
-                    <span className={`erp-dash-finance-breakdown-amt is-${row.type}`}>
+                    <span className={`erp-dash-finance-breakdown-amt num is-${row.type}`}>
                       {formatCurrency(row.amount)}
                     </span>
                   </li>

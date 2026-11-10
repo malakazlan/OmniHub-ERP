@@ -49,7 +49,7 @@ export default function ProductDetailPage() {
       const data = await prodRes.json();
       const catData = await catRes.json();
       if (prodRes.ok) setProduct(data.product);
-      else showToast(data.error || "Failed to load product", "error");
+      else showToast(data.error || "Failed to load item", "error");
       if (catRes.ok) setCategories(catData.categories || []);
     } catch {
       showToast("Error connecting to server", "error");
@@ -83,17 +83,17 @@ export default function ProductDetailPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: product ? `Product — ${product.name}` : "Product",
+    title: product ? `Item — ${product.name}` : "Product",
     subtitle: product?.sku ? `SKU ${product.sku}` : "",
     company: companySettings,
     columns: printCols,
     rows: movements,
-    filename: product ? `product-${product.sku || product.id}.pdf` : "product.pdf",
+    filename: product ? `item-${product.sku || product.id}.pdf` : "item.pdf",
   });
 
   const openEdit = () => {
     setForm({
-      name: product.name || "", categoryId: product.categoryId || "", unit: product.unit || "kg",
+      name: product.name || "", categoryId: product.categoryId || "", unit: product.unit || "ea",
       bagWeight: product.bagWeight ?? "34", costPrice: product.costPrice ?? "", salePrice: product.salePrice ?? "",
       minimumStock: product.minimumStock ?? "", currentStock: product.currentStock ?? "",
       description: product.description || "", isActive: product.isActive,
@@ -112,7 +112,7 @@ export default function ProductDetailPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast("Product updated!", "success");
+        showToast("Item updated!", "success");
         setModalOpen(false);
         fetchProduct();
       } else showToast(data.error || "Failed to update", "error");
@@ -124,12 +124,12 @@ export default function ProductDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(`Delete product "${product.name}"?`)) return;
+    if (!window.confirm(`Delete item "${product.name}"?`)) return;
     try {
       const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || "Product removed", "success");
+        showToast(data.message || "Item removed", "success");
         router.push("/products");
       } else showToast(data.error || "Failed to delete", "error");
     } catch {
@@ -144,7 +144,7 @@ export default function ProductDetailPage() {
   if (!product) {
     return (
       <div className="erp-products-surface p-8 text-center">
-        <p className="text-slate-500 mb-4">Product not found</p>
+        <p className="text-slate-500 mb-4">Item not found</p>
         <Link href="/products"><Button variant="outline"><ArrowLeft className="w-4 h-4" /> Back</Button></Link>
       </div>
     );
@@ -156,7 +156,7 @@ export default function ProductDetailPage() {
   return (
     <div className="erp-products-surface page-enter pb-8">
       <div className="erp-products-page space-y-5">
-        <Link href="/products" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> Products</Link>
+        <Link href="/products" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> Items</Link>
 
         <div className="erp-prod-detail-panel">
           <div className="erp-prod-detail-head">
@@ -185,7 +185,7 @@ export default function ProductDetailPage() {
 
           <div className="erp-prod-detail-info">
             <div><span className="label">Unit</span><span>{product.unit}</span></div>
-            {product.unit === "bag" && <div><span className="label">Bag weight</span><span>{product.bagWeight || 34} kg</span></div>}
+            {(product.unit === "case" || product.unit === "bag") && <div><span className="label">Units per case</span><span>{product.bagWeight || 34}</span></div>}
             <div><span className="label">Min stock</span><span>{formatQuantity(product.minimumStock, product.unit)}</span></div>
             {isLow && <div className="erp-prod-low-banner"><AlertTriangle className="w-4 h-4" /> Below minimum stock threshold</div>}
             {product.description && <div className="erp-prod-desc"><span className="label">Description</span><p>{product.description}</p></div>}
@@ -235,13 +235,13 @@ export default function ProductDetailPage() {
       </div>
 
       {form && (
-        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Edit product" size="lg">
+        <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Edit item" size="lg">
           <ProductForm form={form} onChange={setForm} categories={categories} submitting={submitting} onSubmit={handleSubmit} onCancel={() => setModalOpen(false)} submitLabel="Save changes" />
         </Modal>
       )}
 
       <div className="erp-register-print-host" aria-hidden>
-        <RegisterPrintView ref={printRef} title={`Product — ${product.name}`} subtitle={`SKU ${product.sku || "—"} · Stock ${formatQuantity(product.currentStock, product.unit)}`} company={companySettings} columns={printCols} rows={movements} />
+        <RegisterPrintView ref={printRef} title={`Item — ${product.name}`} subtitle={`SKU ${product.sku || "—"} · Stock ${formatQuantity(product.currentStock, product.unit)}`} company={companySettings} columns={printCols} rows={movements} />
       </div>
     </div>
   );

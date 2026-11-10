@@ -19,7 +19,7 @@ export function PaymentReceiptPanel({ receipt, company, open, onClose, title, wh
       open={open}
       onClose={onClose}
       title={voucherTitle}
-      hint="Print, PDF, or WhatsApp this voucher (image copied to clipboard)."
+      hint="Print, PDF, or share this voucher via WhatsApp (image copied to clipboard)."
       pdfFilename={filename}
       paymentReceiptPdf={{ receipt, company }}
       whatsappPhone={waPhone}

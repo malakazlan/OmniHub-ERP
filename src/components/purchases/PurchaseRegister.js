@@ -10,8 +10,8 @@ function balanceDue(row) {
 }
 
 function vendorTypeLabel(row) {
-  if (row.farmerId) return "Farmer";
-  if (row.companyId) return "Company";
+  if (row.farmerId) return "Farmer (legacy)";
+  if (row.companyId) return "Vendor";
   return "—";
 }
 

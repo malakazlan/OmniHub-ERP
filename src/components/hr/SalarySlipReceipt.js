@@ -63,7 +63,7 @@ export default function SalarySlipReceipt({
             </XlsCell>
             <XlsCell colSpan={4} align="center" className="is-title">
               <span className="erp-sal-xls-kicker">Official Document</span>
-              <strong>Monthly Salary Receipt</strong>
+              <strong>Monthly Pay Stub</strong>
               <span>{data.periodLabel.toUpperCase()}</span>
             </XlsCell>
             <XlsCell colSpan={4} className="is-meta">
@@ -88,7 +88,7 @@ export default function SalarySlipReceipt({
                     ["Employee ID", employee.id],
                     ["Name", employee.name],
                     ["Father name", employee.fatherName || "—"],
-                    ["CNIC", employee.cnic || "—"],
+                    ["SSN / Tax ID", employee.cnic || "—"],
                     ["Phone", employee.phone || "—"],
                     ["Designation", employee.designation || employee.department || "—"],
                     ["Monthly contract", formatCurrency(employee.contractSalary)],

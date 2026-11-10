@@ -7,7 +7,7 @@ import { DocumentReceiptPanel } from "@/components/documents/DocumentReceiptPane
 import { getSaleWhatsAppPhone } from "@/lib/invoicePartyContact";
 import { FileText } from "lucide-react";
 
-export function SaleInvoicePanel({ sale, company, open, onClose, title = "Sales invoice", autoAction = null, onAutoActionDone, whatsappPhone = null }) {
+export function SaleInvoicePanel({ sale, company, open, onClose, title = "Invoice", autoAction = null, onAutoActionDone, whatsappPhone = null }) {
   if (!sale) return null;
 
   const pdfFilename = `${sale.invoiceNumber || "invoice"}-bill.pdf`.replace(/\s+/g, "-");
@@ -39,8 +39,8 @@ export function SaleInvoicePreviewCard({ sale, onOpen }) {
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">Sales invoice</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Bill for {sale.customerName}</p>
+            <h3 className="text-sm font-bold text-slate-900">Invoice</h3>
+            <p className="text-xs text-slate-500 mt-0.5">Invoice for {sale.customerName}</p>
           </div>
         </div>
         <Button

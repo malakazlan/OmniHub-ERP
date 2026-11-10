@@ -25,7 +25,7 @@ export function canCorrectPurchase(purchase, { returnsCount = 0 } = {}) {
 async function reversePurchaseStock(tx, purchase, items) {
   for (const item of items) {
     const product = await tx.product.findUnique({ where: { id: item.productId } });
-    if (!product) throw new Error(`Product ${item.productId} not found`);
+    if (!product) throw new Error(`Item ${item.productId} not found`);
 
     const qty = parseNum(item.quantity);
     if (product.currentStock < qty) {
@@ -81,7 +81,7 @@ async function reversePurchaseLedgerEntries(tx, purchase, correctionDate) {
 }
 
 function buildCorrectionNote(existingNotes, reason, userName) {
-  const stamp = new Date().toLocaleString("en-PK", {
+  const stamp = new Date().toLocaleString("en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",

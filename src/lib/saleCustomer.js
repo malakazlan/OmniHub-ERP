@@ -57,8 +57,20 @@ export function saleCustomerDisplayName(sale) {
 export function saleCustomerTypeLabel(sale) {
   if (sale?.farmerId) return "Farmer";
   if (sale?.shopId) return "Shop";
-  if (sale?.companyId) return "Company";
+  if (sale?.companyId) return "Customer";
   return "Walk-in";
+}
+
+/** Company records that can be invoiced (companyType buyer | both). */
+export function isCustomerCompany(company) {
+  const t = company?.companyType || "both";
+  return t === "buyer" || t === "both";
+}
+
+/** Company records that bill us (companyType supplier | both). */
+export function isVendorCompany(company) {
+  const t = company?.companyType || "both";
+  return t === "supplier" || t === "both";
 }
 
 export function saleCustomerPhone(sale) {

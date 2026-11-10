@@ -3,6 +3,7 @@
 import React from "react";
 import { DEFAULT_COMPANY } from "@/components/documents/DocumentBillShell";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { companyAddressLine } from "@/lib/companyProfile";
 
 function moneyPlain(val) {
   return formatCurrency(val ?? 0, false);
@@ -64,7 +65,7 @@ export default function PaymentReceipt({ receipt, company = DEFAULT_COMPANY }) {
         >
           {c.company_name}
         </p>
-        {c.company_address && (
+        {companyAddressLine(c) && (
           <p
             className="erp-voucher-sub"
             style={{
@@ -75,7 +76,7 @@ export default function PaymentReceipt({ receipt, company = DEFAULT_COMPANY }) {
               lineHeight: 1.3,
             }}
           >
-            {c.company_address}
+            {companyAddressLine(c)}
           </p>
         )}
         {(c.company_phone || c.ntn) && (
@@ -89,7 +90,7 @@ export default function PaymentReceipt({ receipt, company = DEFAULT_COMPANY }) {
               lineHeight: 1.3,
             }}
           >
-            {[c.company_phone, c.ntn ? `NTN: ${c.ntn}` : ""].filter(Boolean).join(" · ")}
+            {[c.company_phone, c.ntn ? `EIN: ${c.ntn}` : ""].filter(Boolean).join(" · ")}
           </p>
         )}
         <div

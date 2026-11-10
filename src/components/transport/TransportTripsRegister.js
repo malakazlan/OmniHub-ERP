@@ -49,8 +49,8 @@ export default function TransportTripsRegister({
     return (
       <div className="erp-ac-empty py-16">
         <Truck className="w-10 h-10 text-cyan-200 mx-auto mb-2" />
-        <p className="text-sm font-semibold text-slate-600">No transport trips recorded</p>
-        <p className="text-xs text-slate-400 mt-1">Create a new trip to track freight and delivery routes</p>
+        <p className="text-sm font-semibold text-slate-600">No deliveries recorded</p>
+        <p className="text-xs text-slate-400 mt-1">Create a new delivery to track freight and routes</p>
       </div>
     );
   }
@@ -156,7 +156,7 @@ export default function TransportTripsRegister({
                       <button
                         type="button"
                         className="erp-fleet-icon-btn"
-                        title="Edit trip"
+                        title="Edit delivery"
                         onClick={() => onOpenTrip?.(t)}
                       >
                         <Pencil className="w-3.5 h-3.5" />

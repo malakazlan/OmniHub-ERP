@@ -1,4 +1,6 @@
 import { buildAdvanceReceiptDetail } from "@/lib/hrPayroll";
+import { formatCurrency } from "@/lib/formatters";
+import { companyAddressLine } from "@/lib/companyProfile";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -114,26 +116,26 @@ function buildAdvanceSummaryText(advanceDetail) {
   const chunks = [];
   if (notRecovered > 0) {
     chunks.push(
-      `Rs ${notRecovered.toLocaleString("en-PK", { minimumFractionDigits: 2 })} not recovered from prior + this month advances`
+      `${formatCurrency(notRecovered)} not recovered from prior + this month advances`
     );
   }
   if (newAdv > 0) {
-    chunks.push(`Rs ${newAdv.toLocaleString("en-PK", { minimumFractionDigits: 2 })} new advance paid at clearance (not deducted from salary)`);
+    chunks.push(`${formatCurrency(newAdv)} new advance paid at clearance (not deducted from salary)`);
   }
   return `${chunks.join(" · ")}.`;
 }
 
 export function buildSalarySlipReceipt({ record, preview, company = {}, clearanceExtras = {} }) {
-  const companyName = company.company_name || "Warraich Traders";
+  const companyName = company.company_name || "Omni Hub";
   const base = {
     company: {
       name: companyName,
-      address: company.address || company.company_address || "",
+      address: companyAddressLine(company),
       phone: company.phone || company.company_phone || "",
       email: company.email || company.company_email || "",
       ntn: company.ntn || "",
     },
-    printedAt: new Date().toLocaleString("en-PK"),
+    printedAt: new Date().toLocaleString("en-US"),
     isPreview: false,
     notes: "",
   };

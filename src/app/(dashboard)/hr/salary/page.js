@@ -129,7 +129,7 @@ export default function SalaryPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: "Salary Register",
+    title: "Payroll Register",
     subtitle: `${MONTHS[parseInt(month, 10) - 1]} ${year} · ${filtered.length} records`,
     company: companySettings,
     columns: SALARY_PRINT_COLS,
@@ -204,13 +204,13 @@ export default function SalaryPage() {
               <Wallet className="w-3.5 h-3.5" />
               Payroll
             </div>
-            <h1 className="erp-hr-page-title">Salary register</h1>
-            <p className="erp-hr-page-desc">Process monthly payroll, record payments, and print salary slips.</p>
+            <h1 className="erp-hr-page-title">Payroll register</h1>
+            <p className="erp-hr-page-desc">Process monthly payroll, record payments, and print pay stubs.</p>
           </div>
           <div className="erp-hr-header-actions">
             <Link href="/hr">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <ArrowLeft className="w-4 h-4" /> HR
+                <ArrowLeft className="w-4 h-4" /> Employees & Payroll
               </Button>
             </Link>
             <Button onClick={openCreate} className="bg-acc-hr border-0">
@@ -315,7 +315,7 @@ export default function SalaryPage() {
       <div className="erp-register-print-host" aria-hidden>
         <RegisterPrintView
           ref={printRef}
-          title="Salary Register"
+          title="Payroll Register"
           subtitle={`${MONTHS[parseInt(month, 10) - 1]} ${year}`}
           company={companySettings}
           columns={SALARY_PRINT_COLS}

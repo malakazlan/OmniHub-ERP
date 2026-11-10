@@ -13,18 +13,17 @@ import { useRegisterExport } from "@/hooks/useRegisterExport";
 import { DirectoryAdminNotice, confirmDirectoryDelete, useDirectoryAdmin } from "@/components/accounts/DirectoryAdminActions";
 import {
   BookOpen, Loader2, Landmark, Users, Wallet,
-  Banknote, Building, Store, Plus, Search, Sprout, Truck, Car, X,
+  Banknote, Building, Store, Plus, Search, Truck, Car, X,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
-const PROJECT_CATEGORIES = ["cash", "bank", "farmer", "company", "shop", "salary", "transport", "vehicle"];
+// farmer / shop categories belong to the hidden feed-era modules and are not listed.
+const PROJECT_CATEGORIES = ["cash", "bank", "company", "salary", "transport", "vehicle"];
 
 const CATEGORY_LABELS = {
   cash: "Cash",
   bank: "Bank",
-  farmer: "Farmers",
-  company: "Companies",
-  shop: "Shops",
+  company: "Customers & Vendors",
   salary: "Employees",
   transport: "Drivers",
   vehicle: "Vehicles",
@@ -33,9 +32,7 @@ const CATEGORY_LABELS = {
 const CATEGORY_ICONS = {
   cash: Banknote,
   bank: Landmark,
-  farmer: Sprout,
   company: Building,
-  shop: Store,
   salary: Users,
   transport: Truck,
   vehicle: Car,
@@ -192,11 +189,16 @@ function AccountsPageContent() {
     [filteredAccounts]
   );
 
+  // Customer accounts are assets (they owe us); vendor, payroll, and driver accounts are liabilities.
   const totalReceivable = accounts
-    .filter((a) => (a.category === "shop" || a.category === "farmer") && a.balance > 0)
+    .filter((a) => a.category === "company" && a.type === "asset" && a.balance > 0)
     .reduce((s, a) => s + a.balance, 0);
   const totalPayable = accounts
-    .filter((a) => ["company", "salary", "transport"].includes(a.category) && a.balance > 0)
+    .filter(
+      (a) =>
+        ((a.category === "company" && a.type !== "asset") || ["salary", "transport"].includes(a.category)) &&
+        a.balance > 0
+    )
     .reduce((s, a) => s + a.balance, 0);
   const cashBankTotal = accounts
     .filter((a) => a.category === "cash" || a.category === "bank")
@@ -256,11 +258,11 @@ function AccountsPageContent() {
           <div className="erp-ac-page-header-main">
             <div className="erp-ac-page-badge">
               <BookOpen className="w-3.5 h-3.5" />
-              Accounts module
+              Accounting module
             </div>
-            <h1 className="erp-ac-page-title">Account register</h1>
+            <h1 className="erp-ac-page-title">Chart of Accounts</h1>
             <p className="erp-ac-page-desc">
-              Master directory for cash, bank, suppliers, customers, staff, drivers, and vehicles — live balances, Excel-style grid.
+              Master directory for cash, bank, customers, vendors, employees, drivers, and vehicles — live balances, spreadsheet-style grid.
             </p>
           </div>
           {canCreate && (

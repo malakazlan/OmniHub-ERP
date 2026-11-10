@@ -3,24 +3,38 @@
 import React from "react";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/Button";
+import { PRODUCT_UNITS } from "@/lib/constants";
 
-export default function ProductForm({ form, onChange, categories = [], submitting = false, onSubmit, onCancel, submitLabel = "Save product" }) {
+const UNIT_LABELS = {
+  ea: "Each (ea)",
+  case: "Case",
+  pallet: "Pallet",
+  lb: "Pound (lb)",
+  ft: "Foot (ft)",
+  gal: "Gallon (gal)",
+  kg: "Kilogram (legacy)",
+  ton: "Ton (legacy)",
+  bag: "Bag (legacy)",
+  piece: "Piece (legacy)",
+};
+
+export default function ProductForm({ form, onChange, categories = [], submitting = false, onSubmit, onCancel, submitLabel = "Save item" }) {
   const set = (field, value) => onChange({ ...form, [field]: value });
 
   return (
     <form onSubmit={onSubmit} className="erp-finance-form erp-prod-form">
       <div className="erp-finance-form-section">
-        <p className="erp-finance-section-label">Product details</p>
+        <p className="erp-finance-section-label">Item details</p>
         <div className="erp-finance-form-grid">
           <div className="erp-finance-field erp-finance-field-span2">
-            <label className="erp-finance-label">Product name *</label>
+            <label className="erp-finance-label">Item name *</label>
             <input
               type="text"
               value={form.name}
               onChange={(e) => set("name", e.target.value)}
               required
               className="erp-finance-input"
-              placeholder="e.g. Star Feed Poultry Mix"
+              placeholder="e.g. 16 oz Stainless Tumbler"
             />
           </div>
           <div className="erp-finance-field">
@@ -40,15 +54,17 @@ export default function ProductForm({ form, onChange, categories = [], submittin
           <div className="erp-finance-field">
             <label className="erp-finance-label">Unit</label>
             <select value={form.unit} onChange={(e) => set("unit", e.target.value)} className="erp-finance-input">
-              <option value="kg">Kilogram (Kg)</option>
-              <option value="ton">Ton</option>
-              <option value="bag">Bag (34kg)</option>
-              <option value="piece">Piece</option>
+              {PRODUCT_UNITS.map((u) => (
+                <option key={u} value={u}>{UNIT_LABELS[u] || u}</option>
+              ))}
+              {form.unit && !PRODUCT_UNITS.includes(form.unit) && (
+                <option value={form.unit}>{UNIT_LABELS[form.unit] || `${form.unit} (legacy)`}</option>
+              )}
             </select>
           </div>
-          {form.unit === "bag" && (
+          {(form.unit === "case" || form.unit === "bag") && (
             <div className="erp-finance-field">
-              <label className="erp-finance-label">Bag weight (kg)</label>
+              <label className="erp-finance-label">Units per case</label>
               <input type="number" step="any" value={form.bagWeight} onChange={(e) => set("bagWeight", e.target.value)} className="erp-finance-input font-mono" />
             </div>
           )}
@@ -78,7 +94,7 @@ export default function ProductForm({ form, onChange, categories = [], submittin
             <div className="erp-finance-field erp-finance-field-span2">
               <label className="erp-prod-check">
                 <input type="checkbox" checked={!!form.isActive} onChange={(e) => set("isActive", e.target.checked)} />
-                Active product
+                Active item
               </label>
             </div>
           )}

@@ -13,7 +13,7 @@ export function PurchaseReceiptPanel({
   company,
   open,
   onClose,
-  title = "Supplier purchase bill",
+  title = "Vendor bill",
   onPay,
   whatsappPhone = null,
 }) {
@@ -33,7 +33,7 @@ export function PurchaseReceiptPanel({
       open={open}
       onClose={onClose}
       title={title}
-      hint="Supplier bill — print, PDF, or WhatsApp (image copied to clipboard)."
+      hint="Vendor bill — print, PDF, or share via WhatsApp (image copied to clipboard)."
       pdfFilename={pdfFilename}
       whatsappPhone={waPhone}
       actions={

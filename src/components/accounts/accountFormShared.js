@@ -7,9 +7,9 @@ import { VEHICLE_TYPES } from "@/components/fleet/fleetConstants";
 export const CATEGORY_TITLES = {
   cash: "Cash Account",
   bank: "Bank Account",
-  farmer: "Farmer / Customer",
-  company: "Company",
-  shop: "Shop / Customer",
+  farmer: "Farmer (legacy)",
+  company: "Customer / Vendor",
+  shop: "Shop (legacy)",
   salary: "Employee",
   transport: "Driver Account",
   vehicle: "Vehicle Account",
@@ -19,7 +19,7 @@ export const OPENING_HINT = {
   cash: "Cash in hand at start (optional).",
   bank: "Current bank balance (optional).",
   farmer: "Amount this farmer owes you (optional).",
-  company: "Opening balance — payable for suppliers, receivable for buyers (optional).",
+  company: "Opening balance — payable for vendors, receivable for customers (optional).",
   shop: "Amount this customer owes you (optional).",
   salary: "Salary payable opening balance (optional).",
   transport: "Opening driver payable balance (optional).",
@@ -200,7 +200,7 @@ export function AccountCategoryFields({
               </Field>
             </div>
             <Field label="Phone" required>
-              {input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "03xx-xxxxxxx" })}
+              {input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "(555) 555-0100" })}
             </Field>
             <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
@@ -230,7 +230,7 @@ export function AccountCategoryFields({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <Field label="Account name" required hint="Shown in ledgers and payment screens">
-                {input({ value: form.accountTitle, onChange: (e) => set("accountTitle", e.target.value), placeholder: "e.g. HBL — Current Account" })}
+                {input({ value: form.accountTitle, onChange: (e) => set("accountTitle", e.target.value), placeholder: "e.g. Chase — Operating Checking" })}
               </Field>
             </div>
             <Field label="Phone" required>
@@ -243,7 +243,7 @@ export function AccountCategoryFields({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Bank name">{input({ value: form.bankName, onChange: (e) => set("bankName", e.target.value) })}</Field>
             <Field label="Account number">{input({ value: form.accountNumber, onChange: (e) => set("accountNumber", e.target.value) })}</Field>
-            <Field label="Branch code">{input({ value: form.branchCode, onChange: (e) => set("branchCode", e.target.value) })}</Field>
+            <Field label="Routing number">{input({ value: form.branchCode, onChange: (e) => set("branchCode", e.target.value) })}</Field>
             <Field label="Branch name">{input({ value: form.branchName, onChange: (e) => set("branchName", e.target.value) })}</Field>
           </div>
         </FormSection>
@@ -267,7 +267,7 @@ export function AccountCategoryFields({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="City">{input({ value: form.city, onChange: (e) => set("city", e.target.value) })}</Field>
             <Field label="Village">{input({ value: form.village, onChange: (e) => set("village", e.target.value) })}</Field>
-            <Field label="CNIC (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
+            <Field label="SSN / Tax ID (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
             <Field label="Father name">{input({ value: form.fatherName, onChange: (e) => set("fatherName", e.target.value) })}</Field>
             <Field label="WhatsApp">{input({ value: form.whatsappNumber, onChange: (e) => set("whatsappNumber", e.target.value) })}</Field>
             <div className="sm:col-span-2">
@@ -284,24 +284,24 @@ export function AccountCategoryFields({
   if (category === "company") {
     return (
       <>
-        <FormSection title="Company details">
+        <FormSection title="Account details">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
-              <Field label="Company name" required hint="Legal or trading name — used on invoices and ledger">
-                {input({ value: form.name, onChange: (e) => set("name", e.target.value), placeholder: "e.g. Al-Fatah Feeds Pvt Ltd" })}
+              <Field label="Business name" required hint="Legal or DBA name — used on invoices and ledger">
+                {input({ value: form.name, onChange: (e) => set("name", e.target.value), placeholder: "e.g. Summit Distribution LLC" })}
               </Field>
             </div>
-            <Field label="Contact person name" hint="Primary contact at this company (optional)">
-              {input({ value: form.contactPerson, onChange: (e) => set("contactPerson", e.target.value), placeholder: "e.g. Ahmad Khan" })}
+            <Field label="Contact person name" hint="Primary contact at this business (optional)">
+              {input({ value: form.contactPerson, onChange: (e) => set("contactPerson", e.target.value), placeholder: "e.g. Jordan Smith" })}
             </Field>
             <Field label="Phone" required>
-              {input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "03xx-xxxxxxx" })}
+              {input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "(555) 555-0100" })}
             </Field>
-            <Field label="Company type">
+            <Field label="Relationship">
               <select className="input-field w-full text-sm" value={form.companyType} onChange={(e) => set("companyType", e.target.value)}>
-                <option value="supplier">Supplier (we purchase from them)</option>
-                <option value="buyer">Buyer (they purchase from us)</option>
-                <option value="both">Both supplier & buyer</option>
+                <option value="supplier">Vendor (we purchase from them)</option>
+                <option value="buyer">Customer (they purchase from us)</option>
+                <option value="both">Customer & Vendor</option>
               </select>
             </Field>
             <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
@@ -311,8 +311,8 @@ export function AccountCategoryFields({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="City">{input({ value: form.city, onChange: (e) => set("city", e.target.value) })}</Field>
             <Field label="Email">{input({ type: "email", value: form.email, onChange: (e) => set("email", e.target.value) })}</Field>
-            <Field label="NTN">{input({ value: form.ntn, onChange: (e) => set("ntn", e.target.value) })}</Field>
-            <Field label="STRN">{input({ value: form.strn, onChange: (e) => set("strn", e.target.value) })}</Field>
+            <Field label="EIN / Tax ID">{input({ value: form.ntn, onChange: (e) => set("ntn", e.target.value), placeholder: "12-3456789" })}</Field>
+            <Field label="State Tax ID / Resale No.">{input({ value: form.strn, onChange: (e) => set("strn", e.target.value) })}</Field>
             <Field label="WhatsApp">{input({ value: form.whatsappNumber, onChange: (e) => set("whatsappNumber", e.target.value) })}</Field>
             <div className="sm:col-span-2">
               <Field label="Address">
@@ -389,7 +389,7 @@ export function AccountCategoryFields({
         <FormSection title="Additional information" optional>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Department">{input({ value: form.department, onChange: (e) => set("department", e.target.value) })}</Field>
-            <Field label="CNIC (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
+            <Field label="SSN / Tax ID (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
           </div>
           {!isEdit && loginFields}
         </FormSection>
@@ -405,13 +405,13 @@ export function AccountCategoryFields({
             <div className="sm:col-span-2">
               <Field label="Driver name" required>{input({ value: form.name, onChange: (e) => set("name", e.target.value), placeholder: "Full name" })}</Field>
             </div>
-            <Field label="Phone" required>{input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "03xx-xxxxxxx" })}</Field>
+            <Field label="Phone" required>{input({ value: form.phone, onChange: (e) => set("phone", e.target.value), placeholder: "(555) 555-0100" })}</Field>
             <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
           </div>
         </FormSection>
         <FormSection title="Additional information" optional>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Field label="CNIC (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
+            <Field label="SSN / Tax ID (optional)">{input({ value: form.cnic, onChange: (e) => set("cnic", e.target.value), placeholder: "Leave blank if unknown" })}</Field>
             <Field label="Monthly salary">{input({ type: "number", value: form.salary, onChange: (e) => set("salary", e.target.value), placeholder: "0" })}</Field>
           </div>
         </FormSection>
@@ -428,7 +428,7 @@ export function AccountCategoryFields({
               {input({
                 value: form.registrationNumber,
                 onChange: (e) => set("registrationNumber", e.target.value),
-                placeholder: "e.g. LEA-1234",
+                placeholder: "e.g. ABC-1234",
               })}
             </Field>
             <Field label="Vehicle type" required>
@@ -444,13 +444,13 @@ export function AccountCategoryFields({
                 ))}
               </select>
             </Field>
-            <Field label="Make">{input({ value: form.make, onChange: (e) => set("make", e.target.value), placeholder: "e.g. Hino" })}</Field>
-            <Field label="Model">{input({ value: form.model, onChange: (e) => set("model", e.target.value), placeholder: "e.g. 500" })}</Field>
+            <Field label="Make">{input({ value: form.make, onChange: (e) => set("make", e.target.value), placeholder: "e.g. Freightliner" })}</Field>
+            <Field label="Model">{input({ value: form.model, onChange: (e) => set("model", e.target.value), placeholder: "e.g. M2 106" })}</Field>
             <Field label="Year">{input({ type: "number", value: form.year, onChange: (e) => set("year", e.target.value), placeholder: "2020" })}</Field>
-            <Field label="Capacity (tons)">{input({ type: "number", step: "0.01", value: form.capacity, onChange: (e) => set("capacity", e.target.value), placeholder: "0" })}</Field>
+            <Field label="Capacity (lb)">{input({ type: "number", step: "0.01", value: form.capacity, onChange: (e) => set("capacity", e.target.value), placeholder: "0" })}</Field>
             <BalanceField isEdit={isEdit} form={form} set={set} openingHint={openingHint} />
             <Field label="Driver name">{input({ value: form.driverName, onChange: (e) => set("driverName", e.target.value), placeholder: "Assigned driver" })}</Field>
-            <Field label="Driver phone" required>{input({ value: form.driverPhone, onChange: (e) => set("driverPhone", e.target.value), placeholder: "03xx-xxxxxxx" })}</Field>
+            <Field label="Driver phone" required>{input({ value: form.driverPhone, onChange: (e) => set("driverPhone", e.target.value), placeholder: "(555) 555-0100" })}</Field>
             <div className="sm:col-span-2">
               <label className="flex items-center gap-2 text-sm cursor-pointer">
                 <input type="checkbox" checked={form.isOwned !== false} onChange={(e) => set("isOwned", e.target.checked)} />

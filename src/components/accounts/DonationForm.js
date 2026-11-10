@@ -6,8 +6,8 @@ import { Loader2, Heart, Wallet } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
 export const DONATION_PURPOSES = [
-  "Zakat",
-  "Sadqa",
+  "Charitable contribution",
+  "Community sponsorship",
   "Mosque / Madrasa",
   "Orphanage",
   "Medical aid",
@@ -60,7 +60,7 @@ export default function DonationForm({
           />
         </div>
         <div className="space-y-1.5">
-          <label className="erp-finance-label">Amount (Rs)</label>
+          <label className="erp-finance-label">Amount ($)</label>
           <input
             type="number"
             required
@@ -121,7 +121,7 @@ export default function DonationForm({
           value={form.purpose}
           onChange={(e) => onChange({ ...form, purpose: e.target.value })}
           className="erp-finance-input w-full bg-white"
-          placeholder="e.g. Zakat, Sadqa, mosque fund..."
+          placeholder="e.g. Charitable contribution, food bank, community fund..."
         />
       </div>
 

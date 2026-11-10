@@ -11,11 +11,14 @@ import {
 
 const COMPANY_FIELDS = [
   { key: "company_name", label: "Company name", required: true },
-  { key: "company_phone", label: "Phone" },
+  { key: "company_phone", label: "Phone", placeholder: "(555) 555-0100" },
   { key: "company_email", label: "Email", type: "email" },
-  { key: "ntn", label: "NTN" },
-  { key: "strn", label: "STRN" },
-  { key: "company_address", label: "Address", type: "textarea", span: 2 },
+  { key: "ntn", label: "EIN / Federal Tax ID", placeholder: "12-3456789" },
+  { key: "strn", label: "State Tax ID / Resale No." },
+  { key: "company_address", label: "Street address", type: "textarea", span: 2 },
+  { key: "company_city", label: "City" },
+  { key: "company_state", label: "State", placeholder: "OH" },
+  { key: "company_zip", label: "ZIP code", placeholder: "43215" },
 ];
 
 const ADMIN_LINKS = [
@@ -28,8 +31,8 @@ const ADMIN_LINKS = [
   {
     href: "/admin/withdrawals",
     icon: Shield,
-    title: "Owner withdrawals",
-    desc: "Personal withdrawals with private notes (admin only)",
+    title: "Owner draws",
+    desc: "Owner draws with private notes (admin only)",
     adminOnly: true,
   },
   {
@@ -46,13 +49,13 @@ const CONFIG_LINKS = [
     href: "/settings/cities",
     icon: MapPin,
     title: "Cities",
-    desc: "Cities used on transport routes",
+    desc: "Cities used on delivery routes",
   },
   {
     href: "/accounts/directory/bank",
     icon: Building2,
     title: "Bank accounts",
-    desc: "Manage bank ledger accounts (Accounts module)",
+    desc: "Manage bank ledger accounts (Accounting module)",
   },
 ];
 
@@ -175,7 +178,7 @@ export default function SettingsPage() {
           <div className="erp-settings-register-head">
             <div>
               <p className="erp-settings-register-title">Company profile</p>
-              <p className="erp-settings-register-meta">Used on sales invoices, payment receipts, salary slips, and PDF exports</p>
+              <p className="erp-settings-register-meta">Used on invoices, payment receipts, pay stubs, and PDF exports</p>
             </div>
           </div>
           <div className="p-4 sm:p-5">
@@ -188,7 +191,7 @@ export default function SettingsPage() {
             ) : (
               <form onSubmit={handleSave} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {COMPANY_FIELDS.map(({ key, label, type, span, required }) => (
+                  {COMPANY_FIELDS.map(({ key, label, type, span, required, placeholder }) => (
                     <div key={key} className={span === 2 ? "md:col-span-2 space-y-1" : "space-y-1"}>
                       <label className="erp-finance-label">{label}</label>
                       {type === "textarea" ? (
@@ -201,6 +204,7 @@ export default function SettingsPage() {
                         <input
                           type={type || "text"}
                           required={required}
+                          placeholder={placeholder}
                           value={settings[key] || ""}
                           onChange={handleChange(key)}
                           className="erp-finance-input w-full"

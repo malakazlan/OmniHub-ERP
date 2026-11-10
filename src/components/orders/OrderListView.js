@@ -102,9 +102,9 @@ export default function OrderListView({ orders, loading, isAdmin }) {
               <ClipboardList className="w-3.5 h-3.5" />
               Order queue
             </div>
-            <h1 className="erp-orders-hub-title">Customer orders</h1>
+            <h1 className="erp-orders-hub-title">Sales Orders</h1>
             <p className="erp-orders-hub-desc">
-              Review salesperson orders — accept, reject, or convert to sales.
+              Review sales rep orders — accept, reject, or convert to invoices.
             </p>
           </div>
           <div className="erp-orders-hub-actions">

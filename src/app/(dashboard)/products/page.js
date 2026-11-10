@@ -17,7 +17,7 @@ import {
 import { formatCurrency, formatQuantity } from "@/lib/formatters";
 
 const emptyForm = {
-  name: "", categoryId: "", unit: "kg", bagWeight: "34",
+  name: "", categoryId: "", unit: "ea", bagWeight: "34",
   costPrice: "", salePrice: "", minimumStock: "", currentStock: "", description: "",
 };
 
@@ -62,7 +62,7 @@ function ProductsPageContent() {
       if (prodRes.ok) setProducts(prodData.products || []);
       if (catRes.ok) setCategories(catData.categories || []);
     } catch {
-      showToast("Error loading products", "error");
+      showToast("Error loading items", "error");
     } finally {
       setLoading(false);
     }
@@ -100,7 +100,7 @@ function ProductsPageContent() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: activeCategoryId ? `Products — ${activeCategory?.name}` : "Product catalog",
+    title: activeCategoryId ? `Items — ${activeCategory?.name}` : "Item catalog",
     subtitle: `${filteredProducts.length} items`,
     company: companySettings,
     columns: CATALOG_PRINT_COLS,
@@ -125,7 +125,7 @@ function ProductsPageContent() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.categoryId) {
-      showToast("Product name and category are required", "warning");
+      showToast("Item name and category are required", "warning");
       return;
     }
     setSubmitting(true);
@@ -137,10 +137,10 @@ function ProductsPageContent() {
       });
       const data = await res.json();
       if (res.ok) {
-        showToast(`Product "${form.name}" created!`, "success");
+        showToast(`Item "${form.name}" created!`, "success");
         setModalOpen(false);
         fetchData();
-      } else showToast(data.error || "Failed to create product", "error");
+      } else showToast(data.error || "Failed to create item", "error");
     } catch {
       showToast("Error processing request", "error");
     } finally {
@@ -166,12 +166,12 @@ function ProductsPageContent() {
               Inventory module
             </div>
             <h1 className="erp-prod-page-title">
-              {activeCategoryId ? activeCategory?.name : "Products & inventory"}
+              {activeCategoryId ? activeCategory?.name : "Items & inventory"}
             </h1>
             <p className="erp-prod-page-desc">
               {activeCategoryId
-                ? `Browse and manage products in ${activeCategory?.name}.`
-                : "Select a category or view all products in the register."}
+                ? `Browse and manage items in ${activeCategory?.name}.`
+                : "Select a category or view all items in the register."}
             </p>
           </div>
           <div className="erp-fin-header-actions">
@@ -185,7 +185,7 @@ function ProductsPageContent() {
             </Link>
             {activeCategoryId && (
               <Button onClick={openAddModal} className="bg-acc-products border-0">
-                <Plus className="w-4 h-4" /> Add product
+                <Plus className="w-4 h-4" /> Add item
               </Button>
             )}
           </div>
@@ -195,7 +195,7 @@ function ProductsPageContent() {
           <div className="erp-prod-category-grid">
             <button type="button" onClick={() => setActiveCategoryId(-1)} className="erp-prod-category-card erp-prod-category-all">
               <div className="erp-prod-category-icon"><Boxes className="w-6 h-6" /></div>
-              <h3>All products</h3>
+              <h3>All items</h3>
               <p>Full catalog across every category</p>
               <span className="erp-prod-category-count">{products.length} items</span>
               <ChevronRight className="erp-prod-category-arrow w-4 h-4" />
@@ -204,7 +204,7 @@ function ProductsPageContent() {
               <button key={cat.id} type="button" onClick={() => setActiveCategoryId(cat.id)} className="erp-prod-category-card">
                 <div className="erp-prod-category-icon"><Tag className="w-6 h-6" /></div>
                 <h3>{cat.name}</h3>
-                <p>Products in this feed group</p>
+                <p>Items in this category</p>
                 <span className="erp-prod-category-count">{cat._count?.products || 0} items</span>
                 <ChevronRight className="erp-prod-category-arrow w-4 h-4" />
               </button>
@@ -253,9 +253,9 @@ function ProductsPageContent() {
               {filteredProducts.length === 0 && !loading ? (
                 <div className="erp-ac-empty py-16 text-center">
                   <Package className="w-10 h-10 text-violet-300 mx-auto mb-2" />
-                  <p className="text-sm font-semibold text-slate-600">No products found</p>
+                  <p className="text-sm font-semibold text-slate-600">No items found</p>
                   <Button onClick={openAddModal} className="mt-4 bg-acc-products border-0">
-                    <Plus className="w-4 h-4" /> Add product
+                    <Plus className="w-4 h-4" /> Add item
                   </Button>
                 </div>
               ) : (
@@ -264,7 +264,7 @@ function ProductsPageContent() {
                   loading={loading}
                   mode="catalog"
                   onRowClick={(row) => router.push(`/products/${row.id}`)}
-                  footerLabel={`${filteredProducts.length} products`}
+                  footerLabel={`${filteredProducts.length} items`}
                   footerValue={formatCurrency(listTotalValue)}
                 />
               )}
@@ -273,7 +273,7 @@ function ProductsPageContent() {
         )}
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Add product" size="lg">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Add item" size="lg">
         <ProductForm
           form={form}
           onChange={setForm}
@@ -281,15 +281,15 @@ function ProductsPageContent() {
           submitting={submitting}
           onSubmit={handleSubmit}
           onCancel={() => setModalOpen(false)}
-          submitLabel="Create product"
+          submitLabel="Create item"
         />
       </Modal>
 
       <div className="erp-register-print-host" aria-hidden>
         <RegisterPrintView
           ref={printRef}
-          title={activeCategory?.name || "Products"}
-          subtitle={`${filteredProducts.length} products`}
+          title={activeCategory?.name || "Items"}
+          subtitle={`${filteredProducts.length} items`}
           company={companySettings}
           columns={CATALOG_PRINT_COLS}
           rows={filteredProducts}

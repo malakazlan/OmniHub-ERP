@@ -62,7 +62,7 @@ export default function FleetListView({
               <Car className="w-3.5 h-3.5" />
               Fleet management
             </div>
-            <h1 className="erp-fleet-page-title">Fleet & vehicles</h1>
+            <h1 className="erp-fleet-page-title">Fleet</h1>
             <p className="erp-fleet-page-desc">
               Register vehicles for dispatch, pay fuel and maintenance from cash or bank, and track operating costs.
             </p>
@@ -70,7 +70,7 @@ export default function FleetListView({
           <div className="erp-fleet-header-actions">
             <Link href="/transport">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <Truck className="w-4 h-4" /> Trips
+                <Truck className="w-4 h-4" /> Deliveries
               </Button>
             </Link>
             <Button variant="outline" className="border-slate-200 text-slate-600" onClick={onOpenReport}>

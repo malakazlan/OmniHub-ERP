@@ -1,5 +1,5 @@
 export const PURCHASE_STATUS_FILTERS = [
-  { key: "all", label: "All orders" },
+  { key: "all", label: "All bills" },
   { key: "draft", label: "Drafts" },
   { key: "confirmed", label: "Confirmed" },
   { key: "received", label: "Received" },
@@ -22,6 +22,5 @@ export const PURCHASE_PERIOD_FILTERS = [
 
 export const PURCHASE_VENDOR_FILTERS = [
   { key: "all", label: "All vendors" },
-  { key: "farmer", label: "Farmers" },
-  { key: "company", label: "Companies" },
+  { key: "company", label: "Vendors" },
 ];

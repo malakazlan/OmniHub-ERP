@@ -20,10 +20,10 @@ const TransferRegisterExports = dynamic(
 const PRINT_COLS = [
   { key: "name", label: "Vendor", get: (r) => r.name, pdfWidth: 36 },
   { key: "type", label: "Type", get: (r) => r.type, pdfWidth: 18 },
-  { key: "purchases", label: "Purchases", get: (r) => String(r.purchaseCount), pdfWidth: 16 },
+  { key: "purchases", label: "Bills", get: (r) => String(r.purchaseCount), pdfWidth: 16 },
   { key: "lines", label: "Item lines", get: (r) => String(r.lineItemCount), pdfWidth: 16 },
   { key: "qty", label: "Total qty", align: "right", get: (r) => String(r.totalQuantity), pdfWidth: 20 },
-  { key: "products", label: "Products", get: (r) => String(r.uniqueProducts), pdfWidth: 16 },
+  { key: "products", label: "Items", get: (r) => String(r.uniqueProducts), pdfWidth: 16 },
   { key: "amount", label: "Value", align: "right", get: (r) => formatCurrency(r.totalAmount), pdfWidth: 28 },
 ];
 
@@ -82,16 +82,16 @@ export default function PurchaseVendorsPage() {
               <ShoppingCart className="w-7 h-7" />
             </div>
             <div>
-              <div className="erp-pv-page-badge">Purchase · Vendor accounts</div>
-              <h1 className="erp-pv-page-title">Purchase vendors</h1>
+              <div className="erp-pv-page-badge">Purchasing · Vendor accounts</div>
+              <h1 className="erp-pv-page-title">Vendors</h1>
               <p className="erp-pv-page-desc">
-                All farmer and supplier accounts you buy from. Click a vendor to see every item purchased and quantity counts.
+                Every vendor account you buy from. Click a vendor to see every item purchased and quantity counts.
               </p>
             </div>
           </div>
           <div className="erp-pv-header-actions">
             <Link href="/purchases">
-              <Button variant="outline" className="erp-pv-btn-ghost">All purchases</Button>
+              <Button variant="outline" className="erp-pv-btn-ghost">Purchase orders</Button>
             </Link>
             <Link href="/purchases/new">
               <Button className="erp-pv-btn-primary">
@@ -134,7 +134,7 @@ export default function PurchaseVendorsPage() {
 
         <TransferRegisterExports
           printRef={printRef}
-          title="Purchase Vendors Register"
+          title="Vendor Activity Register"
           subtitle={`${filtered.length} vendors · item purchase counts`}
           company={companySettings}
           columns={PRINT_COLS}
@@ -174,8 +174,7 @@ export default function PurchaseVendorsPage() {
                   aria-label="Filter by type"
                 >
                   <option value="all">All types</option>
-                  <option value="farmer">Farmers</option>
-                  <option value="company">Companies</option>
+                  <option value="company">Vendors</option>
                 </select>
                 <select
                   value={activityFilter}

@@ -18,7 +18,7 @@ export function canCorrectSale(sale, { returnsCount = 0 } = {}) {
 async function reverseSaleStock(tx, sale, items) {
   for (const item of items) {
     const product = await tx.product.findUnique({ where: { id: item.productId } });
-    if (!product) throw new Error(`Product ${item.productId} not found`);
+    if (!product) throw new Error(`Item ${item.productId} not found`);
 
     const previousStock = product.currentStock;
     const newStock = previousStock + parseNum(item.quantity);
@@ -67,7 +67,7 @@ async function reverseSaleLedgerEntries(tx, sale, correctionDate) {
 }
 
 function buildCorrectionNote(existingNotes, reason, userName) {
-  const stamp = new Date().toLocaleString("en-PK", {
+  const stamp = new Date().toLocaleString("en-US", {
     day: "2-digit",
     month: "short",
     year: "numeric",

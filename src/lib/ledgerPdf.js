@@ -19,7 +19,7 @@ const C = {
 function moneyPlain(n) {
   const v = Number(n) || 0;
   if (v === 0) return "";
-  return v.toLocaleString("en-PK", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  return v.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
 
 function lines(pdf, text, maxW, fontSize = 7) {
@@ -112,7 +112,7 @@ export function downloadLedgerPdf({
   filename,
 }) {
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  const companyName = company?.company_name || "Warraich Traders";
+  const companyName = company?.company_name || "Omni Hub";
 
   const cols = showAccountColumn
     ? [

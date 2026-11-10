@@ -2,13 +2,14 @@
 
 import React from "react";
 import { formatDate } from "@/lib/formatters";
+import { companyAddressLine } from "@/lib/companyProfile";
 
 export const DEFAULT_COMPANY = {
-  company_name: "Warraich Traders",
+  company_name: "Omni Hub",
   company_address: "",
   company_phone: "",
   company_email: "",
-  tagline: "Feed · Trade · Accounts",
+  tagline: "Wholesale Distribution · Operations · Finance",
   ntn: "",
   strn: "",
 };
@@ -92,6 +93,7 @@ export default function DocumentBillShell({
 }) {
   const c = { ...DEFAULT_COMPANY, ...company };
   const contactLine = [c.company_phone, c.company_email].filter(Boolean).join(" · ");
+  const addressLine = companyAddressLine(c);
 
   return (
     <article className="erp-document-bill w-full max-w-[640px] mx-auto bg-white text-slate-800 border border-slate-200 rounded-md shadow-sm overflow-hidden text-[12px] leading-normal">
@@ -99,9 +101,9 @@ export default function DocumentBillShell({
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold tracking-tight truncate">{c.company_name}</p>
           {c.tagline && <p className="text-[10px] text-slate-400 truncate">{c.tagline}</p>}
-          {(c.company_address || contactLine) && (
+          {(addressLine || contactLine) && (
             <p className="text-[9px] text-slate-400 mt-0.5 line-clamp-2">
-              {[c.company_address, contactLine].filter(Boolean).join(" · ")}
+              {[addressLine, contactLine].filter(Boolean).join(" · ")}
             </p>
           )}
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { MODULES, MODULE_ACCENTS } from "@/lib/constants";
+import { VISIBLE_MODULES, MODULE_ACCENTS } from "@/lib/constants";
 
 export default function ModuleAccessTabs({ selected, onChange, disabled = false }) {
   const toggle = (slug) => {
@@ -13,7 +13,7 @@ export default function ModuleAccessTabs({ selected, onChange, disabled = false 
     }
   };
 
-  const selectAll = () => onChange([...MODULES]);
+  const selectAll = () => onChange([...VISIBLE_MODULES]);
   const clearAll = () => onChange(["dashboard"]);
 
   return (
@@ -34,7 +34,7 @@ export default function ModuleAccessTabs({ selected, onChange, disabled = false 
         )}
       </div>
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Allowed modules">
-        {MODULES.map((slug) => {
+        {VISIBLE_MODULES.map((slug) => {
           const active = selected.includes(slug);
           const label = MODULE_ACCENTS[slug]?.label || slug;
           return (

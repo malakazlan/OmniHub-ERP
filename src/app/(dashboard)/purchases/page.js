@@ -86,7 +86,7 @@ function PurchasesPageContent() {
         company={companySettings}
         open={receiptOpen}
         onClose={() => { setReceiptOpen(false); setReceiptPurchase(null); }}
-        title="Supplier purchase bill"
+        title="Vendor bill"
       />
     </>
   );

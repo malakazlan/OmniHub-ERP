@@ -60,7 +60,7 @@ export function validateSaleReturnItems(saleItems, priorReturned, newItems) {
   for (const item of newItems) {
     const sold = saleItems.find((row) => row.productId === item.productId);
     if (!sold) {
-      throw new Error(`Product ${item.productName || item.productId} is not on this invoice`);
+      throw new Error(`Item ${item.productName || item.productId} is not on this invoice`);
     }
 
     const alreadyReturned = priorReturned[item.productId] || 0;

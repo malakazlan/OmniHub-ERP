@@ -28,7 +28,7 @@ const ACTION_ICONS = {
 };
 
 const MODULES = [
-  "auth", "farmers", "companies", "shops", "products", "purchases", "sales",
+  "auth", "companies", "products", "purchases", "sales", "orders",
   "transport", "accounts", "hr", "settings",
 ];
 

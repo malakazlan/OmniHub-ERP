@@ -57,8 +57,8 @@ const HR_SECTIONS = [
     items: [
       {
         href: "/hr/salary",
-        title: "Salary register",
-        desc: "View monthly payroll, process salaries, and print individual pay slips.",
+        title: "Payroll register",
+        desc: "View monthly payroll, process pay runs, and print individual pay stubs.",
         icon: Wallet,
         tone: "indigo",
       },
@@ -85,8 +85,8 @@ const HR_SECTIONS = [
       },
       {
         href: "/hr/salary",
-        title: "Salary receipts",
-        desc: "Print or export monthly salary slips and payment receipts for each worker.",
+        title: "Pay stubs",
+        desc: "Print or export monthly pay stubs and payment receipts for each employee.",
         icon: FileText,
         tone: "sky",
       },
@@ -136,7 +136,7 @@ export default function HRHubPage() {
               <Users className="w-3.5 h-3.5" />
               Human resources
             </div>
-            <h1 className="erp-hr-page-title">Workforce & payroll center</h1>
+            <h1 className="erp-hr-page-title">Employees & Payroll</h1>
             <p className="erp-hr-page-desc">
               Manage employees, attendance, salary processing, advances, commissions, and payment receipts from one place.
             </p>

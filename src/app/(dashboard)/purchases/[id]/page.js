@@ -337,10 +337,10 @@ export default function PurchaseDetailPage() {
       <div className="page-enter space-y-6">
         <PageHeader
           module="purchases"
-          title="Purchase Not Found"
+          title="Bill Not Found"
           icon={ShoppingCart}
           breadcrumbs={[
-            { label: "Purchases", href: "/purchases" },
+            { label: "Purchase Orders", href: "/purchases" },
             { label: "Not Found" },
           ]}
         />
@@ -381,7 +381,7 @@ export default function PurchaseDetailPage() {
         description={purchase.vendorName}
         icon={ShoppingCart}
         breadcrumbs={[
-          { label: "Purchases", href: "/purchases" },
+          { label: "Purchase Orders", href: "/purchases" },
           { label: purchase.purchaseNumber },
         ]}
         actions={
@@ -549,7 +549,7 @@ export default function PurchaseDetailPage() {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                      <th className="px-5 py-3">Product</th>
+                      <th className="px-5 py-3">Item</th>
                       <th className="px-5 py-3">Qty</th>
                       <th className="px-5 py-3">Rate</th>
                       <th className="px-5 py-3 text-right">Amount</th>
@@ -651,7 +651,7 @@ export default function PurchaseDetailPage() {
             </CardHeader>
             <CardContent>
               <DetailRow label="Name" value={purchase.vendorName} />
-              <DetailRow label="Type" value={purchase.farmerId ? "Farmer" : purchase.companyId ? "Company" : "—"} />
+              <DetailRow label="Type" value={purchase.farmerId ? "Farmer (legacy)" : purchase.companyId ? "Vendor" : "—"} />
               <DetailRow label="Date" value={formatDate(purchase.purchaseDate)} />
               {purchase.createdAt && (
                 <DetailRow label="Created" value={formatDateTime(purchase.createdAt)} />
@@ -740,7 +740,7 @@ export default function PurchaseDetailPage() {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="px-3 py-2 w-8"></th>
-                  <th className="px-3 py-2">Product</th>
+                  <th className="px-3 py-2">Item</th>
                   <th className="px-3 py-2">Purchased</th>
                   <th className="px-3 py-2">Returned</th>
                   <th className="px-3 py-2">In Stock</th>

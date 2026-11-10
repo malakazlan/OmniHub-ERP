@@ -145,11 +145,11 @@ export default function PurchaseVendorDetailPage() {
             <div className="min-w-0 flex-1">
               <div className="erp-pv-page-badge">
                 <TrendingUp className="w-3.5 h-3.5" />
-                {isFarmer ? "Farmer supplier" : "Company supplier"}
+                {isFarmer ? "Farmer (legacy)" : "Vendor"}
               </div>
               <h1 className="erp-pv-page-title">{vendor.name}</h1>
               <p className="erp-pv-page-desc">
-                Complete purchase item history — how many times bought, total quantity, and value per product.
+                Complete purchase item history — how many times bought, total quantity, and value per item.
               </p>
               <div className="erp-pv-meta-chips">
                 {vendor.city && (
@@ -245,7 +245,7 @@ export default function PurchaseVendorDetailPage() {
           <div className="erp-pv-stat">
             <div className="erp-pv-stat-icon is-vendors"><Package className="w-4 h-4" /></div>
             <div>
-              <p className="erp-pv-stat-label">Unique products</p>
+              <p className="erp-pv-stat-label">Unique items</p>
               <p className="erp-pv-stat-value">{summary.uniqueProducts}</p>
             </div>
           </div>
@@ -303,7 +303,7 @@ export default function PurchaseVendorDetailPage() {
                   </p>
                   <p className="erp-pv-register-meta">
                     {activeTab === "items"
-                      ? `${filteredItems.length} product${filteredItems.length === 1 ? "" : "s"} · times bought & total quantity per item`
+                      ? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"} · times bought & total quantity per item`
                       : `${purchases.length} confirmed bill${purchases.length === 1 ? "" : "s"} from this vendor`}
                   </p>
                 </div>
@@ -315,7 +315,7 @@ export default function PurchaseVendorDetailPage() {
                     <Search className="erp-pv-search-icon" />
                     <input
                       type="text"
-                      placeholder="Search product name or SKU..."
+                      placeholder="Search item name or SKU..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />

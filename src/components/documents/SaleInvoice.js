@@ -12,6 +12,7 @@ import { computeCustomerBalancesForSale } from "@/lib/saleBalances";
 import { buildInvoiceLineItems } from "@/lib/saleReturn";
 import { formatCurrency, formatDate, formatQuantity } from "@/lib/formatters";
 import { amountInWords } from "@/lib/amountInWords";
+import { companyAddressLine } from "@/lib/companyProfile";
 
 function moneyPlain(val) {
   return formatCurrency(val ?? 0, false);
@@ -59,7 +60,7 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
             <h1 className="erp-inv-company-name">{c.company_name}</h1>
             {c.tagline && <p className="erp-inv-company-tag">{c.tagline}</p>}
             <div className="erp-inv-company-meta">
-              {[c.company_address, c.company_phone, c.company_email, c.ntn && `NTN ${c.ntn}`, c.strn && `STRN ${c.strn}`]
+              {[companyAddressLine(c), c.company_phone, c.company_email, c.ntn && `EIN ${c.ntn}`, c.strn && `State Tax ID ${c.strn}`]
                 .filter(Boolean)
                 .join(" · ")}
             </div>
@@ -151,7 +152,7 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
             <thead>
               <tr>
                 <th>Return #</th>
-                <th>Product</th>
+                <th>Item</th>
                 <th className="text-right">Qty</th>
                 <th className="text-right">Amount</th>
               </tr>
@@ -187,7 +188,7 @@ export default function SaleInvoice({ sale, company = DEFAULT_COMPANY }) {
           <p className="erp-inv-payment-title">Payment summary</p>
           <div className="erp-inv-pay-grid">
             <div className="erp-inv-pay-head">Particulars</div>
-            <div className="erp-inv-pay-head is-amt">Amount (Rs.)</div>
+            <div className="erp-inv-pay-head is-amt">Amount ($)</div>
 
             {hasLedger && (
               <>

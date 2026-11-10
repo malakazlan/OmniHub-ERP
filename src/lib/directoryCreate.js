@@ -6,7 +6,7 @@ export function directoryCreateBlocked(body) {
   return Response.json(
     {
       error:
-        "Create this account from All Accounts (Finance → All Accounts). Other pages are for transactions and viewing only.",
+        "Create this account from Chart of Accounts (Accounting → Chart of Accounts). Other pages are for transactions and viewing only.",
     },
     { status: 403 }
   );

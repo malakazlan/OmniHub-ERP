@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/Button";
 import { Receipt, Plus, Loader2, ArrowLeft, ArrowRightLeft } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { HIDDEN_ACCOUNT_CATEGORIES } from "@/lib/constants";
 
 const emptyForm = {
   paymentDate: new Date().toISOString().slice(0, 10),
@@ -58,7 +59,7 @@ export default function PaymentsPage() {
       try {
         const res = await fetch("/api/accounts");
         const data = await res.json();
-        if (res.ok) setAccounts(data.accounts || []);
+        if (res.ok) setAccounts((data.accounts || []).filter((a) => !HIDDEN_ACCOUNT_CATEGORIES.includes(a.category)));
       } catch {
         /* ignore */
       }
@@ -283,7 +284,7 @@ export default function PaymentsPage() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 required
                 className="input-field"
-                placeholder="e.g. Payment to farmer for outstanding balance"
+                placeholder="e.g. Payment to vendor for outstanding balance"
               />
             </div>
             <div className="space-y-1 md:col-span-2">

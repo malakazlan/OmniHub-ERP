@@ -77,7 +77,7 @@ export default function OrdersReportPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: "Order Report",
+    title: "Sales Order Report",
     subtitle: `${filtered.length} orders`,
     company: companySettings,
     columns: PRINT_COLS,
@@ -99,8 +99,8 @@ export default function OrdersReportPage() {
     <ReportShell
       badge="Orders"
       badgeIcon={BarChart3}
-      title="Order pipeline report"
-      description="Customer orders by status and salesperson performance."
+      title="Sales order pipeline report"
+      description="Sales orders by status and sales rep performance."
       accentClass="text-orange-600"
       filterBar={
         <ReportDateFilter

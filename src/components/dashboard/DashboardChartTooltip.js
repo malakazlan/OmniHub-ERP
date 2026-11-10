@@ -11,7 +11,7 @@ export default function DashboardChartTooltip({ active, payload, label }) {
         <div key={item.dataKey} className="erp-dash-chart-tooltip-row">
           <span className="erp-dash-chart-tooltip-dot" style={{ background: item.color }} />
           <span>{item.name}</span>
-          <span className="font-mono font-bold">{formatCurrency(item.value || 0)}</span>
+          <span className="num font-semibold">{formatCurrency(item.value || 0)}</span>
         </div>
       ))}
     </div>

@@ -6,9 +6,9 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
 
 const CATEGORY_LABELS = {
-  shop: "Shop",
+  shop: "Legacy account",
   company: "Company",
-  farmer: "Farmer",
+  farmer: "Legacy account",
   transport: "Driver",
   salary: "Employee",
   general: "General",

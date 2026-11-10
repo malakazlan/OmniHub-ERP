@@ -36,7 +36,7 @@ export default function TransportStatusSelect({
           onChange={handleChange}
           disabled={disabled}
           className={`erp-trip-status-select is-${TRANSPORT_STATUS_META[local]?.tone || "pending"}`}
-          aria-label="Trip status"
+          aria-label="Delivery status"
         >
           {TRANSPORT_STATUSES.map((s) => (
             <option key={s} value={s}>

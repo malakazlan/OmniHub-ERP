@@ -69,7 +69,7 @@ export function validatePurchaseReturnItems(
   for (const item of newItems) {
     const purchased = purchaseItems.find((row) => row.productId === item.productId);
     if (!purchased) {
-      throw new Error(`Product ${item.productName || item.productId} is not on this bill`);
+      throw new Error(`Item ${item.productName || item.productId} is not on this bill`);
     }
 
     const alreadyReturned = priorReturned[item.productId] || 0;

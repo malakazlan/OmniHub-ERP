@@ -150,7 +150,7 @@ export function SettlePurchaseBillsModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 text-sm space-y-1">
-          <p className="font-bold text-slate-900">{vendorName || "Supplier"}</p>
+          <p className="font-bold text-slate-900">{vendorName || "Vendor"}</p>
           <p className="text-xs text-slate-500">
             Payment is applied to unpaid bills starting from the oldest date.
           </p>

@@ -9,7 +9,7 @@ export function DirectoryBackLink({ segment }) {
       href="/accounts"
       className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-acc-accounts transition-colors mb-2"
     >
-      <ArrowLeft className="w-3.5 h-3.5" /> All Accounts{segment ? ` · ${segment}` : ""}
+      <ArrowLeft className="w-3.5 h-3.5" /> Chart of Accounts{segment ? ` · ${segment}` : ""}
     </Link>
   );
 }
@@ -24,7 +24,7 @@ export function DirectoryRegisterBanner({ category, label }) {
       <span>
         New {label} accounts are registered in{" "}
         <Link href="/accounts" className="text-acc-accounts font-semibold hover:underline">
-          All Accounts
+          Chart of Accounts
         </Link>
         . This page is for viewing balances and transactions.
       </span>

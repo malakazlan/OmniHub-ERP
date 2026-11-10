@@ -4,8 +4,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   TrendingUp, ShoppingCart, DollarSign, AlertTriangle, ArrowRight,
-  Loader2, Plus, LayoutDashboard, PackageCheck, Wallet,
+  Loader2, Plus, PackageCheck, Wallet, Download,
 } from "lucide-react";
+import useAuth from "@/hooks/useAuth";
 import { StatCard } from "@/components/layout/PageHeader";
 import { formatCurrency } from "@/lib/formatters";
 import DashboardShortcuts from "@/components/dashboard/DashboardShortcuts";
@@ -15,7 +16,15 @@ import ReceivablesPayablesPanel from "@/components/dashboard/ReceivablesPayables
 import LiquidBalancesPanel from "@/components/dashboard/LiquidBalancesPanel";
 import ExpensesWeekPanel from "@/components/dashboard/ExpensesWeekPanel";
 
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function ExecutiveDashboard() {
+  const { user } = useAuth();
   const [stats, setStats] = useState({
     sales: 0, purchases: 0, outstandingReceivables: 0, outstandingPayables: 0, lowStockCount: 0,
   });
@@ -32,6 +41,7 @@ export default function ExecutiveDashboard() {
     () => new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
     []
   );
+  const firstName = useMemo(() => String(user?.name || "").trim().split(/\s+/)[0] || "", [user?.name]);
 
   useEffect(() => {
     async function fetchStats() {
@@ -65,65 +75,77 @@ export default function ExecutiveDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const salesSpark = useMemo(() => chartData.map((r) => r.Sales || 0), [chartData]);
+  const purchaseSpark = useMemo(() => chartData.map((r) => r.Purchases || 0), [chartData]);
+  const cashSpark = useMemo(
+    () => (analytics.cashFlow.trend || []).map((r) => (r.totalIn || 0) - (r.totalOut || 0)),
+    [analytics.cashFlow.trend]
+  );
+
   if (loading) {
     return (
       <div className="erp-dashboard h-72 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-[var(--brand-primary)] animate-spin" />
+        <Loader2 className="w-7 h-7 text-[var(--brand)] animate-spin" />
       </div>
     );
   }
 
-  return (
-    <div className="erp-dashboard space-y-5 sm:space-y-6 page-enter">
-      {/* Hero */}
-      <header className="erp-dash-hero">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-start gap-4 min-w-0">
-            <div className="erp-dash-hero-icon">
-              <LayoutDashboard className="w-6 h-6" strokeWidth={2} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--brand-primary)] mb-1">{todayLabel}</p>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[var(--text-primary)]">Dashboard</h1>
-              <p className="text-sm text-[var(--text-secondary)] mt-1 max-w-xl">
-                Live overview of Warraich Traders trading operations, receivables, and inventory health.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
-            <Link href="/sales/new" className="erp-dash-btn erp-dash-btn-primary">
-              <Plus className="w-4 h-4 shrink-0" /> New Sale
-            </Link>
-            <Link href="/purchases/new" className="erp-dash-btn erp-dash-btn-secondary">
-              <Plus className="w-4 h-4 shrink-0" /> New Purchase
-            </Link>
-          </div>
-        </div>
-      </header>
+  const liquid = analytics.cashFlow.balances?.total ?? 0;
+  const net = analytics.cashFlow.summary?.net ?? 0;
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard module="sales" label="Total Sales" value={formatCurrency(stats.sales)} icon={TrendingUp} className="erp-dash-stat" />
-        <StatCard module="purchases" label="Total Purchases" value={formatCurrency(stats.purchases)} icon={ShoppingCart} className="erp-dash-stat" />
-        <StatCard module="shops" label="Receivables" value={formatCurrency(stats.outstandingReceivables)} icon={Wallet} className="erp-dash-stat" subtext="Outstanding from customers" />
-        <StatCard module="farmers" label="Payables" value={formatCurrency(stats.outstandingPayables)} icon={DollarSign} className="erp-dash-stat" subtext="Due to suppliers" />
+  return (
+    <div className="erp-dashboard space-y-4 page-enter">
+      {/* Page header */}
+      <div className="oh-ph !mb-0">
+        <div className="min-w-0">
+          <h1 className="oh-ph-title">{firstName ? `${greeting()}, ${firstName}` : "Dashboard"}</h1>
+          <p className="oh-ph-sub">{todayLabel} · Live overview of operations, receivables and inventory health</p>
+        </div>
+        <div className="oh-ph-actions">
+          <Link href="/reports" className="erp-dash-btn erp-dash-btn-secondary">
+            <Download className="w-3.5 h-3.5 shrink-0" strokeWidth={2} /> Reports
+          </Link>
+          <Link href="/purchases/new" className="erp-dash-btn erp-dash-btn-secondary">
+            <Plus className="w-3.5 h-3.5 shrink-0" strokeWidth={2} /> New purchase
+          </Link>
+          <Link href="/sales/new" className="erp-dash-btn erp-dash-btn-primary">
+            <Plus className="w-3.5 h-3.5 shrink-0" strokeWidth={2} /> New sale
+          </Link>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-5">
-        {/* Shortcuts — main column (where chart was) */}
+      {/* KPIs */}
+      <div className="oh-kpis">
+        <StatCard tone="navy" label="Total sales" value={formatCurrency(stats.sales)} icon={TrendingUp} spark={salesSpark} subtext="All recorded sales" />
+        <StatCard tone="blue" label="Total purchases" value={formatCurrency(stats.purchases)} icon={ShoppingCart} spark={purchaseSpark} subtext="All recorded purchases" />
+        <StatCard tone="cyan" label="Receivables" value={formatCurrency(stats.outstandingReceivables)} icon={Wallet} subtext="Outstanding from customers" />
+        <StatCard
+          tone="plain"
+          label="Payables"
+          value={formatCurrency(stats.outstandingPayables)}
+          icon={DollarSign}
+          spark={cashSpark}
+          subtext={
+            <>
+              Due to suppliers · cash &amp; bank <b className="num" style={{ color: net >= 0 ? "var(--ok)" : "var(--bad)" }}>{formatCurrency(liquid)}</b>
+            </>
+          }
+        />
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         <div className="xl:col-span-8 min-w-0">
           <DashboardShortcuts />
         </div>
 
-        {/* Side panels */}
         <div className="xl:col-span-4 space-y-4 min-w-0">
           <section className="erp-dash-panel">
             <div className="erp-dash-panel-head">
               <h2 className="erp-dash-panel-title flex items-center gap-2">
                 <span className="erp-dash-alert-icon">
-                  <AlertTriangle className="w-4 h-4" />
+                  <AlertTriangle className="w-4 h-4" strokeWidth={1.9} />
                 </span>
-                Stock Alerts
+                Stock alerts
               </h2>
               {stats.lowStockCount > 0 && (
                 <span className="erp-dash-badge-warn">{stats.lowStockCount} low</span>
@@ -132,7 +154,7 @@ export default function ExecutiveDashboard() {
             <div className="erp-dash-panel-body space-y-3">
               <div className="flex items-start gap-3">
                 <span className={`erp-dash-status-dot ${stats.lowStockCount > 0 ? "erp-dash-status-dot-warn" : "erp-dash-status-dot-ok"}`} />
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-[13px] text-[var(--ink-2)] leading-relaxed">
                   {stats.lowStockCount > 0
                     ? `${stats.lowStockCount} product(s) are below minimum stock levels. Review inventory before new sales.`
                     : "All products are above minimum thresholds. Inventory is healthy."}
@@ -155,16 +177,16 @@ export default function ExecutiveDashboard() {
             </div>
             <div className="erp-dash-panel-body space-y-2">
               {[
-                { href: "/accounts/ledger", label: "General Ledger", desc: "Pay & receive" },
+                { href: "/accounts/ledger", label: "General ledger", desc: "Pay & receive" },
                 { href: "/accounts/payments", label: "Payments", desc: "Cash & bank transfers" },
-                { href: "/accounts", label: "All Accounts", desc: "Parties & registers" },
+                { href: "/accounts", label: "All accounts", desc: "Parties & registers" },
               ].map((link) => (
                 <Link key={link.href} href={link.href} className="erp-dash-mini-link">
                   <span>
-                    <span className="block text-sm font-semibold text-slate-800">{link.label}</span>
-                    <span className="block text-[11px] text-slate-400">{link.desc}</span>
+                    <span className="block text-[13px] font-medium text-[var(--ink)]">{link.label}</span>
+                    <span className="block text-[11.5px] text-[var(--ink-3)]">{link.desc}</span>
                   </span>
-                  <ArrowRight className="w-4 h-4 text-slate-300 shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-[var(--ink-3)] shrink-0" />
                 </Link>
               ))}
             </div>
@@ -172,7 +194,6 @@ export default function ExecutiveDashboard() {
         </div>
       </div>
 
-      {/* Trading activity + finance charts */}
       <div className="space-y-4 min-w-0">
         <TradingActivityPanel chartData={chartData} />
         <CashBankFlowPanel cashFlow={analytics.cashFlow} />

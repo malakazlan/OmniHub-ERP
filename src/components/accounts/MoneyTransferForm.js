@@ -161,7 +161,7 @@ export default function MoneyTransferForm({
           />
         </div>
         <div className="space-y-1.5">
-          <label className="erp-finance-label">Amount (Rs)</label>
+          <label className="erp-finance-label">Amount ($)</label>
           <input
             type="number"
             required
@@ -218,7 +218,7 @@ export default function MoneyTransferForm({
         <Button
           type="submit"
           disabled={submitting || insufficient || !form.fromAccountId || !form.toAccountId}
-          className="erp-xfer-btn-primary !bg-[#2563eb] !text-white hover:!bg-[#1d4ed8]"
+          className="erp-xfer-btn-primary !bg-[var(--brand)] !text-white hover:!bg-[var(--brand-ink)]"
         >
           {submitting ? (
             <>

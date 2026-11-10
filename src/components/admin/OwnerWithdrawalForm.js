@@ -22,7 +22,7 @@ export default function OwnerWithdrawalForm({
   return (
     <form onSubmit={onSubmit} className="erp-finance-form space-y-4">
       <p className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-        Withdrawals post to the general ledger as <strong>Owner withdrawal</strong> only — private notes stay on this page.
+        Draws post to the general ledger as <strong>Owner withdrawal</strong> only — private notes stay on this page.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

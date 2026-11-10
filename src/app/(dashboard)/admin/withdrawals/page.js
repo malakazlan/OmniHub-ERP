@@ -130,14 +130,14 @@ export default function OwnerWithdrawalsPage() {
               <Banknote className="w-3.5 h-3.5" />
               Administration
             </div>
-            <h1 className="erp-settings-page-title">Owner withdrawals</h1>
+            <h1 className="erp-settings-page-title">Owner draws</h1>
             <p className="erp-settings-page-desc">
-              Record personal withdrawals from company cash or bank. General ledger shows only &quot;Owner withdrawal&quot;.
+              Record owner draws from company cash or bank. General ledger shows only &quot;Owner draw&quot;.
             </p>
           </div>
           <div className="erp-settings-header-actions">
             <Button onClick={() => { setForm(emptyWithdrawalForm()); setModalOpen(true); }} className="bg-slate-800 border-0">
-              <Plus className="w-4 h-4" /> New withdrawal
+              <Plus className="w-4 h-4" /> New draw
             </Button>
             <Link href="/dashboard">
               <Button variant="outline" className="border-slate-200 text-slate-600">
@@ -199,7 +199,7 @@ export default function OwnerWithdrawalsPage() {
         </div>
       </div>
 
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Record owner withdrawal" size="md">
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="Record owner draw" size="md">
         <OwnerWithdrawalForm
           form={form}
           onChange={setForm}

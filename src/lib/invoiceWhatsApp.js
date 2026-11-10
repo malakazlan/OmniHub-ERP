@@ -1,15 +1,15 @@
 import { captureInvoiceImage, waitForInvoiceElement } from "@/lib/downloadReceiptPdf";
 
-/** Normalize to digits for wa.me / WhatsApp desktop (Pakistan-friendly). */
+/** Normalize to E.164 digits for wa.me / WhatsApp desktop (US-friendly: 10-digit numbers get the +1 country code). */
 export function normalizeWhatsAppPhone(raw) {
   if (!raw) return null;
   let digits = String(raw).replace(/\D/g, "");
   if (!digits) return null;
 
-  if (digits.startsWith("0")) {
-    digits = `92${digits.slice(1)}`;
-  } else if (digits.length === 10 && digits.startsWith("3")) {
-    digits = `92${digits}`;
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  } else if (digits.length === 10) {
+    digits = `1${digits}`;
   }
 
   if (digits.length < 10) return null;

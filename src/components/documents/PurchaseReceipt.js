@@ -4,6 +4,7 @@ import React from "react";
 import { DEFAULT_COMPANY } from "@/components/documents/DocumentBillShell";
 import { formatCurrency, formatDate, formatQuantity } from "@/lib/formatters";
 import { computeVendorBalancesForPurchase } from "@/lib/purchaseBalances";
+import { companyAddressLine } from "@/lib/companyProfile";
 
 function moneyPlain(val) {
   return formatCurrency(val ?? 0, false);
@@ -26,8 +27,8 @@ function partyMeta(purchase) {
 }
 
 function vendorTypeLabel(purchase) {
-  if (purchase.farmerId) return "Farmer";
-  if (purchase.companyId) return "Company";
+  if (purchase.farmerId) return "Farmer (legacy)";
+  if (purchase.companyId) return "Vendor";
   return "Vendor";
 }
 
@@ -41,7 +42,7 @@ function PaymentBadge({ status }) {
 }
 
 /**
- * Professional purchase invoice — print, PDF, and WhatsApp capture.
+ * Professional vendor bill — print, PDF, and WhatsApp capture.
  */
 export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY }) {
   if (!purchase) return null;
@@ -76,7 +77,7 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
     paymentLines.push({ label: "Labour", value: purchase.labourCost });
   }
   if (positiveAmount(purchase.transportCost) != null) {
-    paymentLines.push({ label: "Transport", value: purchase.transportCost });
+    paymentLines.push({ label: "Freight", value: purchase.transportCost });
   }
   if (positiveAmount(purchase.loadingCost) != null) {
     paymentLines.push({ label: "Loading", value: purchase.loadingCost });
@@ -104,14 +105,14 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
             <h1 className="erp-pi-company-name">{c.company_name}</h1>
             {c.tagline && <p className="erp-pi-company-tag">{c.tagline}</p>}
             <div className="erp-pi-company-meta">
-              {[c.company_address, c.company_phone, c.company_email, c.ntn && `NTN ${c.ntn}`, c.strn && `STRN ${c.strn}`]
+              {[companyAddressLine(c), c.company_phone, c.company_email, c.ntn && `EIN ${c.ntn}`, c.strn && `State Tax ID ${c.strn}`]
                 .filter(Boolean)
                 .join(" · ")}
             </div>
           </div>
 
           <div className="erp-pi-doc-meta">
-            <p className="erp-pi-doc-kicker">Purchase invoice</p>
+            <p className="erp-pi-doc-kicker">Vendor bill</p>
             <p className="erp-pi-doc-no">{purchase.purchaseNumber || "—"}</p>
             <p className="erp-pi-doc-date">
               {purchase.purchaseDate ? formatDate(purchase.purchaseDate) : "—"}
@@ -155,7 +156,7 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
           <thead>
             <tr>
               <th className="w-10">#</th>
-              <th>Product</th>
+              <th>Item</th>
               <th className="text-right w-24">Qty</th>
               <th className="text-right w-24">Rate</th>
               <th className="text-right w-28">Amount</th>
@@ -175,7 +176,7 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
           <tfoot>
             <tr>
               <td colSpan={2} className="erp-pi-subtotal-label">Material sub-total</td>
-              <td className="text-right tabular-nums font-semibold">{materialQty.toLocaleString("en-PK")}</td>
+              <td className="text-right tabular-nums font-semibold">{materialQty.toLocaleString("en-US")}</td>
               <td />
               <td className="text-right font-mono font-bold">{moneyPlain(purchase.subtotal)}</td>
             </tr>
@@ -206,7 +207,7 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
           <p className="erp-pi-payment-title">Payment summary</p>
           <div className="erp-pi-pay-grid">
             <div className="erp-pi-pay-head">Particulars</div>
-            <div className="erp-pi-pay-head is-amt">Amount (Rs.)</div>
+            <div className="erp-pi-pay-head is-amt">Amount ($)</div>
 
             {paymentLines.map((row) => (
               <React.Fragment key={row.label}>
@@ -250,7 +251,7 @@ export default function PurchaseReceipt({ purchase, company = DEFAULT_COMPANY })
       </footer>
 
       <p className="erp-pi-footnote">
-        {c.company_name} · Computer-generated purchase invoice
+        {c.company_name} · Computer-generated vendor bill
       </p>
     </article>
   );

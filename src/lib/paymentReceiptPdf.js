@@ -1,7 +1,8 @@
 import { jsPDF } from "jspdf";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import { companyAddressLine } from "@/lib/companyProfile";
 
-const DEFAULT_COMPANY = { company_name: "Warraich Traders" };
+const DEFAULT_COMPANY = { company_name: "Omni Hub" };
 
 const MARGIN = 14;
 const TABLE_W = 182;
@@ -89,12 +90,13 @@ export function downloadPaymentReceiptPdf(receipt, company = {}, filename = "pay
   pdf.setTextColor(...C.white);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(14);
-  pdf.text(c.company_name || "Warraich Traders", 105, y, { align: "center" });
+  pdf.text(c.company_name || "Omni Hub", 105, y, { align: "center" });
   y += 6;
   pdf.setFontSize(8);
   pdf.setFont("helvetica", "normal");
-  if (c.company_address) {
-    pdf.text(c.company_address, 105, y, { align: "center" });
+  const addressLine = companyAddressLine(c);
+  if (addressLine) {
+    pdf.text(addressLine, 105, y, { align: "center" });
     y += 4;
   }
   pdf.setFontSize(10);

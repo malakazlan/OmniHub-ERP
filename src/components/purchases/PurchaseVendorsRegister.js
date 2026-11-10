@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ShoppingCart, Loader2 } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
-const TYPE_LABEL = { farmer: "Farmer", company: "Company", other: "Vendor" };
+const TYPE_LABEL = { farmer: "Farmer (legacy)", company: "Vendor", other: "Vendor" };
 
 export default function PurchaseVendorsRegister({ vendors = [], loading = false, onRowClick }) {
   const router = useRouter();
@@ -31,8 +31,8 @@ export default function PurchaseVendorsRegister({ vendors = [], loading = false,
             <div className="erp-pv-empty-icon">
               <ShoppingCart className="w-6 h-6" />
             </div>
-            <p className="text-sm font-semibold text-slate-700">No purchase vendors yet</p>
-            <p className="text-xs text-slate-500 mt-1">Register farmers or supplier companies in All Accounts.</p>
+            <p className="text-sm font-semibold text-slate-700">No vendors yet</p>
+            <p className="text-xs text-slate-500 mt-1">Register vendors in Chart of Accounts.</p>
           </div>
         ) : (
           <div className="erp-pv-grid-scroll">

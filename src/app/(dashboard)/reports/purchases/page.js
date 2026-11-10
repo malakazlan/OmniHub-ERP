@@ -73,7 +73,7 @@ export default function PurchasesReportPage() {
 
   const { pdfLoading, onPrint, onExportPdf } = useRegisterExport({
     printRef,
-    title: "Purchase Report",
+    title: "Purchasing Report",
     subtitle: `${filtered.length} purchases`,
     company: companySettings,
     columns: PRINT_COLS,
@@ -86,7 +86,7 @@ export default function PurchasesReportPage() {
     <ReportShell
       badge="Purchases"
       badgeIcon={ShoppingCart}
-      title="Purchase report"
+      title="Purchasing report"
       description="Vendor bills, total spend, payments, and outstanding payables."
       accentClass="text-acc-purchases"
       filterBar={
@@ -101,7 +101,7 @@ export default function PurchasesReportPage() {
         />
       }
       stats={[
-        { label: "Purchases", value: summary.count, icon: Hash },
+        { label: "Bills", value: summary.count, icon: Hash },
         { label: "Total spend", value: formatCurrency(summary.total), icon: DollarSign },
         { label: "Paid", value: formatCurrency(summary.paid), icon: Wallet },
         { label: "Outstanding", value: formatCurrency(summary.outstanding), icon: Wallet, valueClass: "text-red-600" },

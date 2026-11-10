@@ -6,9 +6,9 @@ export function usesEmployeeDashboard(user) {
 
 export function employeeRoleLabel(role) {
   const labels = {
-    salesperson: "Sales",
+    salesperson: "Sales Rep",
     driver: "Driver",
-    accountant: "Accounts",
+    accountant: "Accounting",
     viewer: "Viewer",
     admin: "Administrator",
     manager: "Manager",

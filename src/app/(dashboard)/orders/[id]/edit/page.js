@@ -125,7 +125,7 @@ export default function EditOrderPage() {
               productId: parseInt(item.productId, 10),
               productName: product?.name || "",
               quantity: parseNumber(item.quantity),
-              unit: product?.unit || "kg",
+              unit: product?.unit || "ea",
               rate: parseNumber(item.rate),
               amount: parseNumber(item.amount),
             };
@@ -161,7 +161,7 @@ export default function EditOrderPage() {
         module="orders"
         title="Edit order"
         icon={ClipboardList}
-        breadcrumbs={[{ label: "Orders", href: "/orders" }, { label: "Edit" }]}
+        breadcrumbs={[{ label: "Sales Orders", href: "/orders" }, { label: "Edit" }]}
         actions={
           <Link href={`/orders/${id}`} className="inline-flex items-center gap-2 text-sm">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -182,7 +182,7 @@ export default function EditOrderPage() {
               <tr key={index}>
                 <td className="py-1 pr-2">
                   <select className="input-field-compact w-full" value={item.productId} onChange={(e) => updateItem(index, "productId", e.target.value)}>
-                    <option value="">Product</option>
+                    <option value="">Item</option>
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>{p.name}</option>
                     ))}

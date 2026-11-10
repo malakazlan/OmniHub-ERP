@@ -6,7 +6,6 @@ import {
 } from "recharts";
 import { ArrowDownLeft, ArrowUpRight, Landmark, Wallet, TrendingUp } from "lucide-react";
 import { formatCurrency } from "@/lib/formatters";
-import DashboardChartTooltip from "@/components/dashboard/DashboardChartTooltip";
 
 function CashFlowTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -14,11 +13,11 @@ function CashFlowTooltip({ active, payload, label }) {
   if (!row) return null;
 
   const items = [
-    { name: "Cash in", value: row.cashIn, color: "#16a34a" },
-    { name: "Cash out", value: row.cashOut, color: "#f87171" },
-    { name: "Bank in", value: row.bankIn, color: "#2563eb" },
-    { name: "Bank out", value: row.bankOut, color: "#fb923c" },
-    { name: "Net flow", value: row.net, color: "#0f172a" },
+    { name: "Cash in", value: row.cashIn, color: "var(--ok)" },
+    { name: "Cash out", value: row.cashOut, color: "var(--bad)" },
+    { name: "Bank in", value: row.bankIn, color: "var(--brand)" },
+    { name: "Bank out", value: row.bankOut, color: "var(--warn)" },
+    { name: "Net flow", value: row.net, color: "var(--ink)" },
   ];
 
   return (
@@ -28,7 +27,7 @@ function CashFlowTooltip({ active, payload, label }) {
         <div key={item.name} className="erp-dash-chart-tooltip-row">
           <span className="erp-dash-chart-tooltip-dot" style={{ background: item.color }} />
           <span>{item.name}</span>
-          <span className="font-mono font-bold">{formatCurrency(item.value || 0)}</span>
+          <span className="num font-semibold">{formatCurrency(item.value || 0)}</span>
         </div>
       ))}
     </div>
@@ -36,7 +35,7 @@ function CashFlowTooltip({ active, payload, label }) {
 }
 
 export default function CashBankFlowPanel({ cashFlow = {} }) {
-  const trend = cashFlow.trend || [];
+  const trend = useMemo(() => cashFlow.trend || [], [cashFlow.trend]);
   const balances = cashFlow.balances || { cash: 0, bank: 0, total: 0 };
   const summary = cashFlow.summary || {};
 
@@ -48,50 +47,31 @@ export default function CashBankFlowPanel({ cashFlow = {} }) {
     return max > 0 ? Math.ceil(max * 1.15) : 1000;
   }, [trend]);
 
+  const kpis = [
+    { cls: "is-cash-balance", Icon: Wallet, label: "Cash on hand", value: balances.cash },
+    { cls: "is-bank-balance", Icon: Landmark, label: "Bank balance", value: balances.bank },
+    { cls: "is-money-in", Icon: ArrowDownLeft, label: "Money in", value: summary.totalIn || 0 },
+    { cls: "is-money-out", Icon: ArrowUpRight, label: "Money out", value: summary.totalOut || 0 },
+    { cls: (summary.net || 0) >= 0 ? "is-net-positive" : "is-net-negative", Icon: TrendingUp, label: "Net flow", value: summary.net || 0 },
+  ];
+
   return (
     <section className="erp-dash-trading-panel erp-dash-cash-panel min-w-0">
       <div className="erp-dash-trading-head">
         <div>
-          <p className="erp-dash-trading-badge">Cash & bank</p>
           <h2 className="erp-dash-trading-title">Money flow</h2>
           <p className="erp-dash-trading-sub">Cash and bank in vs out · last 7 days</p>
         </div>
         <div className="erp-dash-trading-kpis">
-          <div className="erp-dash-trading-kpi is-cash-balance">
-            <Wallet className="w-4 h-4 shrink-0" />
-            <div>
-              <p className="erp-dash-trading-kpi-label">Cash on hand</p>
-              <p className="erp-dash-trading-kpi-value">{formatCurrency(balances.cash)}</p>
+          {kpis.map(({ cls, Icon, label, value }) => (
+            <div key={label} className={`erp-dash-trading-kpi ${cls}`}>
+              <Icon className="w-4 h-4 shrink-0" strokeWidth={1.75} />
+              <div>
+                <p className="erp-dash-trading-kpi-label">{label}</p>
+                <p className="erp-dash-trading-kpi-value num">{formatCurrency(value)}</p>
+              </div>
             </div>
-          </div>
-          <div className="erp-dash-trading-kpi is-bank-balance">
-            <Landmark className="w-4 h-4 shrink-0" />
-            <div>
-              <p className="erp-dash-trading-kpi-label">Bank balance</p>
-              <p className="erp-dash-trading-kpi-value">{formatCurrency(balances.bank)}</p>
-            </div>
-          </div>
-          <div className="erp-dash-trading-kpi is-money-in">
-            <ArrowDownLeft className="w-4 h-4 shrink-0" />
-            <div>
-              <p className="erp-dash-trading-kpi-label">Money in</p>
-              <p className="erp-dash-trading-kpi-value">{formatCurrency(summary.totalIn || 0)}</p>
-            </div>
-          </div>
-          <div className="erp-dash-trading-kpi is-money-out">
-            <ArrowUpRight className="w-4 h-4 shrink-0" />
-            <div>
-              <p className="erp-dash-trading-kpi-label">Money out</p>
-              <p className="erp-dash-trading-kpi-value">{formatCurrency(summary.totalOut || 0)}</p>
-            </div>
-          </div>
-          <div className={`erp-dash-trading-kpi ${(summary.net || 0) >= 0 ? "is-net-positive" : "is-net-negative"}`}>
-            <TrendingUp className="w-4 h-4 shrink-0" />
-            <div>
-              <p className="erp-dash-trading-kpi-label">Net flow</p>
-              <p className="erp-dash-trading-kpi-value">{formatCurrency(summary.net || 0)}</p>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -107,39 +87,38 @@ export default function CashBankFlowPanel({ cashFlow = {} }) {
             <span className="dot" /> Net flow
           </span>
         </div>
-        <div className="h-56 sm:h-64 lg:h-72 w-full min-w-0">
+        <div className="h-56 sm:h-64 lg:h-72 w-full min-w-0 font-mono">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-            <ComposedChart data={trend} margin={{ top: 12, right: 12, left: 0, bottom: 4 }}>
-              <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#e2e8f0" />
+            <ComposedChart data={trend} margin={{ top: 12, right: 12, left: 0, bottom: 4 }} barGap={3} barCategoryGap="28%">
+              <CartesianGrid strokeDasharray="2 3" vertical={false} stroke="var(--line)" />
               <XAxis
                 dataKey="day"
-                stroke="#94a3b8"
-                fontSize={11}
-                fontWeight={600}
+                stroke="var(--ink-3)"
+                tick={{ fill: "var(--ink-3)", fontSize: 10.5 }}
                 tickLine={false}
                 axisLine={false}
                 dy={8}
               />
               <YAxis
-                stroke="#94a3b8"
-                fontSize={10}
+                stroke="var(--ink-3)"
+                tick={{ fill: "var(--ink-3)", fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
                 width={52}
                 domain={[0, yMax]}
                 tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
               />
-              <Tooltip content={<CashFlowTooltip />} cursor={{ fill: "rgba(148,163,184,0.08)" }} />
-              <Bar dataKey="totalIn" name="Money in" fill="#16a34a" radius={[4, 4, 0, 0]} maxBarSize={28} />
-              <Bar dataKey="totalOut" name="Money out" fill="#f87171" radius={[4, 4, 0, 0]} maxBarSize={28} />
+              <Tooltip content={<CashFlowTooltip />} cursor={{ fill: "var(--surface-2)" }} />
+              <Bar dataKey="totalIn" name="Money in" fill="var(--brand)" radius={[3, 3, 0, 0]} maxBarSize={22} />
+              <Bar dataKey="totalOut" name="Money out" fill="var(--cyan)" radius={[3, 3, 0, 0]} maxBarSize={22} opacity={0.9} />
               <Line
                 type="monotone"
                 dataKey="net"
                 name="Net flow"
-                stroke="#0f172a"
-                strokeWidth={2}
-                dot={{ r: 3, fill: "#0f172a", strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: "#0f172a", stroke: "#fff", strokeWidth: 2 }}
+                stroke="var(--ink)"
+                strokeWidth={1.75}
+                dot={{ r: 2.5, fill: "var(--ink)", strokeWidth: 0 }}
+                activeDot={{ r: 4, fill: "var(--ink)", stroke: "var(--surface)", strokeWidth: 2 }}
               />
             </ComposedChart>
           </ResponsiveContainer>

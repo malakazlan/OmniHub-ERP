@@ -25,7 +25,7 @@ export default function ProductsRegister({
           ) : rows.length === 0 ? (
             <div className="erp-ledger-empty">
               <Package className="w-9 h-9 text-violet-200 mx-auto mb-2" />
-              <p className="text-sm font-medium text-slate-600">No products found</p>
+              <p className="text-sm font-medium text-slate-600">No items found</p>
             </div>
           ) : (
             <table className="erp-ledger-grid erp-prod-grid">
@@ -44,7 +44,7 @@ export default function ProductsRegister({
               <thead>
                 <tr>
                   <th className="erp-lg-th erp-prod-th erp-lg-th-num">#</th>
-                  <th className="erp-lg-th erp-prod-th">Product</th>
+                  <th className="erp-lg-th erp-prod-th">Item</th>
                   <th className="erp-lg-th erp-prod-th">SKU</th>
                   <th className="erp-lg-th erp-prod-th">Category</th>
                   <th className="erp-lg-th erp-prod-th erp-lg-th-money">Stock</th>

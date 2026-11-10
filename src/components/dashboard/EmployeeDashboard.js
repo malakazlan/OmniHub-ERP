@@ -51,7 +51,7 @@ const SALARY_VARIANT = { paid: "success", pending: "warning", partial: "warning"
 const SHORTCUT_DEFS = [
   { module: "orders", href: "/orders/my", label: "My orders", icon: ClipboardList, tone: "orange" },
   { module: "sales", href: "/sales/new", label: "New sale", icon: DollarSign, tone: "green" },
-  { module: "shops", href: "/shops", label: "Shops", icon: Store, tone: "amber" },
+  { module: "companies", href: "/companies?type=customers", label: "Customers", icon: Store, tone: "amber" },
   { module: "products", href: "/products", label: "Products", icon: Package, tone: "violet" },
   { module: "transport", href: "/transport", label: "Transport", icon: Truck, tone: "cyan" },
 ];
@@ -102,10 +102,17 @@ export default function EmployeeDashboard() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!data?.employee || tab !== "pay") return;
-    loadPaySnapshot(payMonth, payYear);
-  }, [data?.employee, tab, payMonth, payYear, loadPaySnapshot]);
+  // Salary data loads from user actions (tab switch / period change) instead of an effect.
+  const openPayTab = useCallback(() => {
+    setTab("pay");
+    if (data?.employee) loadPaySnapshot(payMonth, payYear);
+  }, [data?.employee, loadPaySnapshot, payMonth, payYear]);
+
+  const changePeriod = useCallback((month, year) => {
+    setPayMonth(month);
+    setPayYear(year);
+    if (data?.employee) loadPaySnapshot(month, year);
+  }, [data?.employee, loadPaySnapshot]);
 
   const shortcuts = useMemo(() => {
     return SHORTCUT_DEFS.filter((s) => hasModuleAccess(s.module));
@@ -123,7 +130,7 @@ export default function EmployeeDashboard() {
   if (loading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center bg-white">
-        <Loader2 className="w-9 h-9 text-indigo-500 animate-spin" />
+        <Loader2 className="w-9 h-9 text-[var(--brand)] animate-spin" />
       </div>
     );
   }
@@ -141,7 +148,7 @@ export default function EmployeeDashboard() {
             <UserCircle className="w-9 h-9 text-white/95" strokeWidth={1.25} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-indigo-100/95">Staff portal</p>
+            <p className="text-xs font-medium text-white/80">Staff portal</p>
             <h1 className="text-2xl font-bold text-white tracking-tight truncate mt-0.5">
               {displayName}
             </h1>
@@ -155,7 +162,7 @@ export default function EmployeeDashboard() {
               )}
             </div>
             {data?.employee?.designation && (
-              <p className="text-sm text-indigo-50/90 mt-2 flex items-center gap-1.5">
+              <p className="text-sm text-white/85 mt-2 flex items-center gap-1.5">
                 <Briefcase className="w-3.5 h-3.5 opacity-80" strokeWidth={2} />
                 {data.employee.designation}
               </p>
@@ -167,7 +174,7 @@ export default function EmployeeDashboard() {
           <div className="grid grid-cols-3 gap-2 mt-5">
             <div className="emp-dash-stat">
               <p className="text-lg font-bold text-white tabular-nums">{summary.present || 0}</p>
-              <p className="text-[10px] uppercase tracking-wide text-indigo-100/85 font-semibold mt-0.5">
+              <p className="text-[10px] uppercase tracking-wide text-white/75 font-semibold mt-0.5">
                 Present
               </p>
             </div>
@@ -178,16 +185,16 @@ export default function EmployeeDashboard() {
                     {latest.status}
                   </Badge>
                 ) : (
-                  <span className="text-indigo-100/80">—</span>
+                  <span className="text-white/70">—</span>
                 )}
               </p>
-              <p className="text-[10px] uppercase tracking-wide text-indigo-100/85 font-semibold mt-0.5">
+              <p className="text-[10px] uppercase tracking-wide text-white/75 font-semibold mt-0.5">
                 Last pay
               </p>
             </div>
             <div className="emp-dash-stat">
               <p className="text-lg font-bold text-white tabular-nums">{shortcuts.length}</p>
-              <p className="text-[10px] uppercase tracking-wide text-indigo-100/85 font-semibold mt-0.5">
+              <p className="text-[10px] uppercase tracking-wide text-white/75 font-semibold mt-0.5">
                 Shortcuts
               </p>
             </div>
@@ -206,7 +213,7 @@ export default function EmployeeDashboard() {
             type="button"
             role="tab"
             aria-selected={tab === id}
-            onClick={() => setTab(id)}
+            onClick={() => (id === "pay" ? openPayTab() : setTab(id))}
             className={`emp-tab ${tab === id ? "emp-tab-active" : ""}`}
           >
             <Icon className="w-4 h-4 shrink-0" strokeWidth={2} />
@@ -306,7 +313,7 @@ export default function EmployeeDashboard() {
                   </>
                 )}
               </p>
-              <button type="button" onClick={() => setTab("pay")} className="emp-link-row mt-3">
+              <button type="button" onClick={openPayTab} className="emp-link-row mt-3">
                 View salary details <ChevronRight className="w-4 h-4" />
               </button>
             </div>
@@ -372,7 +379,7 @@ export default function EmployeeDashboard() {
                     <select
                       className="emp-select"
                       value={payMonth}
-                      onChange={(e) => setPayMonth(parseInt(e.target.value, 10))}
+                      onChange={(e) => changePeriod(parseInt(e.target.value, 10), payYear)}
                       aria-label="Salary month"
                     >
                       {MONTH_OPTIONS.map((m) => (
@@ -382,7 +389,7 @@ export default function EmployeeDashboard() {
                     <select
                       className="emp-select"
                       value={payYear}
-                      onChange={(e) => setPayYear(parseInt(e.target.value, 10))}
+                      onChange={(e) => changePeriod(payMonth, parseInt(e.target.value, 10))}
                       aria-label="Salary year"
                     >
                       {yearOptions.map((y) => (
@@ -394,7 +401,7 @@ export default function EmployeeDashboard() {
 
                 {payLoading ? (
                   <div className="flex justify-center py-12">
-                    <Loader2 className="w-7 h-7 text-indigo-500 animate-spin" />
+                    <Loader2 className="w-7 h-7 text-[var(--brand)] animate-spin" />
                   </div>
                 ) : paySnapshot?.preview ? (
                   <div className="mt-4">
@@ -440,10 +447,7 @@ export default function EmployeeDashboard() {
                         <li key={row.id}>
                           <button
                             type="button"
-                            onClick={() => {
-                              setPayMonth(row.month);
-                              setPayYear(row.year);
-                            }}
+                            onClick={() => changePeriod(row.month, row.year)}
                             className={`emp-pay-row w-full text-left${isSelected ? " emp-pay-row-active" : ""}`}
                           >
                             <div>

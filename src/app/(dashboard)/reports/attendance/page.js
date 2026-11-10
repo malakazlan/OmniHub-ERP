@@ -88,7 +88,7 @@ export default function AttendanceReportPage() {
   return (
     <ReportShell
       surfaceClass="erp-hr-surface"
-      badge="HR"
+      badge="Employees & Payroll"
       badgeIcon={CalendarCheck}
       title="Attendance report"
       description="Monthly attendance summary with present, absent, leave counts and attendance rate."

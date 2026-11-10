@@ -94,12 +94,12 @@ export default function DayClosePage() {
     <div className="space-y-8 page-enter">
       <PageHeader
         module="accounts"
-        title="Day Close"
+        title="Daily Close"
         description="Reconcile daily cash position and close the books for the day."
         icon={CalendarCheck}
         breadcrumbs={[
           { label: "Accounting", href: "/accounts" },
-          { label: "Day Close" },
+          { label: "Daily Close" },
         ]}
         actions={
           <Link href="/accounts">

@@ -16,6 +16,7 @@ import {
   Building2,
   ArrowLeft,
 } from "lucide-react";
+import { isCustomerCompany } from "@/lib/saleCustomer";
 import { parseNumber, formatCurrency } from "@/lib/formatters";
 import { CURRENCY_SYMBOL } from "@/lib/constants";
 
@@ -32,7 +33,7 @@ export default function NewOrderForm({
   const lockRates = mobile;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [customerType, setCustomerType] = useState("shop");
+  const [customerType, setCustomerType] = useState("company");
   const [shops, setShops] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [products, setProducts] = useState([]);
@@ -62,7 +63,9 @@ export default function NewOrderForm({
       .finally(() => setLoading(false));
   }, [showToast]);
 
-  const customerOptions = customerType === "shop" ? shops : companies;
+  const customerOptions = customerType === "shop" ? shops : companies.filter(isCustomerCompany);
+  // Shop customers are legacy; the tab only appears while editing an old order that used one.
+  const legacyCustomerType = customerType === "shop";
 
   const updateItem = (index, field, value) => {
     setItems((prev) => {
@@ -105,7 +108,7 @@ export default function NewOrderForm({
             productId: parseInt(item.productId, 10),
             productName: product?.name || "",
             quantity: parseNumber(item.quantity),
-            unit: product?.unit || "kg",
+            unit: product?.unit || "ea",
             rate: parseNumber(item.rate),
             amount: parseNumber(item.amount),
           };
@@ -123,7 +126,7 @@ export default function NewOrderForm({
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.customerId) {
-      showToast(`Select a ${customerType}`, "warning");
+      showToast(`Select a ${customerType === "company" ? "customer" : customerType}`, "warning");
       return;
     }
     const { payload, validItems } = buildPayload();
@@ -162,10 +165,11 @@ export default function NewOrderForm({
     <div
       className={
         mobile
-          ? "sp-segment grid grid-cols-2 gap-1 p-1"
-          : "grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg"
+          ? `sp-segment grid ${legacyCustomerType ? "grid-cols-2" : "grid-cols-1"} gap-1 p-1`
+          : `grid ${legacyCustomerType ? "grid-cols-2" : "grid-cols-1"} gap-2 p-1 bg-slate-100 rounded-lg`
       }
     >
+      {legacyCustomerType && (
       <button
         type="button"
         onClick={() => {
@@ -180,8 +184,9 @@ export default function NewOrderForm({
             : "text-slate-600"
         }`}
       >
-        <Store className="w-4 h-4" /> Shop
+        <Store className="w-4 h-4" /> Shop (legacy)
       </button>
+      )}
       <button
         type="button"
         onClick={() => {
@@ -196,7 +201,7 @@ export default function NewOrderForm({
             : "text-slate-600"
         }`}
       >
-        <Building2 className="w-4 h-4" /> Company
+        <Building2 className="w-4 h-4" /> Customer
       </button>
     </div>
   );
@@ -210,7 +215,7 @@ export default function NewOrderForm({
             value={item.productId}
             onChange={(e) => updateItem(index, "productId", e.target.value)}
           >
-            <option value="">Choose product…</option>
+            <option value="">Choose item…</option>
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -265,7 +270,7 @@ export default function NewOrderForm({
         onClick={() => setItems([...items, { ...EMPTY_ITEM }])}
         className="w-full py-3 rounded-xl border-2 border-dashed border-orange-200 text-orange-700 font-semibold text-sm flex items-center justify-center gap-2"
       >
-        <Plus className="w-5 h-5" /> Add product line
+        <Plus className="w-5 h-5" /> Add item line
       </button>
     </div>
   );
@@ -278,7 +283,7 @@ export default function NewOrderForm({
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">New order</h1>
+            <h1 className="text-xl font-bold text-slate-900">New sales order</h1>
             <p className="text-xs text-slate-500">Submitted to admin for approval</p>
           </div>
         </div>
@@ -289,7 +294,7 @@ export default function NewOrderForm({
           <div className="mt-3">
             <SearchPicker
               hideLabel
-              label={customerType === "shop" ? "Shop" : "Company"}
+              label={customerType === "shop" ? "Shop" : "Customer"}
               options={customerOptions}
               value={form.customerId}
               onChange={(id) => setForm({ ...form, customerId: id })}
@@ -307,7 +312,7 @@ export default function NewOrderForm({
         </div>
 
         <div className="sp-section-card mt-3">
-          <p className="sp-section-title">Products</p>
+          <p className="sp-section-title">Items</p>
           {lineItemsMobile}
         </div>
 
@@ -344,10 +349,10 @@ export default function NewOrderForm({
     <form onSubmit={handleSubmit} className="page-enter pb-8 space-y-6">
       <PageHeader
         module="orders"
-        title="New customer order"
+        title="New sales order"
         description="Sales staff capture order details; admin accepts before invoicing."
         icon={ClipboardList}
-        breadcrumbs={[{ label: "Orders", href: backHref }, { label: "New" }]}
+        breadcrumbs={[{ label: "Sales Orders", href: backHref }, { label: "New" }]}
         actions={
           <Link href={backHref} className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-orange-700">
             <ArrowLeft className="w-4 h-4" /> Back
@@ -359,7 +364,7 @@ export default function NewOrderForm({
         <div className="space-y-3">
           {customerToggle}
           <SearchPicker
-            label={customerType === "shop" ? "Shop *" : "Company *"}
+            label={customerType === "shop" ? "Shop *" : "Customer *"}
             options={customerOptions}
             value={form.customerId}
             onChange={(id) => setForm({ ...form, customerId: id })}
@@ -387,7 +392,7 @@ export default function NewOrderForm({
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="text-left text-[10px] uppercase text-slate-500">
-              <th className="pb-2">Product</th>
+              <th className="pb-2">Item</th>
               <th className="pb-2 text-right">Qty</th>
               <th className="pb-2 text-right">Rate</th>
               <th className="pb-2 text-right">Amount</th>
@@ -403,7 +408,7 @@ export default function NewOrderForm({
                     value={item.productId}
                     onChange={(e) => updateItem(index, "productId", e.target.value)}
                   >
-                    <option value="">Product…</option>
+                    <option value="">Item…</option>
                     {products.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.name}

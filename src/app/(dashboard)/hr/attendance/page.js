@@ -311,7 +311,7 @@ export default function AttendancePage() {
           <div className="erp-hr-header-actions">
             <Link href="/hr">
               <Button variant="outline" className="border-slate-200 text-slate-600">
-                <ArrowLeft className="w-4 h-4" /> HR
+                <ArrowLeft className="w-4 h-4" /> Employees & Payroll
               </Button>
             </Link>
             {(tab === "daily" || tab === "hazri") && (

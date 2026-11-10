@@ -166,9 +166,9 @@ export default function SalesListView({ sales, loading, onOpenInvoice }) {
           <div>
             <div className="erp-sales-hub-badge">
               <DollarSign className="w-3.5 h-3.5" />
-              Sales desk
+              Invoicing desk
             </div>
-            <h1 className="erp-sales-hub-title">Sales & invoices</h1>
+            <h1 className="erp-sales-hub-title">Invoices</h1>
             <p className="erp-sales-hub-desc">
               Spreadsheet-style register with dropdown filters — newest invoices at the top.
             </p>
@@ -181,7 +181,7 @@ export default function SalesListView({ sales, loading, onOpenInvoice }) {
             </Link>
             <Link href="/sales/new">
               <Button className="bg-acc-sales hover:bg-green-700 border-0 shadow-md shadow-green-600/15">
-                <Plus className="w-4 h-4" /> New sale
+                <Plus className="w-4 h-4" /> New invoice
               </Button>
             </Link>
           </div>
