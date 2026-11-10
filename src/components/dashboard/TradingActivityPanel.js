@@ -4,7 +4,7 @@ import React, { useMemo } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatAxisMoney } from "@/lib/formatters";
 import { TrendingUp, ShoppingCart } from "lucide-react";
 import DashboardChartTooltip from "@/components/dashboard/DashboardChartTooltip";
 
@@ -80,7 +80,7 @@ export default function TradingActivityPanel({ chartData = [] }) {
                 axisLine={false}
                 width={52}
                 domain={[0, yMax]}
-                tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+                tickFormatter={formatAxisMoney}
               />
               <Tooltip content={<DashboardChartTooltip />} cursor={{ fill: "var(--surface-2)" }} />
               <Bar dataKey="Sales" name="Sales" fill="var(--brand)" radius={[3, 3, 0, 0]} maxBarSize={22} />

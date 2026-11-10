@@ -5,7 +5,7 @@ import {
   Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, ComposedChart,
 } from "recharts";
 import { ArrowDownLeft, ArrowUpRight, Landmark, Wallet, TrendingUp } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatAxisMoney } from "@/lib/formatters";
 
 function CashFlowTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
@@ -106,7 +106,7 @@ export default function CashBankFlowPanel({ cashFlow = {} }) {
                 axisLine={false}
                 width={52}
                 domain={[0, yMax]}
-                tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+                tickFormatter={formatAxisMoney}
               />
               <Tooltip content={<CashFlowTooltip />} cursor={{ fill: "var(--surface-2)" }} />
               <Bar dataKey="totalIn" name="Money in" fill="var(--brand)" radius={[3, 3, 0, 0]} maxBarSize={22} />

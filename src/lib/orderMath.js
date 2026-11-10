@@ -32,9 +32,14 @@ export function normalizeItems(items) {
   });
 }
 
+/** Cent tolerance so float sums like 5384.389999 still count as fully paid. */
+const MONEY_EPSILON = 0.005;
+
 export function computePaymentStatus(paidAmount, totalAmount) {
-  if (paidAmount <= 0) return "unpaid";
-  if (paidAmount >= totalAmount) return "paid";
+  const paid = Number(paidAmount) || 0;
+  const total = Number(totalAmount) || 0;
+  if (paid <= MONEY_EPSILON) return "unpaid";
+  if (paid + MONEY_EPSILON >= total) return "paid";
   return "partial";
 }
 

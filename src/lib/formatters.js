@@ -66,3 +66,13 @@ export function parseNumber(value, fallback = 0) {
   const num = parseFloat(value);
   return isNaN(num) ? fallback : num;
 }
+
+/** Compact axis label for charts: 1.2k, -14k, 2.5M, keeps sign and never prints raw floats. */
+export function formatAxisMoney(value) {
+  const n = Number(value) || 0;
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`;
+  if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`;
+  return `${sign}${Math.round(abs)}`;
+}

@@ -5,7 +5,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { Receipt } from "lucide-react";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, formatAxisMoney } from "@/lib/formatters";
 import DashboardChartTooltip from "@/components/dashboard/DashboardChartTooltip";
 
 export default function ExpensesWeekPanel({ expenses = {} }) {
@@ -61,7 +61,7 @@ export default function ExpensesWeekPanel({ expenses = {} }) {
                 axisLine={false}
                 width={48}
                 domain={[0, yMax]}
-                tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v)}
+                tickFormatter={formatAxisMoney}
               />
               <Tooltip content={<DashboardChartTooltip />} cursor={{ stroke: "var(--line-strong)", strokeWidth: 1 }} />
               <Area
