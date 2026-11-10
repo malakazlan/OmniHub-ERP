@@ -601,7 +601,7 @@ export default function NewPurchasePage() {
         <DocSection title="Vendor" className="overflow-visible">
           <div className="erp-doc-body space-y-4 overflow-visible">
             <div
-              className={`erp-vendor-switch grid ${legacyVendorType ? "grid-cols-2" : "grid-cols-1"} gap-2 p-1.5 rounded-xl bg-slate-100/80 border border-slate-200/60`}
+              className={`erp-vendor-switch grid ${legacyVendorType ? "grid-cols-2" : "hidden"} gap-2 p-1.5 rounded-xl bg-[var(--surface-2)] border border-[var(--line)]`}
               role="tablist"
               aria-label="Vendor type"
             >
@@ -616,8 +616,8 @@ export default function NewPurchasePage() {
                 }}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   vendorType === "farmer"
-                    ? "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-1 ring-emerald-400/50"
-                    : "text-slate-600 hover:bg-white/95 hover:text-emerald-700 hover:ring-1 hover:ring-emerald-200/80"
+                    ? "bg-[var(--brand)] text-white shadow-sm"
+                    : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                 }`}
               >
                 <Sprout
@@ -639,13 +639,13 @@ export default function NewPurchasePage() {
                 }}
                 className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   vendorType === "company"
-                    ? "bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 shadow-md shadow-amber-500/30 ring-1 ring-amber-300/70"
-                    : "text-slate-600 hover:bg-white/95 hover:text-amber-800 hover:ring-1 hover:ring-amber-200/90"
+                    ? "bg-[var(--brand)] text-white shadow-sm"
+                    : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                 }`}
               >
                 <Building2
                   className={`w-4 h-4 shrink-0 transition-colors ${
-                    vendorType === "company" ? "text-amber-950" : "text-amber-600"
+                    vendorType === "company" ? "text-white" : "text-[var(--ink-3)]"
                   }`}
                   strokeWidth={2.25}
                 />
@@ -1084,7 +1084,7 @@ export default function NewPurchasePage() {
                 disabled={submitting || correctionReason.trim().length < 3}
                 variant="primary"
                 onClick={handleCorrectionSubmit}
-                className="min-h-[42px] sm:min-w-[220px] rounded-lg shadow-md bg-amber-600 hover:bg-amber-700 border-amber-600"
+                className="min-h-[42px] sm:min-w-[220px]"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

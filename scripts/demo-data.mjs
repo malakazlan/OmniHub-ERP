@@ -169,7 +169,7 @@ async function main() {
   const existingPayments = (await api("GET", "/api/payments")).payments || [];
   const existingExpenses = (await api("GET", "/api/expenses")).expenses || [];
   const existingTrips = (await api("GET", "/api/transport")).transports || [];
-  const INVOICE_TARGET = 30;
+  const INVOICE_TARGET = 75;
 
   const byName = (list, key = "name") => new Map((list || []).map((x) => [x[key], x]));
   const existingCompanies = byName((await api("GET", "/api/companies")).companies);

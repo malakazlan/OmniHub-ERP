@@ -74,7 +74,7 @@ export default function FleetVehiclesRegister({
                 </td>
                 <td className="erp-lg-td text-sm capitalize text-slate-800">{vehicleLabel(v)}</td>
                 <td className="erp-lg-td text-xs text-slate-600">{v.driverName || "—"}</td>
-                <td className="erp-lg-td text-xs text-slate-600">{v.capacity ? `${v.capacity} t` : "—"}</td>
+                <td className="erp-lg-td text-xs text-slate-600">{v.capacity ? `${v.capacity.toLocaleString("en-US")} lb` : "—"}</td>
                 <td className="erp-lg-td erp-fleet-td-center">
                   <span className={`erp-fleet-status${v.isActive ? " is-active" : ""}`}>
                     {v.isActive ? "Active" : "Inactive"}

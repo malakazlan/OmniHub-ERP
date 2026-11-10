@@ -90,7 +90,7 @@ export default function OrdersReportPage() {
     return (
       <div className="erp-reports-surface page-enter p-8 text-center">
         <p className="text-slate-600">Admin access required.</p>
-        <Link href="/orders" className="text-orange-700 underline text-sm">Back to orders</Link>
+        <Link href="/orders" className="text-[var(--brand)] underline text-sm">Back to orders</Link>
       </div>
     );
   }
@@ -101,7 +101,7 @@ export default function OrdersReportPage() {
       badgeIcon={BarChart3}
       title="Sales order pipeline report"
       description="Sales orders by status and sales rep performance."
-      accentClass="text-orange-600"
+      accentClass="text-[var(--brand)]"
       filterBar={
         <ReportDateFilter
           from={from}
@@ -110,7 +110,7 @@ export default function OrdersReportPage() {
           onToChange={setTo}
           onApply={() => fetchReport(from, to)}
           onClear={() => { setFrom(""); setTo(""); fetchReport("", ""); }}
-          accentBtnClass="bg-orange-600 hover:bg-orange-700"
+          accentBtnClass="bg-[var(--brand)] hover:bg-[var(--brand-ink)]"
         />
       }
       stats={[
@@ -184,7 +184,7 @@ export default function OrdersReportPage() {
                 {filtered.map((row, idx) => (
                   <tr key={row.id} className="erp-lg-row">
                     <td className="erp-lg-td erp-lg-td-num text-slate-400">{idx + 1}</td>
-                    <td className="erp-lg-td font-semibold text-orange-700">{row.orderNumber}</td>
+                    <td className="erp-lg-td font-semibold text-[var(--brand)]">{row.orderNumber}</td>
                     <td className="erp-lg-td erp-lg-td-date">{formatDate(row.orderDate)}</td>
                     <td className="erp-lg-td text-sm">{row.customerName}</td>
                     <td className="erp-lg-td erp-lg-td-money font-bold">{formatCurrency(row.totalAmount)}</td>

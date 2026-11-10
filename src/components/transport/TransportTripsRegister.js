@@ -120,7 +120,7 @@ export default function TransportTripsRegister({
                     )}
                   </td>
                   <td className="erp-lg-td erp-lg-td-money text-xs text-slate-600">
-                    {t.loadWeight ? `${t.loadWeight} t` : "—"}
+                    {t.loadWeight ? `${t.loadWeight.toLocaleString("en-US")} lb` : "—"}
                   </td>
                   <td className="erp-lg-td erp-lg-td-money">
                     <p className="font-mono text-sm font-bold text-slate-900">{formatCurrency(t.totalCharges)}</p>
@@ -175,7 +175,7 @@ export default function TransportTripsRegister({
                 </span>
               </td>
               <td className="erp-lg-td erp-lg-td-money text-xs font-bold text-slate-600">
-                {footerWeight ? `${footerWeight.toFixed(2)} t` : "—"}
+                {footerWeight ? `${footerWeight.toLocaleString("en-US")} lb` : "—"}
               </td>
               <td className="erp-lg-td erp-lg-td-money">
                 <p className="font-mono text-sm font-black text-cyan-700">{formatCurrency(footerCharges)}</p>

@@ -13265,9 +13265,9 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-ledger-toolbar, .erp-pv-toolbar, .erp-reports-toolbar, .erp-sales-toolbar, .erp-settings-toolbar, .erp-xfer-toolbar,
 .erp-hr-filter-bar, .erp-reports-filter-bar, .erp-settings-filter-bar, .erp-orders-filters-panel, .erp-purchases-filters-panel, .erp-sales-filters-panel,
 .erp-orders-sheet-panel, .erp-purchases-sheet-panel, .erp-sales-sheet-panel,
-.erp-ac-account-panel, .erp-ac-section, .erp-hr-detail-panel, .erp-hr-hub-card, .erp-hr-hub-section, .erp-hr-info-card, .erp-hr-login-panel,
-.erp-prod-category-card, .erp-prod-detail-panel, .erp-pv-top-product-card, .erp-reports-hub-card, .erp-reports-hub-section, .erp-reports-split-panel,
-.erp-settings-link-card, .erp-settings-links-section, .erp-xfer-flow-panel, .erp-xfer-type-card, .erp-fleet-pay-panel, .erp-pay-split-card,
+.erp-ac-account-panel, .erp-ac-section, .erp-hr-detail-panel, .erp-hr-hub-card, .erp-hr-info-card, .erp-hr-login-panel,
+.erp-prod-category-card, .erp-prod-detail-panel, .erp-pv-top-product-card, .erp-reports-hub-card, .erp-reports-split-panel,
+.erp-settings-link-card, .erp-xfer-flow-panel, .erp-xfer-type-card, .erp-fleet-pay-panel, .erp-pay-split-card,
 .erp-inv-info-card, .erp-trip-section, .erp-sc-panel, .erp-sc-ref-panel, .emp-panel,
 .erp-ac-stat, .erp-dealer-stat, .erp-don-stat, .erp-fin-stat, .erp-fleet-stat, .erp-hr-stat, .erp-hr-hub-stat, .erp-inv-stat,
 .erp-orders-stat, .erp-prod-stat, .erp-purchases-stat, .erp-pv-stat, .erp-reports-stat, .erp-sales-stat, .erp-settings-stat, .erp-xfer-stat, .sp-stat {
@@ -13340,7 +13340,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-orders-select, .erp-ledger-select, .erp-ledger-account-select, .erp-ledger-account-picker-select, .erp-ledger-date-input, .erp-ledger-search-input,
 .erp-dealer-date-input, .erp-don-date-input, .erp-xfer-date-input, .erp-ac-search-input, .erp-att-status-select, .erp-trip-status-select, .emp-select,
 .erp-hr-filter-field input, .erp-hr-filter-field select, .erp-reports-filter-field input, .erp-reports-filter-field select,
-.erp-settings-filter-field input, .erp-settings-filter-field select, .erp-sales-select-field, .erp-purchases-select-field, .erp-orders-select-field,
+.erp-settings-filter-field input, .erp-settings-filter-field select,
 .search-picker-field {
   min-height: 34px;
   padding-top: 0;
@@ -13490,7 +13490,7 @@ textarea.input-field, textarea.input-field-compact, textarea.erp-finance-input, 
 
 /* ── Status pills: full-round, soft background ── */
 .erp-ac-status, .erp-dealer-status, .erp-fleet-status, .erp-inv-status, .erp-pv-status, .erp-pv-bill-status, .erp-reports-status, .erp-trip-status,
-.erp-orders-sheet-status, .erp-purchases-sheet-status, .erp-sales-sheet-status, .erp-sal-doc-status, .erp-sal-rcpt-status,
+.erp-sal-doc-status, .erp-sal-rcpt-status,
 .erp-hr-status-pill, .erp-hr-att-pill, .erp-hr-role-pill, .erp-inv-att-pill, .erp-ac-category-pill, .erp-fin-cat-pill, .erp-prod-cat-pill, .erp-prod-move-pill,
 .erp-fleet-type-pill, .erp-pv-date-pill, .erp-sales-pill, .erp-sc-account-pill, .sp-status-pill, .sp-status-accepted, .sp-status-converted, .sp-status-pending, .sp-status-rejected,
 .erp-fleet-paid-badge, .erp-fleet-unpaid-badge, .erp-inv-pay-badge, .erp-pi-pay-badge, .erp-pv-count-badge, .erp-pv-unit-badge, .erp-return-badge, .erp-don-purpose-badge,
@@ -13569,3 +13569,50 @@ textarea.input-field, textarea.input-field-compact, textarea.erp-finance-input, 
 @media print {
   .oh-kpi, .oh-card, .stat-card, .module-panel { box-shadow: none !important; border: 1px solid #cfd6e4 !important; }
 }
+
+/* ── Hub section groups: plain headed groups, never cards (cards live inside) ── */
+.erp-reports-hub-section, .erp-hr-hub-section, .erp-settings-links-section {
+  background: transparent; border: 0; box-shadow: none; border-radius: 0; padding: 0; margin-top: 4px;
+}
+.erp-reports-hub-section-title, .erp-hr-hub-section-title { margin: 0 0 10px 2px; }
+
+/* ── Register filter fields: label above a 34px select, no outer box ── */
+.erp-sales-select-field, .erp-purchases-select-field, .erp-orders-select-field {
+  display: flex; flex-direction: column; gap: 5px; min-width: 0;
+  border: 0; padding: 0; background: transparent; box-shadow: none; min-height: 0; line-height: normal;
+}
+.erp-sales-filters-panel, .erp-purchases-filters-panel, .erp-orders-filters-panel { padding: 14px 16px; }
+
+/* Register status cells stay table cells; the pill is the inner badge */
+.erp-orders-sheet-status, .erp-purchases-sheet-status, .erp-sales-sheet-status { text-transform: none; font-size: 0.8125rem; color: var(--ink-2); white-space: nowrap; }
+
+/* ── Field labels: any label immediately followed by its control sits above it, preview style ── */
+label:has(+ input), label:has(+ select), label:has(+ textarea), label:has(+ .search-picker-field), label:has(+ .input-field), label:has(+ div > input) {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
+label:has(+ input[type="checkbox"]), label:has(+ input[type="radio"]) { display: inline; margin: 0; }
+
+/* Breadcrumb: take available width; the current page never truncates, earlier crumbs shrink first */
+.oh-crumb { flex: 1 1 0; min-width: 120px; }
+.oh-crumb > span { min-width: 0; }
+.oh-crumb > span:last-child { flex-shrink: 0; }
+.oh-crumb > span:last-child b { overflow: visible; text-overflow: clip; }
+
+/* ── No per-module accent stripes on panels, headers or toolbars (preview cards are flat) ── */
+.erp-ac-account-panel, .erp-accounts-register, .erp-accounts-surface .erp-accounts-toolbar, .erp-fin-page-header, .erp-fin-register,
+.erp-fleet-page-header, .erp-fleet-register, .erp-hr-detail-panel, .erp-hr-page-header, .erp-hr-register,
+.erp-ledger-surface .erp-ledger-toolbar, .erp-orders-hub-header, .erp-orders-register, .erp-prod-category-all, .erp-prod-detail-panel,
+.erp-prod-page-header, .erp-prod-register, .erp-purchases-hub-header, .erp-purchases-register, .erp-reports-page-header, .erp-reports-register,
+.erp-sales-hub-header, .erp-sales-register, .erp-settings-page-header, .erp-settings-register, .erp-trip-summary {
+  border-top: 0;
+}
+
+/* Search inputs with a leading icon need room for it */
+.erp-ledger-search-input, .erp-ac-search-input { padding-left: 34px; }

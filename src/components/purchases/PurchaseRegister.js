@@ -4,6 +4,8 @@ import React from "react";
 import Link from "next/link";
 import { FileText, ExternalLink, Pencil, Wallet } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
+import Badge from "@/components/ui/Badge";
+import { paymentStatusTone, orderStatusTone, statusLabel } from "@/lib/statusTone";
 
 function balanceDue(row) {
   return Math.max((row.totalAmount || 0) - (row.paidAmount || 0), 0);
@@ -83,8 +85,8 @@ export default function PurchaseRegister({ rows, onOpenBill, onPay }) {
                   <td className={`erp-lg-td erp-lg-td-money${due > 0 ? " erp-purchases-sheet-due" : ""}`}>
                     {formatCurrency(due)}
                   </td>
-                  <td className="erp-lg-td erp-purchases-sheet-status">{(row.status || "draft").replace(/_/g, " ")}</td>
-                  <td className="erp-lg-td erp-purchases-sheet-status">{row.paymentStatus || "unpaid"}</td>
+                  <td className="erp-lg-td erp-purchases-sheet-status"><Badge variant={orderStatusTone(row.status || "draft")}>{statusLabel(row.status || "draft")}</Badge></td>
+                  <td className="erp-lg-td erp-purchases-sheet-status"><Badge variant={paymentStatusTone(row.paymentStatus || "unpaid")}>{statusLabel(row.paymentStatus || "unpaid")}</Badge></td>
                   <td className="erp-lg-td erp-purchases-sheet-actions" onClick={(e) => e.stopPropagation()}>
                     <div className="erp-purchases-sheet-action-btns">
                       {row.status === "draft" && (

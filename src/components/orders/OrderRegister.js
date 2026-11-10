@@ -3,6 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import Badge from "@/components/ui/Badge";
+import { paymentStatusTone, orderStatusTone, statusLabel } from "@/lib/statusTone";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 
 export default function OrderRegister({ rows, onOpenOrder }) {
@@ -49,7 +51,7 @@ export default function OrderRegister({ rows, onOpenOrder }) {
                   </td>
                   <td className="erp-lg-td erp-lg-td-date">{formatDate(row.orderDate)}</td>
                   <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.totalAmount)}</td>
-                  <td className="erp-lg-td erp-orders-sheet-status">{row.status || "pending"}</td>
+                  <td className="erp-lg-td erp-orders-sheet-status"><Badge variant={orderStatusTone(row.status || "pending")}>{statusLabel(row.status || "pending")}</Badge></td>
                   <td className="erp-lg-td">{row.createdBy?.name || "—"}</td>
                   <td className="erp-lg-td erp-orders-sheet-actions" onClick={(e) => e.stopPropagation()}>
                     <Link href={`/orders/${row.id}`} className="erp-orders-sheet-action" title="Open order">

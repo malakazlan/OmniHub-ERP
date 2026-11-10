@@ -156,7 +156,7 @@ export default function NewOrderForm({
   if (loading) {
     return (
       <div className={`flex items-center justify-center ${mobile ? "min-h-[50vh]" : "h-72"}`}>
-        <Loader2 className="w-8 h-8 text-orange-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-[var(--brand)] animate-spin" />
       </div>
     );
   }
@@ -165,8 +165,8 @@ export default function NewOrderForm({
     <div
       className={
         mobile
-          ? `sp-segment grid ${legacyCustomerType ? "grid-cols-2" : "grid-cols-1"} gap-1 p-1`
-          : `grid ${legacyCustomerType ? "grid-cols-2" : "grid-cols-1"} gap-2 p-1 bg-slate-100 rounded-lg`
+          ? `sp-segment grid ${legacyCustomerType ? "grid-cols-2" : "hidden"} gap-1 p-1`
+          : `grid ${legacyCustomerType ? "grid-cols-2" : "hidden"} gap-2 p-1 bg-[var(--surface-2)] rounded-lg`
       }
     >
       {legacyCustomerType && (
@@ -197,7 +197,7 @@ export default function NewOrderForm({
           customerType === "company"
             ? mobile
               ? "sp-segment-active-company"
-              : "bg-amber-500 text-white"
+              : "bg-[var(--brand)] text-white"
             : "text-slate-600"
         }`}
       >
@@ -268,7 +268,7 @@ export default function NewOrderForm({
       <button
         type="button"
         onClick={() => setItems([...items, { ...EMPTY_ITEM }])}
-        className="w-full py-3 rounded-xl border-2 border-dashed border-orange-200 text-orange-700 font-semibold text-sm flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-xl border-2 border-dashed border-[var(--brand-line)] text-[var(--brand)] font-semibold text-sm flex items-center justify-center gap-2"
       >
         <Plus className="w-5 h-5" /> Add item line
       </button>
@@ -328,7 +328,7 @@ export default function NewOrderForm({
 
         <div className="sp-total-bar mt-4">
           <span className="text-sm font-semibold text-slate-600">Order total</span>
-          <span className="text-2xl font-bold text-orange-700 tabular-nums">
+          <span className="text-2xl font-bold text-[var(--ink)] tabular-nums">
             {CURRENCY_SYMBOL}
             {totalAmount.toLocaleString()}
           </span>
@@ -354,13 +354,13 @@ export default function NewOrderForm({
         icon={ClipboardList}
         breadcrumbs={[{ label: "Sales Orders", href: backHref }, { label: "New" }]}
         actions={
-          <Link href={backHref} className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-orange-700">
+          <Link href={backHref} className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-[var(--brand)]">
             <ArrowLeft className="w-4 h-4" /> Back
           </Link>
         }
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 erp-doc-section p-4 rounded-xl border border-orange-100">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 erp-doc-section p-4 rounded-xl">
         <div className="space-y-3">
           {customerToggle}
           <SearchPicker
@@ -388,7 +388,7 @@ export default function NewOrderForm({
         </div>
       </div>
 
-      <div className="erp-doc-section p-4 rounded-xl border border-orange-100 overflow-x-auto">
+      <div className="erp-doc-section p-4 rounded-xl overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="text-left text-[10px] uppercase text-slate-500">
@@ -452,18 +452,18 @@ export default function NewOrderForm({
         <button
           type="button"
           onClick={() => setItems([...items, { ...EMPTY_ITEM }])}
-          className="mt-3 text-xs font-semibold text-orange-700 flex items-center gap-1"
+          className="mt-3 text-xs font-semibold text-[var(--brand)] flex items-center gap-1"
         >
           <Plus className="w-4 h-4" /> Add line
         </button>
-        <p className="mt-4 text-right font-bold text-orange-800">
+        <p className="mt-4 text-right font-bold text-[var(--ink)]">
           Total {CURRENCY_SYMBOL}
           {totalAmount.toLocaleString()}
         </p>
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={submitting} className="bg-orange-600 border-0 min-w-[160px]">
+        <Button type="submit" disabled={submitting} className="min-w-[160px]">
           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Submit order"}
         </Button>
       </div>

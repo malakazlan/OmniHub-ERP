@@ -5,6 +5,8 @@ import Link from "next/link";
 import { FileText, ExternalLink } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/formatters";
 import { saleCustomerTypeLabel } from "@/lib/saleCustomer";
+import Badge from "@/components/ui/Badge";
+import { paymentStatusTone, orderStatusTone, statusLabel } from "@/lib/statusTone";
 
 function balanceDue(row) {
   return Math.max((row.totalAmount || 0) - (row.paidAmount || 0), 0);
@@ -74,8 +76,8 @@ export default function SalesRegister({ rows, onOpenInvoice }) {
                   <td className={`erp-lg-td erp-lg-td-money${due > 0 ? " erp-sales-sheet-due" : ""}`}>
                     {formatCurrency(due)}
                   </td>
-                  <td className="erp-lg-td erp-sales-sheet-status">{row.paymentStatus || "unpaid"}</td>
-                  <td className="erp-lg-td erp-sales-sheet-status">{(row.status || "draft").replace(/_/g, " ")}</td>
+                  <td className="erp-lg-td erp-sales-sheet-status"><Badge variant={paymentStatusTone(row.paymentStatus || "unpaid")}>{statusLabel(row.paymentStatus || "unpaid")}</Badge></td>
+                  <td className="erp-lg-td erp-sales-sheet-status"><Badge variant={orderStatusTone(row.status || "draft")}>{statusLabel(row.status || "draft")}</Badge></td>
                   <td className="erp-lg-td erp-sales-sheet-actions" onClick={(e) => e.stopPropagation()}>
                     <div className="erp-sales-sheet-action-btns">
                       {canInvoice && (

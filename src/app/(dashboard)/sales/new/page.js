@@ -596,8 +596,8 @@ function NewSalePageInner() {
                 onClick={() => switchCustomerType("farmer")}
                 className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   customerType === "farmer"
-                    ? "bg-gradient-to-b from-lime-500 to-lime-600 text-white shadow-md shadow-lime-600/25 ring-1 ring-lime-400/50"
-                    : "text-slate-600 hover:bg-white/95 hover:text-lime-700 hover:ring-1 hover:ring-lime-200/80"
+                    ? "bg-[var(--brand)] text-white shadow-sm"
+                    : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                 }`}
               >
                 <Wheat className="w-4 h-4 shrink-0" strokeWidth={2.25} />
@@ -612,8 +612,8 @@ function NewSalePageInner() {
                 onClick={() => switchCustomerType("shop")}
                 className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   customerType === "shop"
-                    ? "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-1 ring-emerald-400/50"
-                    : "text-slate-600 hover:bg-white/95 hover:text-emerald-700 hover:ring-1 hover:ring-emerald-200/80"
+                    ? "bg-[var(--brand)] text-white shadow-sm"
+                    : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                 }`}
               >
                 <Store className="w-4 h-4 shrink-0" strokeWidth={2.25} />
@@ -627,8 +627,8 @@ function NewSalePageInner() {
                 onClick={() => switchCustomerType("company")}
                 className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   customerType === "company"
-                    ? "bg-gradient-to-b from-amber-400 to-amber-500 text-amber-950 shadow-md shadow-amber-500/30 ring-1 ring-amber-300/70"
-                    : "text-slate-600 hover:bg-white/95 hover:text-amber-800 hover:ring-1 hover:ring-amber-200/90"
+                    ? "bg-[var(--brand)] text-white shadow-sm"
+                    : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                 }`}
               >
                 <Building2 className="w-4 h-4 shrink-0" strokeWidth={2.25} />
@@ -641,8 +641,8 @@ function NewSalePageInner() {
                 onClick={() => switchCustomerType("walkin")}
                 className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-[11px] font-semibold transition-all duration-300 ease-out cursor-pointer select-none ${
                   customerType === "walkin"
-                    ? "bg-gradient-to-b from-slate-600 to-slate-700 text-white shadow-md shadow-slate-600/25 ring-1 ring-slate-400/50"
-                    : "text-slate-600 hover:bg-white/95 hover:text-slate-800 hover:ring-1 hover:ring-slate-200/90"
+                    ? "bg-[var(--brand)] text-white shadow-sm"
+                    : "text-[var(--ink-2)] hover:bg-[var(--surface)] hover:text-[var(--ink)]"
                 }`}
               >
                 <UserRound className="w-4 h-4 shrink-0" strokeWidth={2.25} />
@@ -1011,7 +1011,7 @@ function NewSalePageInner() {
                 disabled={submitting || correctionReason.trim().length < 3}
                 variant="brand"
                 onClick={handleCorrectionSubmit}
-                className="min-h-[42px] sm:min-w-[220px] rounded-lg shadow-md bg-amber-600 hover:bg-amber-700 border-amber-600"
+                className="min-h-[42px] sm:min-w-[220px]"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

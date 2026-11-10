@@ -96,7 +96,7 @@ export default function ExecutiveDashboard() {
   return (
     <div className="erp-dashboard space-y-4 page-enter">
       {/* Page header */}
-      <div className="oh-ph !mb-0">
+      <div className="oh-ph">
         <div className="min-w-0">
           <h1 className="oh-ph-title">{firstName ? `${greeting()}, ${firstName}` : "Dashboard"}</h1>
           <p className="oh-ph-sub">{todayLabel} · Live overview of operations, receivables and inventory health</p>

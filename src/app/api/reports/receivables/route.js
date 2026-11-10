@@ -25,7 +25,10 @@ export async function GET(req) {
       (a) => RECEIVABLE_CATEGORIES.includes(a.category) && a.balance > 0
     );
     const payables = accounts.filter(
-      (a) => (PAYABLE_CATEGORIES.includes(a.category) || a.category === "general") && a.balance < 0
+      // Only party and liability accounts are payables; equity/revenue/expense ledgers carry credit balances by nature.
+      (a) =>
+        (PAYABLE_CATEGORIES.includes(a.category) || (a.category === "general" && a.type === "liability")) &&
+        a.balance < 0
     );
 
     let rows = accounts;

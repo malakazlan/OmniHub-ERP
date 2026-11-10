@@ -255,7 +255,6 @@ export default function EmployeeDetailPage() {
             <div className="erp-hr-info-card">
               <h2><Phone className="w-4 h-4 text-pink-600" /> Personal</h2>
               <dl>
-                <div><dt>Father&apos;s name</dt><dd>{employee.fatherName || "—"}</dd></div>
                 <div><dt>SSN / Tax ID</dt><dd className="font-mono">{employee.cnic || "—"}</dd></div>
                 <div><dt>Phone</dt><dd>{employee.phone || "—"}</dd></div>
                 <div><dt>Address</dt><dd>{employee.address || "—"}</dd></div>

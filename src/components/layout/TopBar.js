@@ -37,7 +37,10 @@ function useBreadcrumb(pathname) {
     if (!best) {
       const segs = pathname.split("/").filter(Boolean);
       if (segs.length === 0) return [{ label: "Dashboard" }];
-      return segs.map((s, i) => ({ label: titleCase(s), href: i < segs.length - 1 ? "/" + segs.slice(0, i + 1).join("/") : undefined }));
+      return segs.map((s, i) => ({
+        label: /^\d+$/.test(s) ? "Detail" : titleCase(s),
+        href: i < segs.length - 1 ? "/" + segs.slice(0, i + 1).join("/") : undefined,
+      }));
     }
     const crumbs = [];
     if (best.section && best.section !== "Overview") crumbs.push({ label: best.section });

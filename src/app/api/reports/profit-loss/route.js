@@ -39,9 +39,14 @@ export async function GET(req) {
       if (to) transportDateFilter.createdAt.lte = new Date(to);
     }
 
-    const [salesAgg, purchasesAgg, expensesAgg, transportAgg, salesByMonth] = await Promise.all([
+    const [salesAgg, soldItems, expensesAgg, transportAgg, salesByMonth] = await Promise.all([
       prisma.saleOrder.aggregate({ _sum: { totalAmount: true, subtotal: true }, where: { status: { not: "cancelled" }, ...saleDateFilter } }),
-      prisma.purchaseOrder.aggregate({ _sum: { totalAmount: true }, where: { status: { not: "cancelled" }, ...purchaseDateFilter } }),
+      // Cost of goods sold = quantity shipped x item cost. Purchases are inventory, not an expense,
+      // until the goods are sold, so summing purchase orders here would overstate COGS.
+      prisma.saleItem.findMany({
+        where: { saleOrder: { status: { not: "cancelled" }, ...saleDateFilter } },
+        select: { quantity: true, product: { select: { costPrice: true } } },
+      }),
       prisma.expense.aggregate({ _sum: { amount: true }, where: { status: { not: "rejected" }, ...expenseDateFilter } }),
       prisma.transport.aggregate({ _sum: { totalCharges: true }, where: { status: { not: "cancelled" }, ...transportDateFilter } }),
       prisma.saleOrder.findMany({
@@ -51,7 +56,9 @@ export async function GET(req) {
     ]);
 
     const revenue = salesAgg._sum.totalAmount || 0;
-    const cogs = purchasesAgg._sum.totalAmount || 0;
+    const cogs = Math.round(
+      soldItems.reduce((sum, line) => sum + (Number(line.quantity) || 0) * (Number(line.product?.costPrice) || 0), 0) * 100
+    ) / 100;
     const operatingExpenses = expensesAgg._sum.amount || 0;
     const transportCosts = transportAgg._sum.totalCharges || 0;
     const grossProfit = revenue - cogs;
