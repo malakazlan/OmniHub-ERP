@@ -3,6 +3,14 @@
 # administrator on first boot (idempotent), then start Next.js.
 set -eu
 
+# Some env-file loaders keep surrounding quotes; strip them so the URL parses.
+strip_quotes() { printf '%s' "$1" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//"; }
+DATABASE_URL=$(strip_quotes "${DATABASE_URL:-}")
+JWT_SECRET=$(strip_quotes "${JWT_SECRET:-}")
+ADMIN_EMAIL=$(strip_quotes "${ADMIN_EMAIL:-}")
+ADMIN_PASSWORD=$(strip_quotes "${ADMIN_PASSWORD:-}")
+export DATABASE_URL JWT_SECRET ADMIN_EMAIL ADMIN_PASSWORD
+
 if [ -z "${DATABASE_URL:-}" ]; then
   echo "DATABASE_URL is not set" >&2
   exit 1

@@ -13,8 +13,10 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import bcrypt from "bcryptjs";
 import { parseDatabaseUrl } from "../src/lib/dbConfig.mjs";
 
-const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+/** Env-file loaders sometimes keep surrounding quotes; never let them into stored values. */
+const unquote = (value) => String(value ?? "").trim().replace(/^["']|["']$/g, "");
+const ADMIN_EMAIL = unquote(process.env.ADMIN_EMAIL).toLowerCase();
+const ADMIN_PASSWORD = unquote(process.env.ADMIN_PASSWORD);
 
 if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
   console.error("Seed aborted: ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env.");
