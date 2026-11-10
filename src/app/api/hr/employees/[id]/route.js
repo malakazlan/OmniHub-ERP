@@ -241,22 +241,41 @@ export async function DELETE(req, { params }) {
       return Response.json({ error: "Employee not found" }, { status: 404 });
     }
 
-    await runTransaction(async (tx) => {
-      await tx.employee.delete({ where: { id: employeeId } });
-      if (existing.accountId) {
-        await tx.account.delete({ where: { id: existing.accountId } }).catch(() => {});
-      }
-      if (existing.cashAccountId && existing.cashAccountId !== existing.accountId) {
-        const cashEntries = await tx.ledgerEntry.count({
-          where: { accountId: existing.cashAccountId },
-        });
-        if (cashEntries === 0) {
-          await tx.account.delete({ where: { id: existing.cashAccountId } }).catch(() => {});
+    // Payroll, advances and commissions are financial records: an employee who
+    // has any is deactivated, never hard-deleted, so history and ledgers stay intact.
+    const [salaryCount, advanceCount, commissionCount, ledgerCount] = await Promise.all([
+      prisma.salaryRecord.count({ where: { employeeId } }),
+      prisma.salaryAdvance.count({ where: { employeeId } }),
+      prisma.employeeCommission.count({ where: { employeeId } }),
+      existing.accountId ? prisma.ledgerEntry.count({ where: { accountId: existing.accountId } }) : 0,
+    ]);
+    const hasHistory = salaryCount + advanceCount + commissionCount + ledgerCount > 0;
+
+    if (hasHistory) {
+      await runTransaction(async (tx) => {
+        await tx.employee.update({ where: { id: employeeId }, data: { isActive: false } });
+        if (existing.userId) {
+          await tx.user.updateMany({ where: { id: existing.userId }, data: { isActive: false } });
         }
+      });
+      return Response.json({
+        success: true,
+        deactivated: true,
+        message: "Employee has payroll history and was deactivated instead of deleted",
+      });
+    }
+
+    await runTransaction(async (tx) => {
+      await tx.employeeAttendance.deleteMany({ where: { employeeId } });
+      await tx.employee.delete({ where: { id: employeeId } });
+      for (const accountId of [existing.accountId, existing.cashAccountId]) {
+        if (!accountId) continue;
+        const entries = await tx.ledgerEntry.count({ where: { accountId } });
+        if (entries === 0) await tx.account.delete({ where: { id: accountId } });
       }
     });
 
-    return Response.json({ success: true, message: "Employee deleted" });
+    return Response.json({ success: true, deactivated: false, message: "Employee deleted" });
   } catch (error) {
     console.error("Delete employee error:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
