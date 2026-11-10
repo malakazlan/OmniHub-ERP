@@ -184,6 +184,16 @@ export async function correctSaleBill(tx, {
 
   await tx.saleItem.deleteMany({ where: { saleOrderId: saleId } });
 
+  // Amounts settled by standalone receipts (FIFO) are not on the invoice's
+  // cash/bank split and keep their own ledger entries — carry them over.
+  const settledByPayments = Math.max(
+    parseNum(existing.paidAmount) - parseNum(existing.cashAmount) - parseNum(existing.bankAmount),
+    0
+  );
+  const nextCash = parseNum(computed.cashAmount ?? existing.cashAmount);
+  const nextBank = parseNum(computed.bankAmount ?? existing.bankAmount);
+  const nextPaid = settledByPayments + nextCash + nextBank;
+
   const updateData = {
     saleDate: correctionDate,
     companyId,
@@ -198,10 +208,10 @@ export async function correctSaleBill(tx, {
     discountAmount: computed.discountAmount ?? existing.discountAmount,
     subtotal: computed.subtotal,
     totalAmount: computed.totalAmount,
-    cashAmount: computed.cashAmount ?? existing.cashAmount,
-    bankAmount: computed.bankAmount ?? existing.bankAmount,
-    paidAmount: computed.paidAmount ?? existing.paidAmount,
-    paymentStatus: computed.paymentStatus ?? existing.paymentStatus,
+    cashAmount: nextCash,
+    bankAmount: nextBank,
+    paidAmount: nextPaid,
+    paymentStatus: computePaymentStatus(nextPaid, computed.totalAmount),
     cashAccountId:
       body.cashAccountId !== undefined
         ? body.cashAccountId

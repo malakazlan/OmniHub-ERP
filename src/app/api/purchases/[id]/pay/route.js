@@ -92,7 +92,9 @@ export async function POST(req, { params }) {
 
       const newCash = (existing.cashAmount || 0) + cashAmount;
       const newBank = (existing.bankAmount || 0) + bankAmount;
-      const newPaid = newCash + newBank;
+      // paidAmount may exceed cash+bank when standalone payments were settled
+      // against this bill (FIFO); add the delta instead of recomputing from the split.
+      const newPaid = (existing.paidAmount || 0) + totalPay;
       const paymentStatus = computePaymentStatus(newPaid, existing.totalAmount);
 
       const updated = await tx.purchaseOrder.update({

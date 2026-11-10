@@ -27,6 +27,12 @@ export function resetPrismaClient() {
   }
 }
 
+/** MySQL 1205 / 1213 and TiDB write conflicts: the transaction was rolled back and is safe to retry. */
+export function isLockConflictError(error) {
+  const msg = String(error?.message || "");
+  return error?.code === "P2034" || /Lock wait timeout exceeded|Deadlock found|write conflict|try restarting transaction/i.test(msg);
+}
+
 export function isTransientDbError(error) {
   const msg = String(error?.message || "");
   const code = error?.code;
@@ -36,7 +42,8 @@ export function isTransientDbError(error) {
     code === "ECONNREFUSED" ||
     code === "ETIMEDOUT" ||
     code === "PROTOCOL_CONNECTION_LOST" ||
-    /ECONNRESET|ECONNREFUSED|ETIMEDOUT|pool timeout|connection timeout|Connection lost|server has gone away|read ECONNRESET/i.test(msg)
+    /ECONNRESET|ECONNREFUSED|ETIMEDOUT|pool timeout|connection timeout|Connection lost|server has gone away|read ECONNRESET/i.test(msg) ||
+    isLockConflictError(error)
   );
 }
 
@@ -49,7 +56,8 @@ export async function withDbRetry(fn, maxAttempts = 3) {
     } catch (error) {
       lastError = error;
       if (attempt < maxAttempts - 1 && isTransientDbError(error)) {
-        resetPrismaClient();
+        // A lock conflict only needs a short back-off; a dropped connection needs a fresh pool.
+        if (!isLockConflictError(error)) resetPrismaClient();
         await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
         continue;
       }

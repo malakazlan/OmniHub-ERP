@@ -147,7 +147,9 @@ export async function applyPurchaseReturnRefund(
 
   const newCashAmount = Math.max(parseNum(purchase.cashAmount) - cash, 0);
   const newBankAmount = Math.max(parseNum(purchase.bankAmount) - bank, 0);
-  const newPaidAmount = newCashAmount + newBankAmount;
+  // paidAmount also holds amounts settled by standalone payments (FIFO), which
+  // are not part of the bill's cash/bank split — reduce it by the refund only.
+  const newPaidAmount = Math.max(parseNum(purchase.paidAmount) - refundTotal, 0);
   const paymentStatus = computePaymentStatus(newPaidAmount, newTotalAmount);
 
   await tx.purchaseReturn.update({

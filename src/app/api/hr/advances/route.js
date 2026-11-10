@@ -55,9 +55,15 @@ export async function POST(req) {
     const body = await req.json();
     const employeeId = parseInt(body.employeeId, 10);
     const amount = parseFloat(body.amount) || 0;
-    const cashAmount = parseFloat(body.cashAmount) || amount;
     const bankAmount = parseFloat(body.bankAmount) || 0;
-    const totalPay = cashAmount + bankAmount || amount;
+    let cashAmount = parseFloat(body.cashAmount) || 0;
+    // `amount` is the advance total: the cash/bank split can never exceed it,
+    // so a bank-only advance is not doubled by the legacy "cash = amount" fallback.
+    if (amount > 0 && cashAmount + bankAmount > amount + 0.005) {
+      cashAmount = Math.max(amount - bankAmount, 0);
+    }
+    if (cashAmount + bankAmount <= 0) cashAmount = amount;
+    const totalPay = cashAmount + bankAmount;
 
     if (!employeeId || totalPay <= 0) {
       return Response.json({ error: "Employee and amount are required" }, { status: 400 });

@@ -183,6 +183,15 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
   const cashAmt = parseNum(purchase.cashAmount);
   const bankAmt = parseNum(purchase.bankAmount);
 
+  // Legs reversed by a bill correction no longer count as posted, otherwise
+  // the re-post after a correction finds "no gap" and the cash/bank credit is lost.
+  const lastCorrection = await tx.ledgerEntry.findFirst({
+    where: { referenceType: "PurchaseCorrection", referenceId: purchase.id },
+    orderBy: { id: "desc" },
+    select: { id: true },
+  });
+  const activeOnly = lastCorrection ? { id: { gt: lastCorrection.id } } : {};
+
   if (cashAmt > 0) {
     cashAccountId = await resolveDefaultCashAccountId(tx, cashAccountId);
     if (!cashAccountId) {
@@ -194,6 +203,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
         reference: ref,
         referenceType: "PurchaseOrder",
         description: { contains: "Cash payment" },
+        ...activeOnly,
       },
       _sum: { credit: true },
     });
@@ -222,6 +232,7 @@ export async function syncPurchasePaymentLedgerLegs(tx, purchase) {
         reference: ref,
         referenceType: "PurchaseOrder",
         description: { contains: "Bank payment" },
+        ...activeOnly,
       },
       _sum: { credit: true },
     });
@@ -271,7 +282,10 @@ export async function applyPurchaseStockAndLedger(tx, purchase, items) {
 
   if (purchase.vendorAccountId) {
     const ref = purchase.purchaseNumber;
-    const { purchaseDate, totalAmount, paidAmount, cashAmount, bankAmount } = purchase;
+    const { purchaseDate, totalAmount, cashAmount, bankAmount } = purchase;
+    // Only the bill's own cash/bank split is posted here; amounts settled by
+    // standalone payments (FIFO) already have their own ledger entries.
+    const inlinePaid = parseNum(cashAmount) + parseNum(bankAmount);
 
     await createLedgerEntry(tx, {
       accountId: purchase.vendorAccountId,
@@ -284,7 +298,7 @@ export async function applyPurchaseStockAndLedger(tx, purchase, items) {
       lineItems: serializeLedgerLineItems(items),
     });
 
-    if (paidAmount > 0) {
+    if (inlinePaid > 0) {
       await createLedgerEntry(tx, {
         accountId: purchase.vendorAccountId,
         date: purchaseDate,
@@ -292,7 +306,7 @@ export async function applyPurchaseStockAndLedger(tx, purchase, items) {
         reference: ref,
         referenceType: "PurchaseOrder",
         referenceId: purchase.id,
-        debit: paidAmount,
+        debit: inlinePaid,
       });
     }
 
@@ -401,7 +415,10 @@ export async function applySaleStockAndLedger(tx, sale, items) {
   }
 
   const ref = sale.invoiceNumber;
-  const { saleDate, paidAmount, cashAmount, bankAmount, totalAmount } = sale;
+  const { saleDate, cashAmount, bankAmount, totalAmount } = sale;
+  // Only the invoice's own cash/bank split is posted here; amounts settled by
+  // standalone receipts (FIFO) already have their own ledger entries.
+  const inlinePaid = parseNum(cashAmount) + parseNum(bankAmount);
 
   if (sale.customerAccountId) {
     await createLedgerEntry(tx, {
@@ -415,7 +432,7 @@ export async function applySaleStockAndLedger(tx, sale, items) {
       lineItems: serializeLedgerLineItems(items),
     });
 
-    if (paidAmount > 0) {
+    if (inlinePaid > 0) {
       await createLedgerEntry(tx, {
         accountId: sale.customerAccountId,
         date: saleDate,
@@ -423,7 +440,7 @@ export async function applySaleStockAndLedger(tx, sale, items) {
         reference: ref,
         referenceType: "SaleOrder",
         referenceId: sale.id,
-        credit: paidAmount,
+        credit: inlinePaid,
       });
     }
   }
