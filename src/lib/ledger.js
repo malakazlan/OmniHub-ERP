@@ -43,9 +43,14 @@ export function sortLedgerEntries(entries = []) {
 }
 
 /** Recompute running balance column from debit/credit in proper statement order. */
-export function applyRunningBalances(entries = []) {
+/**
+ * Compute running balances in statement order. `openingByAccount` carries the
+ * balance brought forward when the entries were filtered by a start date, so a
+ * date-ranged statement does not restart from zero.
+ */
+export function applyRunningBalances(entries = [], openingByAccount = {}) {
   const sorted = sortLedgerEntries(entries);
-  const runningByAccount = {};
+  const runningByAccount = { ...openingByAccount };
 
   return sorted.map((entry) => {
     const accountId = entry.accountId;
@@ -70,7 +75,7 @@ export async function recomputeAndPersistAccountLedgerBalances(tx, accountId) {
 
   const entries = await tx.ledgerEntry.findMany({
     where: { accountId: id },
-    orderBy: LEDGER_ENTRY_ORDER,
+    select: { id: true, date: true, debit: true, credit: true, referenceType: true, description: true, reference: true },
   });
 
   const dateFixes = [];
@@ -96,23 +101,13 @@ export async function recomputeAndPersistAccountLedgerBalances(tx, accountId) {
   }
   if (dateFixes.length) await Promise.all(dateFixes);
 
-  const ordered = sortLedgerEntries(entries);
+  // Running balances are derived on read (applyRunningBalances); only the
+  // account total is persisted. Rewriting every row's balance here serialized
+  // all writers on shared cash/bank accounts and caused lock-wait timeouts.
   let running = 0;
-  const updates = [];
-  for (const entry of ordered) {
+  for (const entry of entries) {
     running += (entry.debit || 0) - (entry.credit || 0);
-    const balance = Math.round(running * 100) / 100;
-    if (Math.abs(balance - (entry.balance || 0)) > 0.001) {
-      updates.push(
-        tx.ledgerEntry.update({
-          where: { id: entry.id },
-          data: { balance },
-        })
-      );
-    }
   }
-
-  if (updates.length) await Promise.all(updates);
 
   const finalBalance = Math.round(running * 100) / 100;
   await tx.account.update({

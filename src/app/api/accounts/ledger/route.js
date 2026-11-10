@@ -67,8 +67,19 @@ export async function GET(req) {
         })
       : null;
 
+    // Balance brought forward for a date-ranged statement of one account.
+    const openingByAccount = {};
+    if (accountId && from) {
+      const before = await prisma.ledgerEntry.aggregate({
+        where: { accountId: where.accountId, date: { lt: new Date(from) } },
+        _sum: { debit: true, credit: true },
+      });
+      openingByAccount[where.accountId] = (before._sum.debit || 0) - (before._sum.credit || 0);
+    }
+
     const enrichedEntries = applyRunningBalances(
-      await enrichLedgerEntriesWithLineItems(prisma, entries)
+      await enrichLedgerEntriesWithLineItems(prisma, entries),
+      openingByAccount
     );
 
     return Response.json({ success: true, account, entries: enrichedEntries });
