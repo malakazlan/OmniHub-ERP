@@ -209,8 +209,7 @@ async function main() {
   const force = process.env.DEMO_FORCE === "1";
   const existingPurchases = (await api("GET", "/api/purchases")).purchases || [];
   const existingSales = (await api("GET", "/api/sales")).sales || [];
-  const existingPayments = (await api("GET", "/api/payments")).payments || [];
-  const existingExpenses = (await api("GET", "/api/expenses")).expenses || [];
+    const existingExpenses = (await api("GET", "/api/expenses")).expenses || [];
   const existingTrips = (await api("GET", "/api/transport")).transports || [];
   const INVOICE_TARGET = 160;
   const PO_TARGET = 48;
@@ -338,12 +337,12 @@ async function main() {
     const lines = Array.from({ length: between(2, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
       productName: it.name,
-      quantity: it.bagWeight * between(4, 20),
+      quantity: it.bagWeight * between(8, 24),
       unit: it.unit,
       rate: money(it.cost * (0.95 + rnd() * 0.1)),
     }));
     const total = lines.reduce((s, l) => s + l.quantity * l.rate, 0);
-    const paidNow = rnd() < 0.55 ? money(total) : rnd() < 0.5 ? money(total * 0.5) : 0;
+    const paidNow = rnd() < 0.35 ? money(total) : rnd() < 0.5 ? money(total * 0.5) : 0;
     await api("POST", "/api/purchases", {
       companyId: vendor.id,
       vendorName: vendor.name,
@@ -366,7 +365,7 @@ async function main() {
     const lines = Array.from({ length: between(1, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
       productName: it.name,
-      quantity: it.bagWeight * between(1, 4),
+      quantity: it.bagWeight * between(2, 6),
       unit: it.unit,
       rate: money(it.price * (0.97 + rnd() * 0.06)),
     }));
@@ -394,7 +393,7 @@ async function main() {
   // Customer payments against open balances (FIFO settlement happens server-side)
   let payCount = 0;
   const refreshed = await api("GET", "/api/companies");
-  for (const c of force || existingPayments.length === 0 ? refreshed.companies || [] : []) {
+  for (const c of refreshed.companies || []) {
     const balance = Number(c.balance) || 0;
     if (c.companyType === "buyer" && balance > 500 && rnd() < 0.7) {
       const amount = money(rnd() < 0.5 ? balance : balance * (0.3 + rnd() * 0.5));
@@ -575,6 +574,21 @@ async function main() {
     }
   }
   console.log(`  ${advanceCount} salary advances`);
+
+  // If outflows outran collections, the owner tops up capital once (dated into the history).
+  const bankNow = ((await api("GET", "/api/accounts?category=bank")).accounts || []).find((a) => a.id === bankAccountId);
+  const journalsNow = (await api("GET", "/api/journal")).entries || [];
+  if (bankNow && Number(bankNow.balance) < 100000 && !journalsNow.some((j) => j.description === "Additional owner contribution")) {
+    await api("POST", "/api/journal", {
+      entryDate: daysAgo(60),
+      description: "Additional owner contribution",
+      lines: [
+        { accountId: bankAccountId, debit: 250000, credit: 0, description: "Capital deposit" },
+        { accountId: equity.id, debit: 0, credit: 250000, description: "Owner contribution" },
+      ],
+    });
+    console.log("  additional owner contribution posted");
+  }
 
   // Vehicle running costs
   const existingVehicleExpenses = (await api("GET", "/api/transport/vehicle-expenses")).expenses || [];
