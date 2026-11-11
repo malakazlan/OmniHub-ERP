@@ -49,7 +49,7 @@ export default function CommissionPage() {
       <div className="erp-hr-page space-y-5">
         <header className="erp-hr-page-header">
           <div>
-            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-pink-700 mb-2">
+            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[var(--brand)] mb-2">
               <ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll
             </Link>
             <div className="erp-hr-page-badge"><Percent className="w-3.5 h-3.5" /> Commission</div>
@@ -60,7 +60,7 @@ export default function CommissionPage() {
             variant="outline"
             onClick={() => { setSyncing(true); load(true); }}
             disabled={syncing}
-            className="border-pink-200 text-acc-hr"
+            className="border-[var(--brand-line)] text-acc-hr"
           >
             {syncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
             Sync from sales

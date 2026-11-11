@@ -62,6 +62,16 @@ async function api(method, path, body) {
 }
 
 const CUSTOMERS = [
+  ["Cedar Valley Plumbing", "Eugene", "OR"],
+  ["Bayline Electrical Co.", "Oakland", "CA"],
+  ["Mount Hood Builders", "Gresham", "OR"],
+  ["Puget Sound Facilities", "Everett", "WA"],
+  ["Silver Creek Contractors", "Reno", "NV"],
+  ["Redstone Mechanical", "Boise", "ID"],
+  ["Pacific Crest Irrigation", "Bend", "OR"],
+  ["Northstar Property Services", "Spokane", "WA"],
+  ["Golden State Fire Protection", "Sacramento", "CA"],
+  ["Evergreen Marine Repair", "Bellingham", "WA"],
   ["Summit Plumbing Supply", "Portland", "OR"],
   ["Ridgeview Builders", "Seattle", "WA"],
   ["Cascade Hardware", "Portland", "OR"],
@@ -75,6 +85,10 @@ const CUSTOMERS = [
 ];
 
 const VENDORS = [
+  ["Columbia Copper Works", "Portland", "OR"],
+  ["Sierra Tool & Die", "Reno", "NV"],
+  ["Westcoast Lighting Supply", "Los Angeles", "CA"],
+  ["Cascade Hardware Imports", "Tacoma", "WA"],
   ["Pacific Fasteners Inc.", "Oakland", "CA"],
   ["Kessler Metals", "Denver", "CO"],
   ["Evergreen Pipe & Fitting", "Tacoma", "WA"],
@@ -105,6 +119,26 @@ const ITEMS = [
   ['Stretch Wrap 18" x 1500 ft', "Packaging", "roll", 14.0, 24.5, 4],
   ['Shipping Carton 18x18x16"', "Packaging", "ea", 1.15, 2.1, 25],
   ['Packing Tape 2" x 110 yd', "Packaging", "roll", 1.6, 2.95, 36],
+  ['3/4" PVC Schedule 40 Pipe, 10 ft', "Plumbing", "ea", 3.4, 5.95, 10],
+  ['Brass Compression Fitting 1/2"', "Plumbing", "ea", 2.1, 3.85, 50],
+  ["Kitchen Faucet, Single Handle, Chrome", "Plumbing", "ea", 38.0, 69.0, 4],
+  ["Water Heater Element 4500W", "Plumbing", "ea", 9.5, 16.9, 12],
+  ["14-2 NM-B Romex, 250 ft", "Electrical", "roll", 52.0, 86.0, 1],
+  ['1/2" EMT Conduit, 10 ft', "Electrical", "ea", 4.2, 7.25, 10],
+  ["Single-Pole Light Switch, White", "Electrical", "ea", 1.1, 2.15, 10],
+  ["LED Recessed Downlight 6 in", "Electrical", "ea", 11.0, 19.5, 6],
+  ['Drywall Screws #6 x 1-5/8"', "Fasteners", "lb", 2.4, 4.2, 25],
+  ['Carriage Bolt 1/2" x 6"', "Fasteners", "ea", 0.9, 1.65, 50],
+  ["Concrete Anchors, Wedge 3/8", "Fasteners", "ea", 0.65, 1.2, 50],
+  ["Cordless Drill Driver 20V", "Tools", "ea", 64.0, 109.0, 2],
+  ["Adjustable Wrench 10 in", "Tools", "ea", 7.8, 13.5, 12],
+  ["Utility Knife, Retractable", "Tools", "ea", 3.2, 5.95, 12],
+  ["Cut-Resistant Gloves, M", "Safety", "ea", 2.6, 4.95, 12],
+  ["Hi-Vis Safety Vest, L", "Safety", "ea", 4.1, 7.5, 12],
+  ["Ear Plugs, 200 pair", "Safety", "case", 11.0, 19.0, 4],
+  ["Bubble Wrap 12 in x 175 ft", "Packaging", "roll", 9.8, 16.9, 4],
+  ['Shipping Carton 12x12x12"', "Packaging", "ea", 0.72, 1.35, 25],
+  ["Pallet Corner Boards, 48 in", "Packaging", "ea", 1.9, 3.25, 50],
 ];
 
 const EMPLOYEES = [
@@ -116,6 +150,10 @@ const EMPLOYEES = [
   ["Elena Novak", "Purchasing Manager", "Operations", "manager", 6800],
   ["Luis Herrera", "Driver", "Logistics", "driver", 4300],
   ["Sam Whitaker", "Driver", "Logistics", "driver", 4300],
+  ["Priya Natarajan", "Accounts Payable Specialist", "Finance", "accountant", 5100],
+  ["Caleb Ortiz", "Warehouse Associate", "Operations", "warehouse", 3900],
+  ["Hannah Berg", "Customer Service Rep", "Sales", "salesperson", 4200],
+  ["Omar Haddad", "Driver", "Logistics", "driver", 4300],
 ];
 
 const VEHICLES = [
@@ -123,6 +161,8 @@ const VEHICLES = [
   ["TRK-02", "Box Truck", "Freightliner", "M2 106", 2021, 12000, "Sam Whitaker"],
   ["VAN-03", "Cargo Van", "Ford", "Transit 250", 2023, 3500, null],
   ["TRK-04", "Flatbed", "Hino", "268A", 2020, 15000, null],
+  ["TRK-05", "Box Truck", "Isuzu", "NQR", 2024, 9000, "Omar Haddad"],
+  ["VAN-06", "Cargo Van", "Ram", "ProMaster 2500", 2022, 3800, null],
 ];
 
 const EXPENSE_CATEGORIES = ["Rent", "Utilities", "Fuel", "Insurance", "Software", "Office Supplies", "Repairs & Maintenance"];
@@ -135,6 +175,9 @@ const EXPENSES = [
   ["ERP and email subscriptions", "Software", 640],
   ["Forklift service", "Repairs & Maintenance", 890],
   ["Printer paper and labels", "Office Supplies", 215],
+  ["Warehouse lease, Boise", "Rent", 4100],
+  ["Internet and phones", "Utilities", 520],
+  ["Vehicle insurance", "Insurance", 1460],
 ];
 
 async function main() {
@@ -151,11 +194,11 @@ async function main() {
   const bankForCapital = ((await api("GET", "/api/accounts?category=bank")).accounts || []).find((a) => a.code === "ACC-BANK");
   if (bankForCapital && !journals.some((j) => j.description === "Opening capital contribution")) {
     await api("POST", "/api/journal", {
-      entryDate: daysAgo(95),
+      entryDate: daysAgo(185),
       description: "Opening capital contribution",
       lines: [
-        { accountId: bankForCapital.id, debit: 250000, credit: 0, description: "Initial deposit" },
-        { accountId: equity.id, debit: 0, credit: 250000, description: "Owner contribution" },
+        { accountId: bankForCapital.id, debit: 400000, credit: 0, description: "Initial deposit" },
+        { accountId: equity.id, debit: 0, credit: 400000, description: "Owner contribution" },
       ],
     });
     console.log("  opening capital posted");
@@ -169,7 +212,7 @@ async function main() {
   const existingPayments = (await api("GET", "/api/payments")).payments || [];
   const existingExpenses = (await api("GET", "/api/expenses")).expenses || [];
   const existingTrips = (await api("GET", "/api/transport")).transports || [];
-  const INVOICE_TARGET = 75;
+  const INVOICE_TARGET = 160;
 
   const byName = (list, key = "name") => new Map((list || []).map((x) => [x[key], x]));
   const existingCompanies = byName((await api("GET", "/api/companies")).companies);
@@ -289,7 +332,7 @@ async function main() {
 
   // Purchase orders: 3 months of receiving, oldest first so stock exists before sales
   let poCount = 0;
-  for (let day = 92; day >= 2 && (force || existingPurchases.length === 0); day -= between(3, 6)) {
+  for (let day = 180; day >= 2 && (force || existingPurchases.length === 0); day -= between(3, 5)) {
     const vendor = pick(vendors);
     const lines = Array.from({ length: between(2, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
@@ -317,7 +360,7 @@ async function main() {
 
   // Invoices: more frequent, spread across customers and reps
   let invCount = existingSales.length;
-  for (let day = 88; day >= 0 && (force || invCount < INVOICE_TARGET); day -= between(1, 3)) {
+  for (let day = 176; day >= 0 && (force || invCount < INVOICE_TARGET); day -= between(1, 2)) {
     const customer = pick(customers);
     const lines = Array.from({ length: between(1, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
@@ -384,7 +427,7 @@ async function main() {
 
   // Monthly operating expenses for the last three months
   let expCount = 0;
-  for (const monthOffset of force || existingExpenses.length === 0 ? [2, 1, 0] : []) {
+  for (const monthOffset of force || existingExpenses.length === 0 ? [5, 4, 3, 2, 1, 0] : []) {
     for (const [title, category, amount] of EXPENSES) {
       await api("POST", "/api/expenses", {
         expenseDate: daysAgo(monthOffset * 30 + between(1, 6)),
@@ -402,7 +445,7 @@ async function main() {
   // Deliveries
   const vehicles = (await api("GET", "/api/transport/vehicles")).vehicles || [];
   let tripCount = 0;
-  for (let day = 60; day >= 0 && (force || existingTrips.length === 0); day -= between(2, 5)) {
+  for (let day = 150; day >= 0 && (force || existingTrips.length === 0); day -= between(2, 4)) {
     const v = pick(vehicles);
     const customer = pick(customers);
     await api("POST", "/api/transport", {
@@ -422,6 +465,135 @@ async function main() {
     tripCount += 1;
   }
   console.log(`  ${tripCount} deliveries`);
+
+  // Sales orders (customer order queue): some pending, some accepted
+  const existingOrders = (await api("GET", "/api/orders")).orders || [];
+  let orderCount = 0;
+  if (force || existingOrders.length === 0) {
+    for (let i = 0; i < 8; i += 1) {
+      const customer = pick(customers);
+      const lines = Array.from({ length: between(1, 4) }, () => pick(items)).map((it) => ({
+        productId: it.id,
+        productName: it.name,
+        quantity: it.bagWeight * between(1, 3),
+        unit: it.unit,
+        rate: it.price,
+      }));
+      const r = await api("POST", "/api/orders", {
+        customerName: customer.name,
+        companyId: customer.id,
+        orderDate: daysAgo(between(0, 6)),
+        items: lines,
+        notes: pick(["", "Call before delivery", "Dock B after 2pm", ""]),
+      });
+      if (i % 2 === 0) await api("POST", `/api/orders/${r.order.id}`, { action: "accept" });
+      orderCount += 1;
+    }
+  }
+  console.log(`  ${orderCount} sales orders`);
+
+  // A few sale returns against delivered invoices (only on a first load)
+  let returnCount = 0;
+  if (force || existingSales.length === 0) {
+    const delivered = (await api("GET", "/api/sales?status=delivered")).sales || [];
+    for (const sale of delivered.filter((s) => (s.items || []).length > 0).slice(0, 4)) {
+      const item = sale.items[0];
+      const qty = Math.max(1, Math.floor(item.quantity / 4));
+      await api("POST", `/api/sales/${sale.id}/returns`, {
+        items: [{ productId: item.productId, productName: item.productName, quantity: qty, unit: item.unit, rate: item.rate }],
+        reason: pick(["Damaged in transit", "Over-shipped", "Wrong item"]),
+      });
+      returnCount += 1;
+    }
+  }
+  console.log(`  ${returnCount} sale returns`);
+
+  // Attendance for the last six working weeks
+  const employees = (await api("GET", "/api/hr/employees")).employees || [];
+  const existingAttendance = (await api("GET", "/api/hr/attendance")).attendance || [];
+  let attendanceDays = 0;
+  if (force || existingAttendance.length === 0) {
+    for (let day = 42; day >= 0; day -= 1) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - day);
+      if (d.getDay() === 0 || d.getDay() === 6) continue;
+      const date = d.toISOString().slice(0, 10);
+      const records = employees.map((e) => ({
+        employeeId: e.id,
+        date,
+        status: rnd() < 0.92 ? "present" : rnd() < 0.5 ? "absent" : rnd() < 0.5 ? "half_day" : "leave",
+      }));
+      await api("POST", "/api/hr/attendance", { records });
+      attendanceDays += 1;
+    }
+  }
+  console.log(`  ${attendanceDays} attendance days`);
+
+  // Payroll for the previous two months, paid from the bank
+  const existingSalaries = (await api("GET", "/api/hr/salary")).salaryRecords || [];
+  let payrollCount = 0;
+  if (force || existingSalaries.length === 0) {
+    for (const monthsBack of [2, 1]) {
+      const d = new Date(today);
+      d.setMonth(d.getMonth() - monthsBack, 1);
+      const month = d.getMonth() + 1;
+      const year = d.getFullYear();
+      const payDay = new Date(year, month, 0);
+      for (const e of employees) {
+        await api("POST", "/api/hr/salary", {
+          employeeId: e.id,
+          month,
+          year,
+          baseSalary: e.salary,
+          deductions: 0,
+          bonus: rnd() < 0.2 ? 150 : 0,
+          salaryBankAmount: e.salary,
+          bankAccountId,
+          paymentDate: payDay.toISOString().slice(0, 10),
+          paymentMethod: "bank_transfer",
+        });
+        payrollCount += 1;
+      }
+    }
+  }
+  console.log(`  ${payrollCount} payroll records`);
+
+  // Two outstanding salary advances
+  const existingAdvances = (await api("GET", "/api/hr/advances")).advances || [];
+  let advanceCount = 0;
+  if (force || existingAdvances.length === 0) {
+    for (const e of employees.slice(0, 2)) {
+      await api("POST", "/api/hr/advances", {
+        employeeId: e.id,
+        advanceDate: daysAgo(between(3, 12)),
+        bankAmount: 300,
+        bankAccountId,
+        notes: "Mid-month advance",
+      });
+      advanceCount += 1;
+    }
+  }
+  console.log(`  ${advanceCount} salary advances`);
+
+  // Vehicle running costs
+  const existingVehicleExpenses = (await api("GET", "/api/transport/vehicle-expenses")).expenses || [];
+  let vehicleExpenseCount = 0;
+  if (force || existingVehicleExpenses.length === 0) {
+    for (const v of vehicles) {
+      for (const [type, amount] of [["fuel", between(180, 420)], ["maintenance", between(120, 600)], ["fuel", between(180, 420)]]) {
+        await api("POST", "/api/transport/vehicle-expenses", {
+          vehicleId: v.id,
+          expenseDate: daysAgo(between(1, 60)),
+          expenseType: type,
+          amount,
+          accountId: bankAccountId,
+          description: `${type === "fuel" ? "Diesel" : "Service"} ${v.registrationNumber}`,
+        });
+        vehicleExpenseCount += 1;
+      }
+    }
+  }
+  console.log(`  ${vehicleExpenseCount} vehicle expenses`);
 
   console.log("Demo data loaded.");
 }

@@ -124,7 +124,7 @@ export default function EmployeeDetailPage() {
   if (loading) {
     return (
       <div className="min-h-[400px] flex items-center justify-center erp-hr-surface">
-        <Loader2 className="w-8 h-8 text-pink-600 animate-spin" />
+        <Loader2 className="w-8 h-8 text-[var(--brand)] animate-spin" />
       </div>
     );
   }
@@ -133,7 +133,7 @@ export default function EmployeeDetailPage() {
     return (
       <div className="erp-hr-surface p-8 text-center">
         <p className="text-slate-500 mb-4">Employee not found</p>
-        <Link href="/hr"><Button variant="outline"><ArrowLeft className="w-4 h-4" /> Back</Button></Link>
+        <Link href="/hr/employees"><Button variant="outline"><ArrowLeft className="w-4 h-4" /> Employee register</Button></Link>
       </div>
     );
   }
@@ -144,7 +144,7 @@ export default function EmployeeDetailPage() {
   return (
     <div className="erp-hr-surface page-enter pb-8">
       <div className="erp-hr-page space-y-5">
-        <Link href="/hr" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll</Link>
+        <Link href="/hr/employees" className="erp-ac-back-link"><ArrowLeft className="w-3.5 h-3.5" /> Employee register</Link>
 
         <div className="erp-hr-detail-panel">
           <div className="erp-hr-detail-head">
@@ -184,7 +184,7 @@ export default function EmployeeDetailPage() {
             <div className="erp-hr-register">
               <div className="erp-hr-register-head">
                 <p className="erp-hr-register-title flex items-center gap-2">
-                  <CalendarCheck className="w-4 h-4 text-pink-600" /> Recent attendance
+                  <CalendarCheck className="w-4 h-4 text-[var(--brand)]" /> Recent attendance
                 </p>
               </div>
               {(employee.attendance || []).length === 0 ? (
@@ -218,9 +218,9 @@ export default function EmployeeDetailPage() {
             <div className="erp-hr-register">
               <div className="erp-hr-register-head">
                 <p className="erp-hr-register-title flex items-center gap-2">
-                  <DollarSign className="w-4 h-4 text-pink-600" /> Salary history
+                  <DollarSign className="w-4 h-4 text-[var(--brand)]" /> Salary history
                 </p>
-                <Link href="/hr/salary"><Button variant="outline" className="border-pink-200 text-acc-hr text-xs">Process salary</Button></Link>
+                <Link href="/hr/salary"><Button variant="outline" className="border-[var(--brand-line)] text-acc-hr text-xs">Process salary</Button></Link>
               </div>
               {(employee.salaryRecords || []).length === 0 ? (
                 <div className="erp-ac-empty py-10 text-sm text-slate-500">No salary records yet.</div>
@@ -239,7 +239,7 @@ export default function EmployeeDetailPage() {
                       {employee.salaryRecords.map((s) => (
                         <tr key={s.id} className="erp-lg-row">
                           <td className="erp-lg-td font-semibold text-sm">{MONTH_NAMES[s.month]} {s.year}</td>
-                          <td className="erp-lg-td erp-lg-td-money font-bold text-pink-700">{formatCurrency(s.netSalary)}</td>
+                          <td className="erp-lg-td erp-lg-td-money font-bold text-[var(--brand)]">{formatCurrency(s.netSalary)}</td>
                           <td className="erp-lg-td erp-lg-td-money">{formatCurrency(s.paidAmount)}</td>
                           <td className="erp-lg-td"><span className={`erp-hr-status-pill${s.status === "paid" ? " is-paid" : ""}`}>{s.status}</span></td>
                         </tr>
@@ -253,7 +253,7 @@ export default function EmployeeDetailPage() {
 
           <div className="space-y-5">
             <div className="erp-hr-info-card">
-              <h2><Phone className="w-4 h-4 text-pink-600" /> Personal</h2>
+              <h2><Phone className="w-4 h-4 text-[var(--brand)]" /> Personal</h2>
               <dl>
                 <div><dt>SSN / Tax ID</dt><dd className="font-mono">{employee.cnic || "—"}</dd></div>
                 <div><dt>Phone</dt><dd>{employee.phone || "—"}</dd></div>
@@ -262,7 +262,7 @@ export default function EmployeeDetailPage() {
             </div>
 
             <div className="erp-hr-info-card">
-              <h2><CalendarCheck className="w-4 h-4 text-pink-600" /> Absence rules</h2>
+              <h2><CalendarCheck className="w-4 h-4 text-[var(--brand)]" /> Absence rules</h2>
               <dl>
                 <div><dt>Allowed absences</dt><dd>{employee.allowedAbsences ?? 0} / month</dd></div>
                 <div><dt>Deduct per absent day</dt><dd>{employee.absenceDeductionPerDay > 0 ? formatCurrency(employee.absenceDeductionPerDay) : "Auto (salary ÷ days)"}</dd></div>
@@ -271,7 +271,7 @@ export default function EmployeeDetailPage() {
             </div>
 
             <div className="erp-hr-info-card">
-              <h2><Wallet className="w-4 h-4 text-pink-600" /> Bank</h2>
+              <h2><Wallet className="w-4 h-4 text-[var(--brand)]" /> Bank</h2>
               <dl>
                 <div><dt>Bank</dt><dd>{employee.bankName || "—"}</dd></div>
                 <div><dt>Account</dt><dd className="font-mono">{employee.bankAccountNo || "—"}</dd></div>
@@ -297,7 +297,7 @@ export default function EmployeeDetailPage() {
                     ))}
                   </div>
                   {isAdmin && (
-                    <Button variant="outline" onClick={openEdit} className="w-full mt-3 border-pink-200 text-acc-hr text-xs">
+                    <Button variant="outline" onClick={openEdit} className="w-full mt-3 border-[var(--brand-line)] text-acc-hr text-xs">
                       <KeyRound className="w-3.5 h-3.5" /> Edit login & access
                     </Button>
                   )}
@@ -306,7 +306,7 @@ export default function EmployeeDetailPage() {
                 <>
                   <p className="erp-hr-info-hint">No system login assigned. Edit employee to add credentials and module access.</p>
                   {isAdmin && (
-                    <Button variant="outline" onClick={() => { openEdit(); setEditTab("access"); }} className="w-full border-pink-200 text-acc-hr">
+                    <Button variant="outline" onClick={() => { openEdit(); setEditTab("access"); }} className="w-full border-[var(--brand-line)] text-acc-hr">
                       <KeyRound className="w-4 h-4" /> Assign login access
                     </Button>
                   )}

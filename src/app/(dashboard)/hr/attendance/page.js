@@ -472,7 +472,7 @@ export default function AttendancePage() {
           ) : tab === "hazri" ? (
             panelLoading ? (
               <div className="h-52 flex items-center justify-center">
-                <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+                <Loader2 className="w-7 h-7 text-[var(--brand)] animate-spin" />
               </div>
             ) : (
               <AttendanceHazriChart

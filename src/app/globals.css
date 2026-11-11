@@ -13305,7 +13305,7 @@ input[type="number"]::-webkit-inner-spin-button {
 .erp-doc-section-head, .erp-accounts-register-head, .erp-dealer-register-head, .erp-don-register-head, .erp-fin-register-head,
 .erp-fleet-register-head, .erp-hr-register-head, .erp-orders-register-head, .erp-prod-register-head, .erp-purchases-register-head,
 .erp-pv-register-head, .erp-reports-register-head, .erp-sales-register-head, .erp-settings-register-head, .erp-xfer-register-head,
-.erp-ac-account-panel-head, .erp-hr-detail-head, .erp-hr-hub-section-head, .erp-prod-detail-head, .erp-inv-section-head, .erp-inv-pay-head,
+.erp-ac-account-panel-head, .erp-hr-detail-head, .erp-prod-detail-head, .erp-inv-section-head, .erp-inv-pay-head,
 .erp-journal-entry-head, .erp-pay-split-head, .erp-pi-pay-head, .erp-sales-latest-head, .erp-sc-panel-head, .erp-sc-slip-head, .erp-lg-particulars-head {
   background: var(--surface);
   border-bottom: 1px solid var(--line);
@@ -13632,3 +13632,7 @@ label:has(+ input[type="checkbox"]), label:has(+ input[type="radio"]) { display:
 .erp-ac-tab.is-active .erp-ac-tab-count { background: rgba(255, 255, 255, 0.2); color: #fff; }
 .erp-pv-flow-bar .erp-pv-flow-payable { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); }
 .erp-pv-flow-bar .erp-pv-flow-payable * { color: inherit; }
+
+/* Hub section groups (HR, Reports, Settings): a plain eyebrow label and subtitle, no bar */
+.erp-hr-hub-section-head { background: transparent; border: 0; box-shadow: none; padding: 0; margin: 4px 0 10px 2px; }
+.erp-hr-hub-section-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }

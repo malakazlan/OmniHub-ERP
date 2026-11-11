@@ -153,8 +153,8 @@ export default function SalaryClearancePage() {
       <div className="erp-hr-page space-y-5">
         <header className="erp-hr-page-header">
           <div>
-            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-pink-700 mb-2">
-              <ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll
+            <Link href="/hr/salary" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[var(--brand)] mb-2">
+              <ArrowLeft className="w-3.5 h-3.5" /> Payroll register
             </Link>
             <div className="erp-hr-page-badge"><CheckCircle2 className="w-3.5 h-3.5" /> Clearance</div>
             <h1 className="erp-hr-page-title">Salary clearance</h1>
@@ -196,7 +196,7 @@ export default function SalaryClearancePage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {rows.map((row) => (
-                      <tr key={row.employee.id} className={selectedId === row.employee.id ? "bg-pink-50/60" : ""}>
+                      <tr key={row.employee.id} className={selectedId === row.employee.id ? "bg-[var(--brand-soft)]" : ""}>
                         <td className="px-4 py-2 font-semibold">{row.employee.name}</td>
                         <td className="px-4 py-2 text-center font-mono text-emerald-700">{row.preview?.attendance?.present ?? "—"}</td>
                         <td className="px-4 py-2 text-center font-mono text-red-700">{row.preview?.attendance?.absent ?? "—"}</td>

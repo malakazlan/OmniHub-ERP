@@ -98,7 +98,7 @@ export default function SalaryAdvancesPage() {
       <div className="erp-hr-page space-y-5 max-w-4xl mx-auto">
         <header className="erp-hr-page-header">
           <div>
-            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-pink-700 mb-2">
+            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[var(--brand)] mb-2">
               <ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll
             </Link>
             <div className="erp-hr-page-badge"><ArrowDownCircle className="w-3.5 h-3.5" /> Salary advance</div>

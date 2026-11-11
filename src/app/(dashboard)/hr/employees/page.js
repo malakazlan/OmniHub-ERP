@@ -141,7 +141,7 @@ export default function HRPage() {
       <div className="erp-hr-page space-y-5">
         <header className="erp-hr-page-header">
           <div>
-            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-pink-700 mb-2">
+            <Link href="/hr" className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[var(--brand)] mb-2">
               <ArrowLeft className="w-3.5 h-3.5" /> Employees & Payroll
             </Link>
             <div className="erp-hr-page-badge">
@@ -155,12 +155,12 @@ export default function HRPage() {
           </div>
           <div className="erp-hr-header-actions">
             <Link href="/hr/attendance">
-              <Button variant="outline" className="border-pink-200 text-acc-hr">
+              <Button variant="outline" className="border-[var(--brand-line)] text-acc-hr">
                 <CalendarCheck className="w-4 h-4" /> Attendance
               </Button>
             </Link>
             <Link href="/hr/salary">
-              <Button variant="outline" className="border-pink-200 text-acc-hr">
+              <Button variant="outline" className="border-[var(--brand-line)] text-acc-hr">
                 <Wallet className="w-4 h-4" /> Salary
               </Button>
             </Link>

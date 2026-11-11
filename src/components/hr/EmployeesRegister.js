@@ -10,11 +10,11 @@ export default function EmployeesRegister({ rows = [], loading = false, onRowCli
       <div className="erp-accounts-grid-scroll">
         {loading ? (
           <div className="h-52 flex items-center justify-center">
-            <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+            <Loader2 className="w-7 h-7 text-[var(--brand)] animate-spin" />
           </div>
         ) : rows.length === 0 ? (
           <div className="erp-ac-empty py-16">
-            <Users className="w-10 h-10 text-pink-200 mx-auto mb-2" />
+            <Users className="w-10 h-10 text-[var(--brand-soft)] mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-600">No employees found</p>
           </div>
         ) : (
@@ -62,7 +62,7 @@ export default function EmployeesRegister({ rows = [], loading = false, onRowCli
                   </td>
                   <td className="erp-lg-td text-xs text-slate-600">{row.department || "—"}</td>
                   <td className="erp-lg-td text-xs text-slate-600 font-mono">{row.phone || "—"}</td>
-                  <td className="erp-lg-td erp-lg-td-money font-bold text-pink-700">{formatCurrency(row.salary)}</td>
+                  <td className="erp-lg-td erp-lg-td-money font-bold text-[var(--brand)]">{formatCurrency(row.salary)}</td>
                   <td className="erp-lg-td erp-lg-td-date">{formatDate(row.joiningDate)}</td>
                   <td className="erp-lg-td erp-hr-td-center">
                     {row.userId ? (

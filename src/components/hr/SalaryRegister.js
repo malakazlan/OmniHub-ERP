@@ -21,11 +21,11 @@ export default function SalaryRegister({
       <div className="erp-accounts-grid-scroll">
         {loading ? (
           <div className="h-52 flex items-center justify-center">
-            <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+            <Loader2 className="w-7 h-7 text-[var(--brand)] animate-spin" />
           </div>
         ) : rows.length === 0 ? (
           <div className="erp-ac-empty py-16">
-            <Wallet className="w-10 h-10 text-pink-200 mx-auto mb-2" />
+            <Wallet className="w-10 h-10 text-[var(--brand-soft)] mx-auto mb-2" />
             <p className="text-sm font-semibold text-slate-600">No salary records for this period</p>
           </div>
         ) : (
@@ -97,7 +97,7 @@ export default function SalaryRegister({
                   </td>
                   <td className="erp-lg-td erp-lg-td-money text-emerald-700">{formatCurrency(row.bonus)}</td>
                   <td className="erp-lg-td erp-lg-td-money text-red-600">{formatCurrency(row.deductions)}</td>
-                  <td className="erp-lg-td erp-lg-td-money font-bold text-pink-700">{formatCurrency(row.netSalary)}</td>
+                  <td className="erp-lg-td erp-lg-td-money font-bold text-[var(--brand)]">{formatCurrency(row.netSalary)}</td>
                   <td className="erp-lg-td erp-lg-td-money">{formatCurrency(row.paidAmount)}</td>
                   <td className={`erp-lg-td erp-lg-td-money font-semibold${pending > 0 ? " text-red-700" : " text-slate-400"}`}>
                     {pending > 0 ? formatCurrency(pending) : "—"}

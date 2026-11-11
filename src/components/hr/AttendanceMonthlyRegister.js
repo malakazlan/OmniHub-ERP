@@ -8,7 +8,7 @@ export default function AttendanceMonthlyRegister({ rows = [], loading = false }
   if (loading) {
     return (
       <div className="h-52 flex items-center justify-center">
-        <Loader2 className="w-7 h-7 text-pink-500 animate-spin" />
+        <Loader2 className="w-7 h-7 text-[var(--brand)] animate-spin" />
       </div>
     );
   }
@@ -16,7 +16,7 @@ export default function AttendanceMonthlyRegister({ rows = [], loading = false }
   if (rows.length === 0) {
     return (
       <div className="erp-ac-empty py-16">
-        <CalendarCheck className="w-10 h-10 text-pink-200 mx-auto mb-2" />
+        <CalendarCheck className="w-10 h-10 text-[var(--brand-soft)] mx-auto mb-2" />
         <p className="text-sm font-semibold text-slate-600">No employees for this period</p>
       </div>
     );

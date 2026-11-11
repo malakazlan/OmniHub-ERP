@@ -25,16 +25,15 @@ export async function GET(req) {
       orderBy: { createdAt: "desc" },
     });
 
-    const companiesWithBalance = await Promise.all(
-      companies.map(async (company) => {
-        if (!company.accountId) return { ...company, balance: 0 };
-        const account = await prisma.account.findUnique({
-          where: { id: company.accountId },
-          select: { balance: true },
-        });
-        return { ...company, balance: account?.balance || 0 };
-      })
-    );
+    const accountIds = companies.map((c) => c.accountId).filter(Boolean);
+    const accounts = accountIds.length
+      ? await prisma.account.findMany({ where: { id: { in: accountIds } }, select: { id: true, balance: true } })
+      : [];
+    const balanceById = new Map(accounts.map((a) => [a.id, a.balance || 0]));
+    const companiesWithBalance = companies.map((company) => ({
+      ...company,
+      balance: company.accountId ? balanceById.get(company.accountId) || 0 : 0,
+    }));
 
     return Response.json({ success: true, companies: companiesWithBalance });
   } catch (error) {
