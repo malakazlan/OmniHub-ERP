@@ -55,6 +55,10 @@ export function parseDatabaseUrl(connectionString, overrides = {}) {
     password: decodeURIComponent(url.password || ""),
     database,
     ssl,
+    // MySQL 8 defaults to caching_sha2_password. Over a plain connection the
+    // client must fetch the server's RSA public key to send the password;
+    // over TLS the key exchange is unnecessary and the option is ignored.
+    allowPublicKeyRetrieval: !ssl,
     connectTimeout: 20_000,
     connectionLimit: 10,
     acquireTimeout: 20_000,

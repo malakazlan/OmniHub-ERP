@@ -20,6 +20,7 @@ async function main() {
       password: config.password,
       database: config.database,
       ssl: config.ssl,
+      allowPublicKeyRetrieval: config.allowPublicKeyRetrieval,
       connectTimeout: config.connectTimeout,
     });
     const rows = await conn.query("SELECT VERSION() AS version");
