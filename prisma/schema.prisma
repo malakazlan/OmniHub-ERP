@@ -233,7 +233,7 @@ model StockMovement {
   newStock      Float
   referenceType String?   // PurchaseOrder, SaleOrder, etc.
   referenceId   Int?
-  notes         String?
+  notes         String?  @db.Text
   createdAt     DateTime  @default(now())
   product       Product   @relation(fields: [productId], references: [id])
 
@@ -495,7 +495,7 @@ model GatePass {
   driverName      String
   vehicleNumber   String
   dispatchedAt    DateTime  @default(now())
-  notes           String?
+  notes           String?  @db.Text
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -518,7 +518,7 @@ model Vehicle {
   accountId           Int?             @unique
   isOwned             Boolean          @default(true) // true = fleet owned, false = hired
   isActive            Boolean          @default(true)
-  notes               String?
+  notes               String?  @db.Text
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -577,10 +577,10 @@ model VehicleExpense {
   expenseDate     DateTime
   expenseType     String   // fuel, maintenance, repair, toll, salary, other
   amount          Float    @default(0)
-  description     String?
+  description     String?  @db.Text
   paymentMethod   String   @default("cash")
   accountId       Int?
-  notes           String?
+  notes           String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -594,7 +594,7 @@ model LedgerEntry {
   id              Int      @id @default(autoincrement())
   accountId       Int
   date            DateTime
-  description     String
+  description     String  @db.Text
   reference       String?
   referenceType   String?
   referenceId     Int?
@@ -617,7 +617,7 @@ model JournalEntry {
   id              Int           @id @default(autoincrement())
   entryNumber     String        @unique
   entryDate       DateTime
-  description     String
+  description     String  @db.Text
   referenceType   String?
   referenceId     Int?
   totalDebit      Float         @default(0)
@@ -636,7 +636,7 @@ model JournalLine {
   id              Int          @id @default(autoincrement())
   journalEntryId  Int
   accountId       Int
-  description     String?
+  description     String?  @db.Text
   debit           Float        @default(0)
   credit          Float        @default(0)
   createdAt       DateTime     @default(now())
@@ -659,7 +659,7 @@ model Payment {
   fromAccountId   Int?
   toAccountId     Int?
   accountName     String
-  description     String
+  description     String  @db.Text
   referenceType   String?
   referenceId     Int?
   chequeNumber    String?
@@ -689,7 +689,7 @@ model Expense {
   paymentMethod   String           @default("cash")
   cashAccountId   Int?
   bankAccountId   Int?
-  description     String?
+  description     String?  @db.Text
   status          String           @default("approved")
   notes           String?          @db.Text
   createdAt       DateTime         @default(now())
@@ -776,7 +776,7 @@ model EmployeeAttendance {
   status      String    // present, absent, half_day, leave, holiday
   checkIn     DateTime?
   checkOut    DateTime?
-  notes       String?
+  notes       String?  @db.Text
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -806,7 +806,7 @@ model SalaryRecord {
   paymentDate     DateTime?
   paymentMethod   String?
   status          String    @default("pending") // pending, paid
-  notes           String?
+  notes           String?  @db.Text
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -828,7 +828,7 @@ model SalaryAdvance {
   cashAccountId Int?
   bankAccountId Int?
   status        String    @default("pending") // pending, partial, settled
-  notes         String?
+  notes         String?  @db.Text
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -850,7 +850,7 @@ model EmployeeCommission {
   year             Int
   status           String    @default("pending") // pending, included, paid
   salaryRecordId   Int?
-  notes            String?
+  notes            String?  @db.Text
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
