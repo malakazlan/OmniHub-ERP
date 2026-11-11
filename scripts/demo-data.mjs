@@ -213,6 +213,7 @@ async function main() {
   const existingExpenses = (await api("GET", "/api/expenses")).expenses || [];
   const existingTrips = (await api("GET", "/api/transport")).transports || [];
   const INVOICE_TARGET = 160;
+  const PO_TARGET = 48;
 
   const byName = (list, key = "name") => new Map((list || []).map((x) => [x[key], x]));
   const existingCompanies = byName((await api("GET", "/api/companies")).companies);
@@ -332,7 +333,7 @@ async function main() {
 
   // Purchase orders: 3 months of receiving, oldest first so stock exists before sales
   let poCount = 0;
-  for (let day = 180; day >= 2 && (force || existingPurchases.length === 0); day -= between(3, 5)) {
+  for (let day = 180; day >= 2 && (force || poCount + existingPurchases.length < PO_TARGET); day -= between(3, 5)) {
     const vendor = pick(vendors);
     const lines = Array.from({ length: between(2, 5) }, () => pick(items)).map((it) => ({
       productId: it.id,
