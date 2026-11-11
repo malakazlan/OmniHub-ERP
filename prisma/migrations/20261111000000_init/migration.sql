@@ -1,4 +1,3 @@
-◇ injected env (4) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
 -- CreateTable
 CREATE TABLE `users` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
